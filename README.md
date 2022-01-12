@@ -1,5 +1,24 @@
 ## NODELET
 
+## Compiling and creating OS packages
+
+1. Install the build pre-reqs
+   ```
+   sudo apt-get update
+   sudo apt-get install ruby-dev rpm build-essential
+   sudo apt install docker.io
+   sudo gem i fpm -f
+   curl -O https://dl.google.com/go/go1.17.1.linux-amd64.tar.gz
+   sudo tar -C /usr/local -xzf go1.17.1.linux-amd64.tar.gz
+   mkdir -p ~/go; echo "export GOPATH=$HOME/go" >> ~/.bashrc
+   echo "export PATH=$PATH:$HOME/go/bin:/usr/local/go/bin" >> ~/.bashrc
+   source ~/.bashrc
+   ```
+2. Compile and create rpm/deb packages
+   ```
+   make agent-deb # to create a deb package
+   make agent-rpm # to create a rpm package
+   ```
 ## Installation steps
 
 This section contains instructions on creating a single-node cluster using nodelet. Instructions for multi-node cluster and multi-master clusters will be added shortly. 
