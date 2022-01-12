@@ -1,0 +1,30 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: monocular-api-cm
+  namespace: kube-system
+  labels:
+    app: monocular-api-cm
+data:
+  monocular.yaml: |-
+    cacheRefreshInterval: 3600
+    cors:
+      allowed_headers:
+      - content-type
+      - x-xsrf-token
+      allowed_origins:
+      - ""
+    releasesEnabled: true
+    repos:
+    - name: stable
+      source: https://github.com/kubernetes/charts/tree/master/stable
+      url: https://kubernetes-charts.storage.googleapis.com
+    - name: incubator
+      source: https://github.com/kubernetes/charts/tree/master/incubator
+      url: https://kubernetes-charts-incubator.storage.googleapis.com
+    - name: fission-charts
+      source: https://github.com/fission/fission-charts/tree/master
+      url: https://fission.github.io/fission-charts
+    storage:
+      driver: crd

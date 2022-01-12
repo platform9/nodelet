@@ -1,0 +1,35 @@
+release:
+  prerelease: auto
+builds:
+  - id: goversion
+    binary: goversion
+    main: ./cmd/goversion
+    env:
+      - CGO_ENABLED=0
+      - GO111MODULE=on
+    ldflags:
+      - "{{.Env.GOVERSION_LDFLAGS}}" # Inject the goversion-generated LDFlags through environment variables.
+archives:
+  - id: default
+    name_template: "goversion_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    builds:
+      - goversion
+    # Use values used by `uname` (OS) and `uname -m` (architecture).
+    replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      386: i386
+      amd64: x86_64
+    files:
+checksum:
+  name_template: 'checksums.txt'
+  algorithm: sha256
+snapshot:
+  name_template: "{{ .Tag }}-SNAPSHOT-{{.Commit}}"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'

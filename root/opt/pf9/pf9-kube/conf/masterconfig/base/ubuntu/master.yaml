@@ -1,0 +1,189 @@
+---
+apiVersion: "v1"
+kind: "Pod"
+metadata:
+  name: "k8s-master"
+  namespace: "kube-system"
+spec:
+  hostNetwork: true
+  containers:
+    - name: "kube-controller-manager"
+      image: "__K8S_REGISTRY__/kube-controller-manager:__KUBERNETES_VERSION__"
+      command:
+        - "kube-controller-manager"
+        - "--cloud-provider=__CLOUD_PROVIDER__"
+        - "--kubeconfig=/srv/kubernetes/kubeconfigs/kube-controller-manager.yaml"
+        - "--leader-elect=true"
+        - "--profiling=false"
+        - "--root-ca-file=/srv/kubernetes/certs/apiserver/ca.crt"
+        - "--service-account-private-key-file=/srv/kubernetes/certs/apiserver/svcacct.key"
+        - "--v=__DEBUG_LEVEL__"
+        - "--horizontal-pod-autoscaler-use-rest-clients=true"
+        - "--use-service-account-credentials=true"
+      volumeMounts:
+        - name: "apiserver-certs"
+          mountPath: "/srv/kubernetes/certs/apiserver"
+          readOnly: true
+        - name: "kubeconfigs"
+          mountPath: "/srv/kubernetes/kubeconfigs"
+          readOnly: true
+        - name: ca-certs
+          mountPath: /etc/ssl/certs
+          readOnly: true
+        - name: etc-ca-certificates
+          mountPath: /etc/ca-certificates
+          readOnly: true
+        - name: usr-local-share-ca-certificates
+          mountPath: /usr/local/share/ca-certificates
+          readOnly: true
+        - name: usr-share-ca-certificates
+          mountPath: /usr/share/ca-certificates
+          readOnly: true
+      env:
+        - name: "HTTP_PROXY"
+          value: "__HTTP_PROXY__"
+        - name: "HTTPS_PROXY"
+          value: "__HTTPS_PROXY__"
+        - name: "NO_PROXY"
+          value: "__NO_PROXY__"
+        - name: "http_proxy"
+          value: "__http_proxy__"
+        - name: "https_proxy"
+          value: "__https_proxy__"
+        - name: "no_proxy"
+          value: "__no_proxy__"
+    - name: "kube-apiserver"
+      image: "__K8S_REGISTRY__/kube-apiserver:__KUBERNETES_VERSION__"
+      command:
+        - "kube-apiserver"
+        - "--allow-privileged=__PRIVILEGED__"
+        - "--anonymous-auth=false"
+        - "--authentication-token-webhook-cache-ttl=__AUTHN_WEBHOOK_CACHE_TTL__"
+        - "--authentication-token-webhook-config-file=__AUTHN_WEBHOOK_CONFIG_FILE__"
+        - "--authorization-mode=__AUTHZ_MODE__"
+        - "--bind-address=0.0.0.0"
+        - "--client-ca-file=/srv/kubernetes/certs/apiserver/ca.crt"
+        - "--cloud-provider=__CLOUD_PROVIDER__"
+        - "--etcd-servers=http://localhost:2379"
+        - "--etcd-certfile=/srv/kubernetes/certs/apiserver/etcd/request.crt"
+        - "--etcd-keyfile=/srv/kubernetes/certs/apiserver/etcd/request.key"
+        - "--etcd-cafile=/srv/kubernetes/certs/apiserver/etcd/ca.crt"
+        - "--insecure-port=0"
+        - "--profiling=false"
+        - "--runtime-config=__RUNTIME_CONFIG__"
+        - "--secure-port=__K8S_API_PORT__"
+        - "--service-account-issuer=https://localhost:443"
+        - "--service-account-key-file=/srv/kubernetes/certs/apiserver/svcacct.key"
+        - "--service-account-signing-key-file=/srv/kubernetes/certs/apiserver/svcacct.key"
+        - "--service-cluster-ip-range=__SERVICES_CIDR__"
+        - "--storage-backend=__APISERVER_STORAGE_BACKEND__"
+        - "--storage-media-type=application/json"
+        - "--tls-cert-file=/srv/kubernetes/certs/apiserver/request.crt"
+        - "--tls-private-key-file=/srv/kubernetes/certs/apiserver/request.key"
+        - "--tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+        - "--requestheader-client-ca-file=/srv/kubernetes/certs/aggregator/ca.crt"
+        - "--requestheader-allowed-names=aggregator,kubelet,admin,kube-proxy"
+        - "--requestheader-extra-headers-prefix=X-Remote-Extra-"
+        - "--requestheader-group-headers=X-Remote-Group"
+        - "--requestheader-username-headers=X-Remote-User"
+        - "--proxy-client-cert-file=/srv/kubernetes/certs/aggregator/request.crt"
+        - "--proxy-client-key-file=/srv/kubernetes/certs/aggregator/request.key"
+        - "--kubelet-client-certificate=/srv/kubernetes/certs/kubelet/apiserver/request.crt"
+        - "--kubelet-client-key=/srv/kubernetes/certs/kubelet/apiserver/request.key"
+        - "--v=__DEBUG_LEVEL__"
+        - "--http2-max-streams-per-connection=1000" # See: PMK-2969
+      volumeMounts:
+        - name: "authn"
+          mountPath: "/srv/kubernetes/authn"
+          readOnly: true
+        - name: "apiserver-certs"
+          mountPath: "/srv/kubernetes/certs/apiserver"
+          readOnly: true
+        - name: "aggregator-certs"
+          mountPath: "/srv/kubernetes/certs/aggregator"
+          readOnly: true
+        - name: "kubelet-client-certs"
+          mountPath: "/srv/kubernetes/certs/kubelet/apiserver"
+          readOnly: true
+        - name: ca-certs
+          mountPath: /etc/ssl/certs
+          readOnly: true
+        - name: etc-ca-certificates
+          mountPath: /etc/ca-certificates
+          readOnly: true
+        - name: usr-local-share-ca-certificates
+          mountPath: /usr/local/share/ca-certificates
+          readOnly: true
+        - name: usr-share-ca-certificates
+          mountPath: /usr/share/ca-certificates
+          readOnly: true
+        - name: apiserver-config
+          mountPath: /var/opt/pf9/kube/apiserver-config
+          readOnly: true
+      env:
+        - name: "HTTP_PROXY"
+          value: "__HTTP_PROXY__"
+        - name: "HTTPS_PROXY"
+          value: "__HTTPS_PROXY__"
+        - name: "NO_PROXY"
+          value: "__NO_PROXY__"
+        - name: "http_proxy"
+          value: "__http_proxy__"
+        - name: "https_proxy"
+          value: "__https_proxy__"
+        - name: "no_proxy"
+          value: "__no_proxy__"
+    - name: "kube-scheduler"
+      image: "__K8S_REGISTRY__/kube-scheduler:__KUBERNETES_VERSION__"
+      command:
+        - "kube-scheduler"
+        - "--config=/srv/kubernetes/configs/kube-scheduler.yaml"
+        - "--leader-elect=true"
+        - "--profiling=false"
+        - "--v=__DEBUG_LEVEL__"
+      volumeMounts:
+        - name: "kubeconfigs"
+          mountPath: "/srv/kubernetes/kubeconfigs"
+          readOnly: true
+        - name: "configs"
+          mountPath: "/srv/kubernetes/configs"
+          readOnly: true
+  priorityClassName: "system-node-critical"
+  volumes:
+    - name: "authn"
+      hostPath:
+        path: "/etc/pf9/kube.d/authn"
+    - name: "apiserver-certs"
+      hostPath:
+        path: "/etc/pf9/kube.d/certs/apiserver"
+    - name: "kubeconfigs"
+      hostPath:
+        path: "/etc/pf9/kube.d/kubeconfigs"
+    - name: "configs"
+      hostPath:
+        path: "/etc/pf9/kube.d/configs"
+    - name: "aggregator-certs"
+      hostPath:
+        path: "/etc/pf9/kube.d/certs/aggregator"
+    - name: "kubelet-client-certs"
+      hostPath:
+        path: "/etc/pf9/kube.d/certs/kubelet/apiserver"
+    - name: ca-certs
+      hostPath:
+        path: /etc/ssl/certs
+        type: DirectoryOrCreate
+    - name: etc-ca-certificates
+      hostPath:
+        path: /etc/ca-certificates
+        type: DirectoryOrCreate
+    - name: usr-local-share-ca-certificates
+      hostPath:
+        path: /usr/local/share/ca-certificates
+        type: DirectoryOrCreate
+    - name: usr-share-ca-certificates
+      hostPath:
+        path: /usr/share/ca-certificates
+        type: DirectoryOrCreate
+    - name: apiserver-config
+      hostPath:
+        path: /var/opt/pf9/kube/apiserver-config

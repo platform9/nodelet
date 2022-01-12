@@ -1,0 +1,8 @@
+bases:
+- ../../base/__OS_FAMILY__
+patchesJson6902:
+- path: /opt/pf9/.custom_api_args.yaml
+  target:
+    version: "v1"
+    kind: "Pod"
+    name: "k8s-master"

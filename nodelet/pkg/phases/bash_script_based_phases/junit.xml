@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+  <testsuite name="Phases Suite" tests="7" failures="0" errors="0" time="3.393">
+      <testcase name="Test phases.go Should be able to stop the phase on first attempt" classname="Phases Suite" time="0.000630253"></testcase>
+      <testcase name="Test phases.go Should fail to start the phase" classname="Phases Suite" time="0.000124873"></testcase>
+      <testcase name="Test phases.go Should NOT invoke status more than PHASE_RETRY times" classname="Phases Suite" time="1.635089046"></testcase>
+      <testcase name="Test phases.go Should start the phase" classname="Phases Suite" time="0.000190658"></testcase>
+      <testcase name="Test phases.go Should be able to stop the phase on second attempt" classname="Phases Suite" time="0.583010706"></testcase>
+      <testcase name="Test phases.go Should check status of a phase" classname="Phases Suite" time="0.000200969"></testcase>
+      <testcase name="Test phases.go Should NOT try to invoke stop more than PHASE_RETRY times" classname="Phases Suite" time="1.172606881"></testcase>
+  </testsuite>

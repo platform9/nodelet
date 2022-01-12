@@ -1,0 +1,23 @@
+{
+  "suite": "kube_bare_os_centos7_latest_du_5_2",
+  "disabled": "False",
+  "testbed": {
+      "type": "kube_tests.testbeds.raw_kube_testbed.RawKubeTestbed",
+      "params": {
+          "tag": "bare_os_c7_du_5_2",
+          "template_key": "centos7-airgap"
+      },
+      "env": {
+          "SELINUX_ENFORCE": "1",
+          "USE_PROXY": "http://pf9:dummy@squid-basic-auth.platform9.horse:3128",
+          "AMI_BRANCH": "atherton",
+          "DU_REF": "local",
+          "DISABLE_DOCKER_VOLUME_GROUP": "True",
+          "CLUSTER_CREATE_CONTAINER_RUNTIME": "containerd",
+          "CLUSTER_UPGRADE_CONTAINER_RUNTIME": "containerd"
+      }
+  },
+  "modules": [
+      "kube_tests.upgrade.test_bare_os"
+  ]
+}

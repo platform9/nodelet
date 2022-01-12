@@ -1,0 +1,14 @@
+---
+# Subset of a full config from test hosts
+DEBUG: "false"
+ROLE: "master"
+CLUSTER_ID: "fake-id"
+HOSTID: "fake-id"
+TRANSPORT_URL: "localhost:6264"
+CONNECTION_TIMEOUT: 30
+KUBE_SERVICE_STATE: "true"
+FULL_RETRY_COUNT: 10
+USE_CGROUPS: True
+PHASE_RETRY: 3
+CPU_LIMIT: 40.0
+PF9_STATUS_THRESHOLD_SECONDS: 30

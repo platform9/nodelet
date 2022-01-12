@@ -1,0 +1,18 @@
+{
+    "kubernetes": "__KUBERNETES_VERSION__",
+    "kustomize": "__KUSTOMIZE_VERSION__",
+    "coredns": "__COREDNS_VERSION__",
+    "metricsserver": "__METRICS_SERVER_VERSION__",
+    "metallb": "__METALLB_VERSION__",
+    "casaws": "__CASAWS_VERSION__",
+    "casazure": "__CASAZURE_VERSION__",
+    "dashboard": "__DASHBOARD_VERSION__",
+    "flannel": "__FLANNEL_VERSION__",
+    "calico": "__CALICO_VERSION__",
+    "etcd": "__ETCD_VERSION__",
+    "cni": "__CNI_PLUGINS_VERSION__",
+    "kubevirtaddon": "__KUBEVIRT_ADDON_VERSION__",
+    "luigi": "__LUIGI_VERSION__",
+    "monitoring": "__MONITORING_VERSION__",
+    "profileagent": "__PROFILE_AGENT_VERSION__"
+}

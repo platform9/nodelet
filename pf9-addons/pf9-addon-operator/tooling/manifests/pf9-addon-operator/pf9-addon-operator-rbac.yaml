@@ -1,0 +1,28 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pf9-addon-operator
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: pf9-addon-operator
+subjects:
+- kind: ServiceAccount
+  name: pf9-addon-operator
+  namespace: pf9-addons
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: pf9-addon-operator
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pf9-addon-operator
+  namespace: pf9-addons

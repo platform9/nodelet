@@ -1,0 +1,16 @@
+{
+    "bridge": "none",
+    "graph": "__DOCKER_GRAPH__",
+    "group": "__DOCKER_SOCKET_GROUP__",
+    "exec-opts": ["__DOCKER_CGROUP__"],
+    "live-restore": __DOCKER_LIVE_RESTORE_ENABLED__,
+    "log-driver": "__DOCKER_LOG_DRIVER__",
+    "log-opts": {
+        "max-size": "__DOCKER_LOG_MAX_SIZE__",
+        "max-file": "__DOCKER_LOG_MAX_FILE__"
+    },
+    "storage-driver": "__DOCKER_STORAGE_DRIVER__",
+    "storage-opts": __DOCKER_STORAGE_OPTS__,
+    "debug": __DOCKER_DEBUG_FLAG__,
+    "registry-mirrors": __DOCKER_REGISTRY_MIRRORS__
+}

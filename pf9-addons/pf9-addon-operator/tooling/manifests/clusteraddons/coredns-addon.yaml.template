@@ -1,0 +1,20 @@
+apiVersion: agent.pf9.io/v1
+kind: Addon
+metadata:
+  name: __CLUSTER_ID__-coredns
+  namespace: pf9-addons
+spec:
+  clusterID: __CLUSTER_ID__
+  type: coredns
+  version: "1.7.0"
+  watch: true
+  override:
+    params:
+    - name: dnsMemoryLimit
+      value: __DNS_MEMORY_LIMIT__
+    - name: dnsDomain
+      value: __DNS_DOMAIN__
+    - name: dnsServer
+      value: __DNS_SERVER__
+    - name: enableAdditionalDnsConfig
+      value: "false"

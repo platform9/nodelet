@@ -1,0 +1,18 @@
+[Unit]
+Description=Platform9 Kubernetes Management Agent Service
+ConditionPathExists=/opt/pf9/nodelet/nodeletd
+After=network.target
+StartLimitIntervalSec=5s
+StartLimitBurst=2
+
+[Service]
+Type=simple
+RestartSec=5s
+Restart=always
+ExecStart=/bin/bash -c '/opt/pf9/nodelet/nodeletd >> /var/log/pf9/nodelet.log 2>&1'
+PIDFile=/var/run/pf9-nodeletd.pid
+User=pf9
+Group=pf9group
+
+[Install]
+WantedBy=multi-user.target

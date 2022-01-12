@@ -1,0 +1,35 @@
+---
+apiVersion: "v1"
+kind: "Pod"
+metadata:
+  name: "k8s-master"
+  namespace: "kube-system"
+spec:
+  containers:
+    - name: "kube-controller-manager"
+      securityContext:
+        privileged: true
+      args:
+        - "--cloud-config=__CLOUD_CONFIG__"
+      volumeMounts:
+        - name: "config-drive"
+          mountPath: "/dev/disk/by-label/config-2"
+        - name: "cloud-config"
+          mountPath: "/srv/kubernetes/cloud-config"
+    - name: "kube-apiserver"
+      securityContext:
+        privileged: true
+      args:
+        - "--cloud-config=__CLOUD_CONFIG__"
+      volumeMounts:
+        - name: "config-drive"
+          mountPath: "/dev/disk/by-label/config-2"
+        - name: "cloud-config"
+          mountPath: "/srv/kubernetes/cloud-config"
+  volumes:
+    - name: "config-drive"
+      hostPath:
+        path: "/dev/disk/by-label/config-2"
+    - name: "cloud-config"
+      hostPath:
+        path: "/etc/pf9/kube.d/cloud-config"

@@ -1,0 +1,16 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: monocular-api-svc
+  namespace: kube-system
+  labels:
+    app: monocular-api-svc
+spec:
+  ports:
+  - port: 80
+    targetPort: 8081
+    protocol: TCP
+    name: monocular-api
+  selector:
+    app: monocular-api-pod

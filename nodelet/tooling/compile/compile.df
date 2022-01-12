@@ -1,0 +1,8 @@
+FROM golang:1.17.1-alpine3.14@sha256:13919fb9091f6667cb375d5fdf016ecd6d3a5d5995603000d422b04583de4ef9
+
+RUN apk update && apk add --no-cache git build-base strace gdb
+
+# Download build and test tooling
+RUN go get github.com/erwinvaneyk/goversion/cmd/goversion
+RUN go get github.com/onsi/ginkgo/ginkgo
+RUN go get github.com/go-delve/delve/cmd/dlv

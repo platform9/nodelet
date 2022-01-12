@@ -1,0 +1,56 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: monocular-api-deploy
+  namespace: kube-system
+  labels:
+    app: monocular-api-deploy
+spec:
+  selector:
+    matchLabels:
+      app: monocular-api-pod
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: monocular-api-pod
+    spec:
+      containers:
+      - name: monocular
+        image: "__DOCKER_REGISTRY__/platform9/monocular-api:3.2.0"
+        env:
+        - name: MONOCULAR_HOME
+          value: /monocular
+        ports:
+        - containerPort: 8081
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 180
+          timeoutSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 180
+          timeoutSeconds: 5
+        volumeMounts:
+          - name: cache
+            mountPath: /monocular
+          - name: config
+            mountPath: /monocular/config
+        resources:
+            limits:
+              cpu: 1
+              memory: 1G
+            requests:
+              cpu: 250m
+              memory: 500M
+      volumes:
+      - name: config
+        configMap:
+          name: monocular-api-cm
+      - name: cache
+        emptyDir: {}

@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Config
+# clusters refers to the remote service.
+clusters:
+  - name: webhook-service
+    cluster:
+      # CA for verifying the remote service.
+      certificate-authority-data: __AUTHN_WEBHOOK_CA_CERT_BASE64__
+      # URL of remote service to query. Must use 'https'.
+      server: __AUTHN_WEBHOOK_URL__
+
+# users refers to the API Server's webhook configuration.
+users:
+  - name: webhook-user
+    user:
+      # cert for the webhook plugin to use. Not used.
+      # client-certificate: /path/to/cert.pem
+      # key matching the cert. Not used.
+      # client-key: /path/to/key.pem
+
+current-context: webhook
+contexts:
+- context:
+    cluster: webhook-service
+    user: webhook-user
+  name: webhook

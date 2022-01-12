@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+  <testsuite name="Phases Suite" tests="6" failures="0" errors="0" time="0.002">
+      <testcase name="Test phases.go with cgroups disabled fetches worker phases" classname="Phases Suite" time="0.000331708"></testcase>
+      <testcase name="Test phases.go with cgroups enabled fetches worker phases" classname="Phases Suite" time="0.000172534"></testcase>
+      <testcase name="Test phases.go with cgroups disabled fetches master phases" classname="Phases Suite" time="0.000143304"></testcase>
+      <testcase name="Test phases.go with cgroups disabled fetches no role phases" classname="Phases Suite" time="0.000107451"></testcase>
+      <testcase name="Test phases.go with cgroups enabled fetches master phases" classname="Phases Suite" time="0.000176926"></testcase>
+      <testcase name="Test phases.go with cgroups enabled fetches no role phases" classname="Phases Suite" time="0.000105727"></testcase>
+  </testsuite>

@@ -1,0 +1,9 @@
+/var/log/pf9/kube/*.log
+{
+  rotate 10
+  missingok
+  size 5M
+  copytruncate
+  compress
+  nodateext
+}

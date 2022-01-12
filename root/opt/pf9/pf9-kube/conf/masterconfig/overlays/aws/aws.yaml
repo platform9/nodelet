@@ -1,0 +1,12 @@
+---
+apiVersion: "v1"
+kind: "Pod"
+metadata:
+  name: "k8s-master"
+  namespace: "kube-system"
+spec:
+  containers:
+    - name: "kube-controller-manager"
+      args:
+        - "--allocate-node-cidrs=__ALLOCATE_NODE_CIDRS__"
+        - "--cluster-cidr=__CLUSTER_CIDR__"
