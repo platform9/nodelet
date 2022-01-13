@@ -1,0 +1,4 @@
+.ci/build/
+build/
+/nodeletd
+/vendor/

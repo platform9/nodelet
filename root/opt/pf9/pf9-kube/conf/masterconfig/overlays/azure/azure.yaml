@@ -1,0 +1,24 @@
+---
+apiVersion: "v1"
+kind: "Pod"
+metadata:
+  name: "k8s-master"
+  namespace: "kube-system"
+spec:
+  containers:
+    - name: "kube-controller-manager"
+      args:
+        - "--cloud-config=__CLOUD_CONFIG__"
+      volumeMounts:
+        - name: "cloud-config"
+          mountPath: "/srv/kubernetes/cloud-config"
+    - name: "kube-apiserver"
+      args:
+        - "--cloud-config=__CLOUD_CONFIG__"
+      volumeMounts:
+        - name: "cloud-config"
+          mountPath: "/srv/kubernetes/cloud-config"
+  volumes:
+    - name: "cloud-config"
+      hostPath:
+        path: "/etc/pf9/kube.d/cloud-config"

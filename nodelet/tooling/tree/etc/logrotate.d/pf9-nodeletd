@@ -1,0 +1,9 @@
+/var/log/pf9/nodelet.log
+{
+  rotate 10
+  missingok
+  size 50M
+  copytruncate
+  compress
+  nodateext
+}

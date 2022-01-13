@@ -1,0 +1,26 @@
+apiVersion: agent.pf9.io/v1
+kind: Addon
+metadata:
+  name: __CLUSTER_ID__-cluster-auto-scaler-azure
+  namespace: pf9-addons
+spec:
+  clusterID: __CLUSTER_ID__
+  type: cluster-auto-scaler-azure
+  version: "1.13.8"
+  watch: true
+  override:
+    params:
+    - name: clientID
+      value: __CLIENT_ID__
+    - name: clientSecret
+      value: __CLIENT_SECRET__
+    - name: resourceGroup
+      value: __RESOURCE_GROUP__
+    - name: subscriptionID
+      value: __SUBSCRIPTION_ID__
+    - name: tenantID
+      value: __TENANT_ID__
+    - name: minNumWorkers
+      value: "__MIN_NUM_WORKERS__"
+    - name: maxNumWorkers
+      value: "__MAX_NUM_WORKERS__"

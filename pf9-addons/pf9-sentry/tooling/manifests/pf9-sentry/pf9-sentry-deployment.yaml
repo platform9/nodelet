@@ -1,0 +1,48 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: pf9-addons
+  name: pf9-sentry
+  namespace: platform9-system
+spec:
+  selector:
+    matchLabels:
+      app: pf9-addons
+  template:
+    metadata:
+      labels:
+        app: pf9-addons
+    spec:
+      serviceAccountName: pf9-sentry
+      containers:
+      - name: pf9-sentry
+        image: __DOCKER_REGISTRY__/platform9/pf9-sentry:1.0.0
+        imagePullPolicy: IfNotPresent
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        env:
+        - name: DEBUG
+          value: "true"
+        livenessProbe:
+          httpGet:
+            path: /v1/healthz
+            port: 8080
+          initialDelaySeconds: 5
+        #volumeMounts:
+        #- name: my-pvc-volume
+        #  mountPath: /var/tmp
+      tolerations:
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/master
+          operator: Equal
+          value: "true"
+      nodeSelector:
+        node-role.kubernetes.io/master: ""

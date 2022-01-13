@@ -1,0 +1,13 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: pf9-sentry
+subjects:
+- kind: ServiceAccount
+  name: pf9-sentry
+  namespace: platform9-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: pf9-sentry

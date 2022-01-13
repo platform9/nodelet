@@ -1,0 +1,5 @@
+DEBUG: true
+ROLE:  worker
+CLUSTER_ID: cb7a158e-aab7-420c-b2c5-acc6631c7fdd
+KUBE_SERVICE_STATE: "true"
+TRANSPORT_URL: localhost:9111

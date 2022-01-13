@@ -1,0 +1,18 @@
+#! /opt/pf9/python/bin/python
+import sys
+import ipaddress
+
+def ip_for_http(ip):
+    addr = ipaddress.ip_address(ip)
+    if addr.version == 6:
+        return "["+ip+"]"
+    else:
+        return ip
+
+if __name__ == '__main__':
+    try:
+        print(ip_for_http(sys.argv[1]))
+        exit(0)
+    except ValueError:
+        print(sys.argv[1])
+        exit(1)

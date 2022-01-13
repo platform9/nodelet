@@ -1,0 +1,49 @@
+Cmnd_Alias DOCKER_CMDS = /usr/bin/docker images, \
+                         /usr/bin/docker inspect *, \
+                         /usr/bin/docker ps *, \
+                         /usr/bin/docker -H */var/run/docker.sock images, \
+                         /usr/bin/docker -H */var/run/docker.sock inspect*, \
+                         /usr/bin/docker -H */var/run/docker.sock ps*
+
+Cmnd_Alias CONTAINERD_CMDS = /opt/pf9/pf9-kube/bin/nerdctl -n k8s.io --cgroup-manager=systemd -H */run/containerd/containerd.sock images, \
+                             /opt/pf9/pf9-kube/bin/nerdctl -n k8s.io --cgroup-manager=systemd -H */run/containerd/containerd.sock inspect*, \
+                             /opt/pf9/pf9-kube/bin/nerdctl -n k8s.io --cgroup-manager=systemd -H */run/containerd/containerd.sock ps*, \
+                             /opt/pf9/pf9-kube/bin/crictl -r */run/containerd/containerd.sock ps*, \
+                             /opt/pf9/pf9-kube/bin/crictl -r */run/containerd/containerd.sock logs*
+
+Cmnd_Alias JOURNALCTL = /bin/journalctl -u docker.service, \
+                        /bin/journalctl -u keepalived.service, \
+                        /usr/bin/journalctl -u docker.service, \
+                        /usr/bin/journalctl -u keepalived.service, \
+                        /usr/bin/journalctl -u containerd.service
+
+Cmnd_Alias NETWORK_CMDS = /sbin/iptables -vL -t filter, \
+                          /sbin/iptables -vL -t mangle, \
+                          /sbin/iptables -vL -t nat, \
+                          /sbin/iptables --list -t nat, \
+                          /sbin/iptables -P FORWARD ACCEPT, \
+                          /bin/netstat, \
+                          /usr/bin/netstat, \
+                          /opt/pf9/pf9-kube/diagnostics_utils/portChecker.js
+
+Cmnd_Alias LOG_MGMT = /bin/cat /var/log/upstart/docker.log, \
+                      /bin/cp -f /var/log/* /var/log/pf9/, \
+                      /bin/chown pf9\:pf9group /var/log/pf9/*
+
+pf9     ALL = NOPASSWD: JOURNALCTL, DOCKER_CMDS, CONTAINERD_CMDS, NETWORK_CMDS, LOG_MGMT, \
+                        /opt/pf9/pf9-kube/make_kubeconfig.sh, \
+                        /bin/chmod -R a+rX /var/lib/docker/containers, \
+                        /bin/chmod -R a+rX /var/lib/containerd, \
+                        /bin/chmod -R a+rX /var/lib/nerdctl, \
+                        /usr/sbin/apparmor_status, \
+                        /opt/pf9/pf9-kube/bin/jq, \
+                        /opt/pf9/pf9-kube/bin/ip_type, \
+                        /bin/cat /etc/keepalived/keepalived.conf, \
+                        /bin/chown -R pf9\:pf9group /var/opt/pf9/kube/kubelet-config, \
+                        /bin/chown -R pf9\:pf9group /var/opt/pf9/kube_status, \
+                        /bin/chmod -R +r /var/opt/pf9/kube/kubelet-config, \
+                        /opt/pf9/pf9-kube/diagnostics_utils/node_check.sh, \
+                        /opt/pf9/pf9-kube/tackboard_utils/configure_metallb.sh, \
+                        /opt/pf9/pf9-kube/tackboard_utils/calicoctl.py, \
+                        /opt/pf9/pf9-kube/tackboard_utils/calicoctl.sh, \
+                        /opt/pf9/pf9-kube/post_upgrade.sh

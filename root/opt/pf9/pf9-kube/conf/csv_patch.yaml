@@ -1,0 +1,85 @@
+spec:
+  install:
+    spec:
+      deployments:
+      - name: prometheus-operator
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              k8s-app: prometheus-operator
+          template:
+            metadata:
+              labels:
+                k8s-app: prometheus-operator
+            spec:
+              containers:
+              - args:
+                - --kubelet-service=kube-system/kubelet
+                - -logtostderr=true
+                - --config-reloader-image=__DOCKER_REGISTRY__/jimmidyson/configmap-reload:v0.3.0
+                - --prometheus-config-reloader=__QUAY_REGISTRY__/coreos/prometheus-config-reloader:v0.37.0
+                env:
+                - name: NAMESPACES
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.annotations['olm.targetNamespaces']
+                image: __QUAY_REGISTRY__/coreos/prometheus-operator:v0.37.0
+                name: prometheus-operator
+                ports:
+                - containerPort: 8080
+                  name: http
+                resources:
+                  limits:
+                    cpu: 200m
+                    memory: 100Mi
+                  requests:
+                    cpu: 100m
+                    memory: 50Mi
+                securityContext:
+                  allowPrivilegeEscalation: false
+              nodeSelector:
+                beta.kubernetes.io/os: linux
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 65534
+              serviceAccount: prometheus-operator
+      - name: monhelper
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: mon-helper
+              k8s-app: prometheus-operator
+          template:
+            metadata:
+              labels:
+                app: mon-helper
+                k8s-app: prometheus-operator
+            spec:
+              containers:
+              - args:
+                - --mode=k8s
+                - --initmode=true
+                env:
+                - name: K8S_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
+                image: __DOCKER_REGISTRY__/platform9/monhelper:v3.0.0
+                name: monhelper
+                ports:
+                - containerPort: 8080
+                  name: web
+                resources:
+                  limits:
+                    cpu: 200m
+                    memory: 100Mi
+                  requests:
+                    cpu: 50m
+                    memory: 25Mi
+                securityContext:
+                  allowPrivilegeEscalation: false
+              nodeSelector:
+                beta.kubernetes.io/os: linux
+              serviceAccount: prometheus-monhelper

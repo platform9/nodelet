@@ -1,0 +1,16 @@
+{
+ "pf9_kube_service_state": "true",
+ "pf9_kube_node_state": "ok",
+ "pf9_kube_start_attempt": 0,
+ "pf9_cluster_id": "",
+ "pf9_cluster_role": "master",
+ "all_status_checks": [],
+ "all_tasks": [],
+ "completed_tasks": [],
+ "current_status_check": "",
+ "current_task": "",
+ "last_failed_status_check": "",
+ "last_failed_status_time": 0,
+ "last_failed_task": "",
+ "status_check_timestamp": 0
+}

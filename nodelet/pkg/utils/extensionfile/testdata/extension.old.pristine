@@ -1,0 +1,15 @@
+ all_status_checks Check if start operation in progress, Check if HTTP proxy configured, Check keepalived, Check if docker running, Check etcd, Check network configuration, Check if auth webhook running, Check if docker listening
+ last_failed_status_time 0
+ current_task None
+ all_tasks Pre-req check, Generate certs / Send signing request to CA, Prepare configuration, Configure Docker, Start Docker, Configure etcd, Start etcd, Configure CNI plugin, Network configuration, Configure and start auth web hook / pf9-bouncer, Configure and start kubelet, Configure and start kube-proxy, Configure and start k8s API server, Validate k8s API server responding, Check network configuration, Apply and validate node taints, Apply dynamic kubelet configuration, Uncordon node, Validate k8s DNS, Deploy dashboard, Deploy metrics server, Configure and start Keepalived, Configure and start MetalLB, Configure and start Autoscaler
+ pf9_cluster_role master
+ total_task_count 24
+ last_failed_task None
+ last_failed_status_check None
+ pf9_kube_service_state true
+ pf9_kube_start_attempt 0
+ current_status_check None
+ completed_tasks Configure and start Autoscaler, Configure and start MetalLB, Configure and start Keepalived, Deploy metrics server, Deploy dashboard, Validate k8s DNS, Uncordon node, Apply dynamic kubelet configuration, Apply and validate node taints, Check network configuration, Validate k8s API server responding, Configure and start k8s API server, Configure and start kube-proxy, Configure and start kubelet, Configure and start auth web hook / pf9-bouncer, Configure CNI plugin, Network configuration, Start etcd, Configure etcd, Start Docker, Configure Docker, Prepare configuration, Generate certs / Send signing request to CA, Pre-req check
+ status_check_timestamp 1588222644
+ pf9_cluster_id fake-cluster-id
+ pf9_kube_node_state ok

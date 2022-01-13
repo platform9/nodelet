@@ -1,0 +1,15 @@
+pf9     ALL = NOPASSWD: /opt/pf9/pf9-kube/setup_env_and_run_script.sh /opt/pf9/pf9-kube/phases/* name, \
+          NOPASSWD: /opt/pf9/pf9-kube/setup_env_and_run_script.sh /opt/pf9/pf9-kube/phases/* name --debug, \
+          NOPASSWD: /opt/pf9/pf9-kube/setup_env_and_run_script.sh /opt/pf9/pf9-kube/phases/* start, \
+          NOPASSWD: /opt/pf9/pf9-kube/setup_env_and_run_script.sh /opt/pf9/pf9-kube/phases/* start --debug, \
+          NOPASSWD: /opt/pf9/pf9-kube/setup_env_and_run_script.sh /opt/pf9/pf9-kube/phases/* status, \
+          NOPASSWD: /opt/pf9/pf9-kube/setup_env_and_run_script.sh /opt/pf9/pf9-kube/phases/* status --debug, \
+          NOPASSWD: /opt/pf9/pf9-kube/setup_env_and_run_script.sh /opt/pf9/pf9-kube/phases/* can_run_status, \
+          NOPASSWD: /opt/pf9/pf9-kube/setup_env_and_run_script.sh /opt/pf9/pf9-kube/phases/* can_run_status --debug, \
+          NOPASSWD: /opt/pf9/pf9-kube/setup_env_and_run_script.sh /opt/pf9/pf9-kube/phases/* stop, \
+          NOPASSWD: /opt/pf9/pf9-kube/setup_env_and_run_script.sh /opt/pf9/pf9-kube/phases/* stop --debug, \
+          NOPASSWD: /usr/bin/cgcreate -a pf9\:pf9group -t pf9\:pf9group -g cpu\:pf9-kube-status, \
+          NOPASSWD: /usr/bin/cgset -r * pf9-kube-status, \
+          NOPASSWD: /usr/bin/cgget -g cpu\:pf9-kube-status
+
+Defaults:pf9 !requiretty

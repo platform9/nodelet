@@ -1,0 +1,102 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.3.0
+  creationTimestamp: null
+  name: addons.agent.pf9.io
+spec:
+  group: agent.pf9.io
+  names:
+    kind: Addon
+    listKind: AddonList
+    plural: addons
+    singular: addon
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      description: Addon is the Schema for the addons API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: AddonSpec defines the desired state of Addon
+          properties:
+            clusterID:
+              description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
+                Important: Run "make" to regenerate code after modifying this file'
+              type: string
+            override:
+              description: Override defines params to override in the addon
+              properties:
+                params:
+                  items:
+                    description: Params defines params to override in the addon
+                    properties:
+                      name:
+                        type: string
+                      value:
+                        type: string
+                    required:
+                    - name
+                    - value
+                    type: object
+                  type: array
+              type: object
+            retry:
+              format: int32
+              type: integer
+            type:
+              type: string
+            version:
+              type: string
+            watch:
+              type: boolean
+          required:
+          - clusterID
+          - type
+          - version
+          type: object
+        status:
+          description: AddonStatus defines the observed state of Addon
+          properties:
+            healthy:
+              type: boolean
+            message:
+              type: string
+            observedGeneration:
+              description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
+                of cluster Important: Run "make" to regenerate code after modifying
+                this file'
+              format: int64
+              type: integer
+            phase:
+              description: AddonPhase is a label for the status of a addon.
+              type: string
+          type: object
+      type: object
+  version: v1
+  versions:
+  - name: v1
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

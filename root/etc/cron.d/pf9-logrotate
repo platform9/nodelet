@@ -1,0 +1,5 @@
+# Run the pf9 hourly logrotation jobs
+SHELL=/bin/bash
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+MAILTO=root
+0 * * * * root run-parts /etc/cron.pf9

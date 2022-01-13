@@ -1,0 +1,16 @@
+/var/log/pf9/kubelet/kubelet.*.log.*[0-9]
+{
+  rotate 10
+  lastaction
+   CUR_ERR=$(readlink /var/log/pf9/kubelet/kubelet.ERROR)
+   CUR_WAR=$(readlink /var/log/pf9/kubelet/kubelet.WARNING)
+   CUR_INF=$(readlink /var/log/pf9/kubelet/kubelet.INFO)
+   find /var/log/pf9/kubelet -type f -not \( -iname $CUR_ERR -or -iname $CUR_WAR -or -iname $CUR_INF \) -mtime +5 -delete
+  endscript
+  missingok
+  size 5M
+  copytruncate
+  compress
+  nodateext
+  maxage 5
+}

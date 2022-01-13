@@ -1,0 +1,10 @@
+apiVersion: agent.pf9.io/v1
+kind: Addon
+metadata:
+  name: __CLUSTER_ID__-kubernetes-dashboard
+  namespace: pf9-addons
+spec:
+  clusterID: __CLUSTER_ID__
+  type: kubernetes-dashboard
+  version: "2.0.1"
+  watch: true

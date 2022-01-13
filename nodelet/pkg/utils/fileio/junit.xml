@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+  <testsuite name="Fileio Suite" tests="19" failures="0" errors="0" time="0.13">
+      <testcase name="Fileio File I/O Deleting a file Should delete a file" classname="Fileio Suite" time="0.03358434"></testcase>
+      <testcase name="Fileio File I/O Reading from JSON file Should fail to read non-existent JSON file" classname="Fileio Suite" time="0.004903583"></testcase>
+      <testcase name="Fileio File I/O Creating a file Should create a file without error" classname="Fileio Suite" time="0.007056795"></testcase>
+      <testcase name="Fileio File I/O Reading a Plaintext file Should fail to read non-existent file all at once" classname="Fileio Suite" time="0.004953839"></testcase>
+      <testcase name="Fileio File I/O Writing to file Should write a string to a file" classname="Fileio Suite" time="0.005541184"></testcase>
+      <testcase name="Fileio File I/O Reading a Plaintext file Should read file line by line" classname="Fileio Suite" time="0.004273792"></testcase>
+      <testcase name="Fileio File I/O Writing to file Should write a slice of strings to a file" classname="Fileio Suite" time="0.004318292"></testcase>
+      <testcase name="Fileio File I/O Writing to file Should append a slice of bytes to a file" classname="Fileio Suite" time="0.007237378"></testcase>
+      <testcase name="Fileio File I/O Reading from JSON file Should fail to read invalid JSON file" classname="Fileio Suite" time="0.00520666"></testcase>
+      <testcase name="Fileio File I/O Reading a Plaintext file Should fail to read non-existent file line by line" classname="Fileio Suite" time="0.009286368"></testcase>
+      <testcase name="Fileio File I/O Writing to file Should write a slice of bytes to a file" classname="Fileio Suite" time="0.004383549"></testcase>
+      <testcase name="Fileio File I/O Writing to file Should append a slice of strings to a file" classname="Fileio Suite" time="0.007098584"></testcase>
+      <testcase name="Fileio File I/O Fetching file details Should fail to fetch file details of non existing directory" classname="Fileio Suite" time="0.002957531"></testcase>
+      <testcase name="Fileio File I/O Reading from JSON file Should read a valid JSON file" classname="Fileio Suite" time="0.004437786"></testcase>
+      <testcase name="Fileio File I/O Fetching file details Should fetch file details" classname="Fileio Suite" time="0.003319676"></testcase>
+      <testcase name="Fileio File I/O Creating a file Should fail to create file within non existent directory" classname="Fileio Suite" time="0.003094051"></testcase>
+      <testcase name="Fileio File I/O Deleting a file Should fail to delete non-existent file" classname="Fileio Suite" time="0.002913257"></testcase>
+      <testcase name="Fileio File I/O Writing to file Should append a string to a file" classname="Fileio Suite" time="0.008379563"></testcase>
+      <testcase name="Fileio File I/O Reading a Plaintext file Should read file all at once" classname="Fileio Suite" time="0.004459634"></testcase>
+  </testsuite>
