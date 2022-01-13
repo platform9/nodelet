@@ -1,8 +1,0 @@
-{
-    "ca": "/etc/pf9/certs/ca",
-    "key": "/etc/pf9/certs/hostagent/key.pem",
-    "cert": "/etc/pf9/certs/hostagent/cert.pem",
-    "sni_map": {
-        "docker": 7391
-    }
-}

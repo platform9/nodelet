@@ -1,8 +1,0 @@
-{
-    "ca": "/etc/pf9/certs/ca/cert.pem",
-    "key": "/etc/pf9/certs/hostagent/key.pem",
-    "cert": "/etc/pf9/certs/hostagent/cert.pem",
-    "sni_map": {
-        "kubernetes-keystone": 12121
-    }
-}
