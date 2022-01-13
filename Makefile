@@ -1,7 +1,5 @@
 #! vim noexpandtab
 #
-# Copyright (C) 2015-2020 Platform9 Systems, Inc.
-#
 # Usage:
 #
 #   make agent-wrapper  # Makes the agent RPM, DEB and wrapper RPM

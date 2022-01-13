@@ -1,5 +1,3 @@
-# Copyright (C) 2015-2020 Platform9 Systems, Inc.
-
 CGO_ENABLED?=0
 GOOS?=linux
 GOARCH?=amd64

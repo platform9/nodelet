@@ -1,7 +1,3 @@
-/*
- *	Copyright 2019 Platform9, Inc.
- *	All rights reserved
- */
 package nodelet
 
 import (
