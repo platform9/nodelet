@@ -46,7 +46,7 @@ GOLANG_DOCKER_MARKER := ${NODELET_BUILD_DIR}/${COMPILE_IMAGE}.marker
 # Download/create build envs
 nodelet-setup: ${NODELET_BIN_DIR} ${GOLANG_DOCKER_MARKER}
 	echo "setting up env for nodeletd"
-	cd ${NODELET_SRC_DIR} && go mod vendor
+	cd ${NODELET_SRC_DIR} && go mod vendor || true
 
 ${GOLANG_DOCKER_MARKER}: ${NODELET_BIN_DIR} ${NODELET_SRC_DIR}/tooling/compile/compile.df
 	${DOCKER_BUILD_CMD} --network host \
