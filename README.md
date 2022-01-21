@@ -5,8 +5,7 @@
 1. Install the build pre-reqs
    ```
    sudo apt-get update
-   sudo apt-get install ruby-dev rpm build-essential
-   sudo apt install docker.io
+   sudo apt-get install ruby-dev rpm build-essential docker.io -y
    sudo gem i fpm -f
    curl -O https://dl.google.com/go/go1.17.1.linux-amd64.tar.gz
    sudo tar -C /usr/local -xzf go1.17.1.linux-amd64.tar.gz
