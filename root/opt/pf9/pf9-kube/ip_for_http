@@ -1,18 +1,9 @@
-#! /opt/pf9/python/bin/python
-import sys
-import ipaddress
+#!/bin/bash
 
-def ip_for_http(ip):
-    addr = ipaddress.ip_address(ip)
-    if addr.version == 6:
-        return "["+ip+"]"
-    else:
-        return ip
-
-if __name__ == '__main__':
-    try:
-        print(ip_for_http(sys.argv[1]))
-        exit(0)
-    except ValueError:
-        print(sys.argv[1])
-        exit(1)
+if [ "$1" != "${1#*[0-9].[0-9]}" ]; then
+  echo $1
+elif [ "$1" != "${1#*:[0-9a-fA-F]}" ]; then
+  echo "[$1]"
+else
+  exit 1
+fi

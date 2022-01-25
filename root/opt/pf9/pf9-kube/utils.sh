@@ -1222,17 +1222,7 @@ function add_no_proxy()
 }
 
 # Ensure pf9-kube scripts and all processes the spawn have the http/s_proxy and
-# no_proxy env vars defined in their environments. The following scenarios are
-# covered:
-# |------------------|------------------------|----------------------------
-# | environment vars | pf9-comms proxy config |
-# | already defined  | exists and is valid    | action
-# |------------------|------------------------|----------------------------
-# | true             | true                   | use pf9-comms proxy config
-# | true             | false                  | use defined env vars
-# | false            | true                   | use pf9-comms proxy config
-# | false            | false                  | skip configuration
-# |------------------|------------------------|----------------------------
+# no_proxy env vars defined in their environments.
 function ensure_http_proxy_configured()
 {
     if [ -z "$HTTP_PROXY" ] && [ -z "$http_proxy" ] && [ -z "$HTTPS_PROXY" ] && [ -z "$https_proxy" ] && [ ! -f "${PF9_COMMS_PROXY_CONF}" ]; then
@@ -1241,30 +1231,10 @@ function ensure_http_proxy_configured()
         return
     fi
 
-    local pf9_comms_http_proxy
     local kube_no_proxy
 
-    if [ -f "${PF9_COMMS_PROXY_CONF}" ]; then
-        pf9_comms_http_proxy="$(/opt/pf9/python/bin/python parse_pf9_comms_proxy_cfg.py "$PF9_COMMS_PROXY_CONF")"
-        if [ -z "$pf9_comms_http_proxy" ]; then
-            echo "http proxy: pf9-comms proxy configuration malformed; ignoring"
-        fi
-    fi
-
-    if [ -n "$pf9_comms_http_proxy" ]; then
-        if [ -n "$HTTP_PROXY" ] || [ -n "$http_proxy" ] || [ -n "$HTTPS_PROXY" ] || [ -n "$https_proxy" ]; then
-            echo "http proxy: http/s_proxy env vars already defined; overriding with pf9-comms proxy configuration"
-        else
-            echo "http proxy: http/s_proxy env vars not defined; using pf9-comms proxy configuration"
-        fi
-        export HTTP_PROXY="$pf9_comms_http_proxy"
-        export http_proxy="$pf9_comms_http_proxy"
-        export HTTPS_PROXY="$pf9_comms_http_proxy"
-        export https_proxy="$pf9_comms_http_proxy"
-    else
-        if [ -n "$HTTP_PROXY" ] || [ -n "$http_proxy" ] || [ -n "$HTTPS_PROXY" ] || [ -n "$https_proxy" ]; then
-            echo "http proxy: http/s_proxy env vars already defined; using unmodified"
-        fi
+    if [ -n "$HTTP_PROXY" ] || [ -n "$http_proxy" ] || [ -n "$HTTPS_PROXY" ] || [ -n "$https_proxy" ]; then
+        echo "http proxy: http/s_proxy env vars already defined; using unmodified"
     fi
 
     add_no_proxy "127.0.0.1"

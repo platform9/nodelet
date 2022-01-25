@@ -78,11 +78,6 @@ function init_pki() {
     echo "yes" | ${CMD_DIR}/bin/requester/initialize-pki.sh
 }
 
-function extract_vault_json() {
-    # Pass in to standard Python JSON library to avoid jq dependency.
-    /opt/pf9/python/bin/python -c "import sys, json; print(json.load(sys.stdin)['data']['$1'])"
-}
-
 function vault_get_svc_acct_key() {
 
     curl --silent \
@@ -90,7 +85,7 @@ function vault_get_svc_acct_key() {
     ${VAULT_ADDR}/v1/secret/$CLUSTER_ID \
     > $certs_dir/svcacct.json
 
-    cat $certs_dir/svcacct.json | extract_vault_json service_account_key > ${certs_dir}/svcacct.key
+    cat $certs_dir/svcacct.json | /opt/pf9/pf9-kube/bin/jq -r '.data.service_account_key' > ${certs_dir}/svcacct.key
 
 }
 

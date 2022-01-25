@@ -133,8 +133,13 @@ function write_docker_daemon_json()
     # is converted to
     # DOCKER_REFISTRY_MIRRORS="[\"https://mirror1.io\", \"https://mirror2.io\"]"
     # which is then populated in docker's daemon.json file
-    DOCKER_REGISTRY_MIRRORS=$(echo "$REGISTRY_MIRRORS" | /opt/pf9/python/bin/python -c 'import sys; print(str(sys.stdin.read().strip().split(",")))')
-    DOCKER_REGISTRY_MIRRORS=$(echo ${DOCKER_REGISTRY_MIRRORS} | sed "s/'/\"/g" )
+    # tr ',' ' ' - replaces commas with one space
+    # sed 's| |", |g' - convert space to 'double-quote comma space' ('", ')
+    # sed 's|http|"http|g' - prepend http character with double quote
+    # sed 's|$|"|' - append a trailing double quote to close out last string
+    # sed 's|^|[|' - prepend starting square bracket '['
+    # sed 's|$|]|' - append a closing square bracket ']'
+    DOCKER_REGISTRY_MIRRORS=$(echo "$REGISTRY_MIRRORS" | tr ',' ' ' | sed 's| |", |g' | sed 's|http|"http|g' | sed 's|$|"|' | sed 's|^|[|' | sed 's|$|]|')
 
     mkdir -p /etc/docker
     prepare_docker_daemon_json \
