@@ -30,6 +30,10 @@ function run_certs_requests() {
     retries=0
     retry_needed=false
 
+    if [ $STANDALONE == "true" ]; then
+        create_root_ca_if_needed
+    fi
+
     #internally trying for MAX_CERTS_RETRIES times.
     while [ "$retries" -lt ${MAX_CERTS_RETRIES} ]
     do
@@ -161,7 +165,6 @@ function cert() {
     fi
 
     if [ $STANDALONE == "true" ]; then
-        create_root_ca_if_needed
         if [ "${needs_svcacctkey}" == "true" ]; then
             cp $cakey ${certs_dir}/svcacct.key
         fi
