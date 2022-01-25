@@ -241,11 +241,7 @@ This section contains instructions on creating a single-node cluster using nodel
    OR
    apt install <DEB>
    ```
-4. Create a symlink to python3. (We are actively working on removing this dependency)
-   ```
-   mkdir -p /opt/pf9/python/bin
-   ln -s `which python3` /opt/pf9/python/bin/python
-   ```
+
 4. Start the nodelet service
    ```
    /opt/pf9/nodelet/nodeletd --disable-sunpike
