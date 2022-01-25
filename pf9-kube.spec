@@ -6,7 +6,6 @@ License:        Commercial
 URL:            http://www.platform9.net
 Provides:       pf9-kube
 Provides:       pf9app
-Requires:       pf9-hostagent
 Requires:       curl
 Requires:       gzip
 Requires:       net-tools
@@ -35,7 +34,6 @@ mkdir -p $RPM_BUILD_ROOT/var/log/pf9/kubelet
 mkdir -p $RPM_BUILD_ROOT/etc/pf9/kube.d
 mkdir -p $RPM_BUILD_ROOT/etc/cni/net.d
 mkdir -p $RPM_BUILD_ROOT/opt/cni/bin
-mkdir -p $RPM_BUILD_ROOT/etc/pf9/comms/sni_maps
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -45,21 +43,14 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0440, root, root) /etc/sudoers.d/pf9-kube
 %attr(0440, root, root) /etc/sudoers.d/pf9-nodelet
 %attr(0644, root, root) /etc/cron.d/pf9-logrotate
-/opt/pf9/support/kube.sh
 /opt/pf9/pf9-kube/
 /opt/cni/bin/
-/opt/pf9/support/allowed_commands/kube.txt
-/etc/pf9/comms/sni_maps/kubernetes-keystone.json
-/etc/pf9/comms/sni_maps/docker.json
 /opt/pf9/nodelet/nodeletd
 /lib/systemd/system/pf9-nodeletd.service
-/etc/pf9/comms/sni_maps/sunpike.json
-/etc/pf9/comms/sni_maps/registry.json
 
 %attr(0440, root, root) /etc/logrotate.d/pf9-kube
 %attr(0440, root, root) /etc/logrotate.d/pf9-kubelet
 %attr(0440, root, root) /etc/logrotate.d/pf9-nodeletd
-%attr(0755, root, root) /etc/cron.pf9/logrotate
 # Make the extension read-write-executable by pf9group
 %dir /var/log/pf9/kube/
 %dir /var/log/pf9/kubelet/
