@@ -103,7 +103,7 @@ function ensure_containers_CIDR_up_to_date()
             -e ETCDCTL_API=2 \
             --rm --net=host ${ETCD_CONTAINER_IMG} \
             etcdctl --endpoints 'https://localhost:4001' ${etcdctlv2_tls_flags} get /coreos.com/network/config`; then
-                cidr=`/opt/pf9/python/bin/python -c "import json; j = json.loads('$json'); print(j.get('Network'));"`
+                cidr=`echo $json | /opt/pf9/pf9-kube/bin/jq -r '.Network'`
         if [ "$cidr" == "$CONTAINERS_CIDR" ]; then
             echo CIDR is up to date
             update_cidr=false

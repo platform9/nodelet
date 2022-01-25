@@ -97,51 +97,18 @@ build_and_install_pf9_selinux_policy() {
 
 function configure_docker_storage()
 {
-    # Restore docker storage configuration from backup if it exists.
-    # It may have been written by a prior run of /usr/bin/docker-storage-setup
-    # which belongs to CentOS docker package and reads
-    # /etc/sysconfig/docker-storage-setup as input
-    local storage_cfg=/etc/sysconfig/docker-storage
-    local storage_cfg_backup=/etc/sysconfig/docker-storage.rpmsave
-    if [ ! -f $storage_cfg ] && [ -f $storage_cfg_backup ] ; then
-        echo "configure_docker_storage: restoring $storage_cfg"
-        mv -f $storage_cfg_backup $storage_cfg
-    fi
-
     # check if theere is existind docker daemon.json
     if [ -f /etc/docker/daemon.json ]; then
-        local PYTHON=/opt/pf9/python/bin/python
         echo "existing docker daemon.json found, reading the storage opts from the existing configuration"
-        DOCKER_STORAGE_DRIVER=$($PYTHON -c 'import json; f=open("/etc/docker/daemon.json"); d=json.load(f); print(d.get("storage-driver", "overlay2"));')
-        DOCKER_STORAGE_OPTS=$($PYTHON -c 'import json; f=open("/etc/docker/daemon.json"); d=json.load(f); print(d.get("storage-opts", "[ ]"));')
-        if [ "$DOCKER_STORAGE_DRIVER" == "" ]; then
+        DOCKER_STORAGE_DRIVER=`cat /etc/docker/daemon.json | /opt/pf9/pf9-kube/bin/jq '.["storage-driver"]' | xargs`
+        DOCKER_STORAGE_OPTS=`cat /etc/docker/daemon.json | /opt/pf9/pf9-kube/bin/jq '.["storage-opts"]' | xargs`
+        if [ "$DOCKER_STORAGE_DRIVER" == "null" ]; then
             # use default value
-            DOCKER_STORAGE_DRIVER = "overlay2"
+            DOCKER_STORAGE_DRIVER="overlay2"
         fi
-    fi
 
-    # Ensure backward compatibility with hosts where docker storage
-    # is already configured
-    if [ -f $storage_cfg ]; then
-        echo "configure_docker_storage: deriving configuration from $storage_cfg"
-        local PYTHON=/opt/pf9/python/bin/python
-        DOCKER_STORAGE_DRIVER=$($PYTHON -c 'import re; import sys; matches = re.findall("--storage-driver (\S+)", sys.stdin.read()); print(matches[0] if matches else "")' < $storage_cfg)
-        DOCKER_STORAGE_OPTS=$($PYTHON -c 'import re; import sys; matches = re.findall("--storage-opt (\S+)", re.findall("DOCKER_STORAGE_OPTIONS=\"(.*)\"", sys.stdin.read())[0]); quoted_matches = ["\"%s\"" % match for match in matches]; print("[ %s ]" % ", ".join(quoted_matches))' < $storage_cfg)
-    else
-        echo "configure_docker_storage: generating new configuration"
-        # only if the current storage driver is not overlay2 we use devicemapper
-        if [ "$DOCKER_STORAGE_DRIVER" != "overlay2" ]; then
-            DOCKER_STORAGE_DRIVER="devicemapper"
-            local vg_dev_name="/dev/mapper/${DOCKER_VOLUME_GROUP//-/--}-thinpool"
-            # The device is a 'block special' file, whose existence can only be
-            # verified using `-b`
-            if [ -b "$vg_dev_name" ]; then
-                DOCKER_STORAGE_OPTS="[ \"dm.thinpooldev=$vg_dev_name\", \"dm.use_deferred_removal=true\", \"dm.use_deferred_deletion=true\" ]"
-            else
-                DOCKER_STORAGE_OPTS="[ ]"
-            fi
-        else
-            echo "last docker config was using overlay2, we will stick with overlay2"
+        if [ "$DOCKER_STORAGE_OPTS" == "null" ]; then
+            DOCKER_STORAGE_OPTS="[]"
         fi
     fi
 }

@@ -952,16 +952,15 @@ function ensure_addon_secret()
     LITERALS="--from-literal=dnsIP=${DNS_IP} "
 
     if [[ "$CLOUD_PROVIDER_TYPE" == 'azure' ]]; then
-        local PYTHON=/opt/pf9/python/bin/python
-        local client_id=`cat /etc/pf9/kube.d/cloud-config| $PYTHON -c "import json, sys; j = json.load(sys.stdin); print(j['aadClientID']);"`
+        local client_id=`cat /etc/pf9/kube.d/cloud-config| /opt/pf9/pf9-kube/bin/jq -r '.aadClientID'`
         local trimmed_client_id=$(trim_sans "$client_id" | base64)
-        local client_secret=`cat /etc/pf9/kube.d/cloud-config| $PYTHON -c "import json, sys; j = json.load(sys.stdin); print(j['aadClientSecret']);"`
+        local client_secret=`cat /etc/pf9/kube.d/cloud-config| /opt/pf9/pf9-kube/bin/jq -r '.aadClientSecret'`
         local trimmed_client_secret=$(trim_sans "$client_secret" | base64)
-        local resource_group=`cat /etc/pf9/kube.d/cloud-config| $PYTHON -c "import json, sys; j = json.load(sys.stdin); print(j['resourceGroup']);"`
+        local resource_group=`cat /etc/pf9/kube.d/cloud-config| /opt/pf9/pf9-kube/bin/jq -r '.resourceGroup'`
         local trimmed_resource_group=$(trim_sans "$resource_group" | base64)
-        local subscription_id=`cat /etc/pf9/kube.d/cloud-config| $PYTHON -c "import json, sys; j = json.load(sys.stdin); print(j['subscriptionId']);"`
+        local subscription_id=`cat /etc/pf9/kube.d/cloud-config| /opt/pf9/pf9-kube/bin/jq -r '.subscriptionId'`
         local trimmed_subscription_id=$(trim_sans "$subscription_id" | base64)
-        local tenant_id=`cat /etc/pf9/kube.d/cloud-config| $PYTHON -c "import json, sys; j = json.load(sys.stdin); print(j['tenantID']);"`
+        local tenant_id=`cat /etc/pf9/kube.d/cloud-config| /opt/pf9/pf9-kube/bin/jq -r 'tenantID'`
         local trimmed_tenant_id=$(trim_sans "$tenant_id" | base64)
 
         LITERALS=$LITERALS" --from-literal=clientID=${trimmed_client_id} \
