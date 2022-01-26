@@ -425,6 +425,20 @@ func (n *Nodelet) persistStatusAndUpdateConfigIfChanged(ctx context.Context) err
 
 	if n.config.DisableSunpike {
 		n.log.Warnf("Sunpike communication is disabled; not sending an update to sunpike-conductor.")
+		// Generate kube.env from config_sunpike.yaml.
+		// TODO (pacharya): make the config path customizable
+		kubeEnvCfg, err := fetchKubeEnvMapFromConfigFile(n.config.SunpikeConfigPath)
+		if err != nil {
+			return fmt.Errorf("failed to fetch nodelet config from file: %w", err)
+		}
+		err = os.Remove(n.config.ResmgrKubeEnvPath)
+		if err != nil {
+			n.log.Debugf("Could not delete old config %s: %v", n.config.ResmgrKubeEnvPath, err)
+		}
+		err = n.writeEnvMapToKubeEnvFile(kubeEnvCfg, n.config.ResmgrKubeEnvPath)
+		if err != nil {
+			return fmt.Errorf("failed to write to updated config to kube.env: %w", err)
+		}
 		return nil
 	}
 
@@ -472,7 +486,7 @@ func (n *Nodelet) handleConfigUpdate(updatedHost *sunpikev1alpha1.Host) error {
 	n.log.Infof("Config update detected! Writing new config to kube.env and nodelet config: %+v", updatedCfg)
 
 	// Try to write updated config to kube.env
-	err = n.writeEnvMapToKubeEnvFile(kubeEnvMap)
+	err = n.writeEnvMapToKubeEnvFile(kubeEnvMap, n.config.SunpikeKubeEnvPath)
 	if err != nil {
 		n.log.Warnf("Failed to write to updated config to kube.env: %v", err)
 	}
@@ -494,8 +508,8 @@ func (n *Nodelet) handleConfigUpdate(updatedHost *sunpikev1alpha1.Host) error {
 	return nil
 }
 
-func (n *Nodelet) writeEnvMapToKubeEnvFile(kubeEnvMap config.KubeEnvMap) error {
-	fd, err := os.OpenFile(n.config.SunpikeKubeEnvPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+func (n *Nodelet) writeEnvMapToKubeEnvFile(kubeEnvMap config.KubeEnvMap, kubeEnvPath string) error {
+	fd, err := os.OpenFile(kubeEnvPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
 	}
