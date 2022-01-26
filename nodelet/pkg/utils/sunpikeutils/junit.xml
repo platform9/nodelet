@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-  <testsuite name="Phases Suite" tests="4" failures="0" errors="0" time="1.003">
-      <testcase name="Test sunpikeutils.go When executing GetOrderForPhaseName should return correct order for valid phase name" classname="Phases Suite" time="1.001829168"></testcase>
-      <testcase name="Test sunpikeutils.go when running InitOrGetSunpikeClient should return error since sunpike unavailable but host object is populated" classname="Phases Suite" time="0.000292265"></testcase>
-      <testcase name="Test sunpikeutils.go When executing GetOrderForPhaseName should return -1 for empty string" classname="Phases Suite" time="0.000109637"></testcase>
-      <testcase name="Test sunpikeutils.go When executing GetOrderForPhaseName should return -1 for invalid phase name" classname="Phases Suite" time="0.00012878"></testcase>
-  </testsuite>
