@@ -30,9 +30,6 @@ spec:
           limits:
             memory: "128Mi"
             cpu: "500m"
-        volumeMounts:
-        - mountPath: /usr/local/share/ca-certificates/cert.pem
-          name: cacert
         env:
         - name: GODEBUG
           value: "x509ignoreCN=0"
@@ -64,11 +61,10 @@ spec:
           value: __DU_FQDN__
         - name: CLOUD_PROVIDER_TYPE
           value: __CLOUD_PROVIDER_TYPE__
-      volumes:
-      - name: cacert
-        hostPath:
-          path: /etc/pf9/certs/ca/cert.pem
-          type: File
+        - name: DISABLE_SUNPIKE_SYNC
+          value: "true"
+        - name: DISABLE_WATCH
+          value: "true"
       tolerations:
         - effect: NoSchedule
           key: node-role.kubernetes.io/master
@@ -76,3 +72,4 @@ spec:
           value: "true"
       nodeSelector:
         node-role.kubernetes.io/master: ""
+

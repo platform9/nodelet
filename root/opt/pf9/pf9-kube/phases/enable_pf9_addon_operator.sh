@@ -12,7 +12,7 @@ source master_utils.sh
 [ "$DEBUG" == "true" ] && set -x
 
 function start() {
-    ensure_pf9_addon_operator
+    ensure_dns
 }
 
 function stop() {
