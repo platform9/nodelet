@@ -1063,3 +1063,17 @@ function ensure_etcd_cluster_status()
     fi
     return ${exitCode}
 }
+
+function ensure_dns()
+{
+    local coredns_template="${CONF_SRC_DIR}/networkapps/coredns.yaml"
+    local coredns_file="${CONF_SRC_DIR}/networkapps/coredns-applied.yaml"
+    local k8s_registry="${K8S_PRIVATE_REGISTRY:-k8s.gcr.io}"
+
+    # Replace configuration values in calico spec with user input
+    sed -e "s|__DNS_IP__|${DNS_IP}|g" \
+        -e "s|__K8S_REGISTRY__|${k8s_registry}|g" \
+        < ${coredns_template} > ${coredns_file}
+    # Apply daemon set yaml
+    ${KUBECTL_SYSTEM} apply -f ${coredns_file}
+}
