@@ -743,11 +743,14 @@ function check_required_params()
     fi
     echo Docker root directory is set to $DOCKER_ROOT
 
-    if [ -z "$ETCD_DATA_DIR" ]; then
-        echo ETCD_DATA_DIR not defined
-        exit 1
+    if [ "$ROLE" == "master" ]; then
+        if [ -z "$ETCD_DATA_DIR" ]; then
+            echo ETCD_DATA_DIR not defined
+            exit 1
+        fi
+        echo etcd data directory is set to $ETCD_DATA_DIR
     fi
-    echo etcd data directory is set to $ETCD_DATA_DIR
+
     if [ -z "$MASTER_IP" ]; then
         echo MASTER_IP not defined
         exit 1
