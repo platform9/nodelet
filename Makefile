@@ -186,8 +186,8 @@ $(KUBE_GUESTBOOK_DIR): | $(KUBERNETES_DIR)
 	${WGET_CMD} $(KUBERNETES_GUESTBOOK_RAW_BASEURL)/frontend-service.yaml && \
 	${WGET_CMD} $(KUBERNETES_GUESTBOOK_RAW_BASEURL)/redis-master-deployment.yaml && \
 	${WGET_CMD} $(KUBERNETES_GUESTBOOK_RAW_BASEURL)/redis-master-service.yaml && \
-	${WGET_CMD} $(KUBERNETES_GUESTBOOK_RAW_BASEURL)/redis-slave-deployment.yaml && \
-	${WGET_CMD} $(KUBERNETES_GUESTBOOK_RAW_BASEURL)/redis-slave-service.yaml && \
+	${WGET_CMD} $(KUBERNETES_GUESTBOOK_RAW_BASEURL)/redis-replica-deployment.yaml && \
+	${WGET_CMD} $(KUBERNETES_GUESTBOOK_RAW_BASEURL)/redis-replica-service.yaml && \
 	mv -f $($@_TEMPDIR) $@
 	chmod -R u=rwX,og=rX $@
 
