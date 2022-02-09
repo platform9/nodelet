@@ -18,6 +18,7 @@ sysctl net/bridge/bridge-nf-call-iptables > /etc/pf9/kube.d/bridge-nf-call-iptab
 echo net.bridge.bridge-nf-call-iptables = 1 >> /etc/sysctl.conf
 sysctl -p
 
+chown -R pf9:pf9group /var/log/pf9
 chown -R pf9:pf9group /var/log/pf9/kube
 chown -R pf9:pf9group /opt/pf9/pf9-kube
 chown -R pf9:pf9group /var/log/pf9/kubelet

@@ -52,6 +52,7 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0440, root, root) /etc/logrotate.d/pf9-kubelet
 %attr(0440, root, root) /etc/logrotate.d/pf9-nodeletd
 # Make the extension read-write-executable by pf9group
+%dir /var/log/pf9/
 %dir /var/log/pf9/kube/
 %dir /var/log/pf9/kubelet/
 %dir /etc/pf9/kube.d/
