@@ -1,4 +1,9 @@
 echo 'after pf9-kube installation'
+
+mkdir -p /opt/pf9/home
+groupadd pf9group || true
+useradd -d /opt/pf9/home -G pf9group pf9 || true
+
 chmod 0440 /etc/sudoers.d/pf9-kube
 chmod 0440 /etc/logrotate.d/pf9-kube
 chmod 0440 /etc/logrotate.d/pf9-kubelet
@@ -24,7 +29,8 @@ chown -R pf9:pf9group /opt/pf9/pf9-kube
 chown -R pf9:pf9group /var/log/pf9/kubelet
 chown -R pf9:pf9group /opt/pf9/hostagent/extensions/fetch_pf9_kube_status.py
 chown -R pf9:pf9group /opt/pf9/hostagent/extensions/fetch_pod_info.py
-chown -R pf9:pf9group /var/opt/pf9/kube/apiserver-config
+chown -R pf9:pf9group /var/opt/pf9
+chown -R pf9:pf9group /etc/pf9
 
 # Clear any docker network configuration before installation of
 # any network plugin.

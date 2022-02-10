@@ -55,7 +55,7 @@ rm -rf $RPM_BUILD_ROOT
 %dir /var/log/pf9/
 %dir /var/log/pf9/kube/
 %dir /var/log/pf9/kubelet/
-%dir /etc/pf9/kube.d/
+%dir /etc/pf9
 %dir /etc/cni/net.d/
 %dir /opt/cni/bin
 
@@ -137,7 +137,7 @@ if [ "$1" == 1 ]; then
     # Remove write permissions
     chmod -w -R /opt/pf9/pf9-kube || true
     mkdir -p /var/opt/pf9/kube/apiserver-config
-    chown -R pf9:pf9group /var/opt/pf9/kube/apiserver-config
+    chown -R pf9:pf9group /var/opt/pf9 /etc/pf9
 fi
 
 %preun

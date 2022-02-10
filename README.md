@@ -21,19 +21,12 @@
 ## Installation steps
 
 This section contains instructions on creating a single master cluster using nodelet. Instructions for multi-master clusters will be added shortly.
-1. Create pf9 user and group
-   ```
-   mkdir -p /opt/pf9/home
-   groupadd pf9group
-   useradd -d /opt/pf9/home -G pf9group pf9
-   ```
-
-2. Create the config directories -
+1. Create the config directories -
    ```
    mkdir -p /etc/pf9/nodelet /etc/pf9/kube.d
    ```
 
-3. Generate CA certificates that will be used for signing all the certificates for various k8s components. This step is optional when creating a single node cluster.
+2. Generate CA certificates that will be used for signing all the certificates for various k8s components. This step is optional when creating a single node cluster.
 We are actively working on documenting a more streamlined way of generating and sharing certificates using Hashicorp Vault.
 
    a. Create a OpenSSL conf package
@@ -60,7 +53,7 @@ We are actively working on documenting a more streamlined way of generating and 
       ```
    c. Copy `/etc/pf9/kube.d/rootCA.key` and `/etc/pf9/kube.d/rootCA.crt` to all the nodes. The location of these files must be same on all hosts i.e. `/etc/pf9/kube.d/rootCA.*`
 
-4. Create the necessary config files. Replace the IP address of the node. Create /etc/pf9/nodelet/config_sunpike.yaml on master node with following contents -
+3. Create the necessary config files. Replace the IP address of the node. Create /etc/pf9/nodelet/config_sunpike.yaml on master node with following contents -
    ```
    # Contents of /etc/pf9/nodelet/config_sunpike.yaml
    ALLOW_WORKLOADS_ON_MASTER: "true" # whether to allow workloads on master. Valid values are - "true" & "false"
@@ -146,7 +139,7 @@ We are actively working on documenting a more streamlined way of generating and 
    DOCKER_ROOT: /var/lib/docker
    ```
 
-5. Create /etc/pf9/nodelet/config_sunpike.yaml on all worker nodes with following contents -
+4. Create /etc/pf9/nodelet/config_sunpike.yaml on all worker nodes with following contents -
    ```
    # Contents of /etc/pf9/nodelet/config_sunpike.yaml
    CALICO_IPIP_MODE: Always 
@@ -206,14 +199,14 @@ We are actively working on documenting a more streamlined way of generating and 
    ```
    Replace the master node IP address in this config file. 
 
-6. Install the rpm or deb according to your OS on all the hosts. Currently nodelet only supports CentOS 7.8, CentOS 7.9, Ubuntu 18 and Ubuntu 20. Support for other OS and creating a OS independent nodelet binary is in-progress.
+5. Install the rpm or deb according to your OS on all the hosts. Currently nodelet only supports CentOS 7.8, CentOS 7.9, Ubuntu 18 and Ubuntu 20. Support for other OS and creating a OS independent nodelet binary is in-progress.
    ```
    yum install <RPM>
    OR
    apt install <DEB>
    ```
 
-7. Start the nodelet service on all the hosts
+6. Start the nodelet service on all the hosts
    ```
    systemctl daemon-reload
    systemctl start pf9-nodeletd
