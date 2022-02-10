@@ -11,17 +11,19 @@ import (
 	"os"
 	"time"
 
+	"github.com/platform9/nodelet/pkg/utils/constants"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/kubectl/pkg/drain"
 )
 
-func kubernetes_api_available() bool {
+func Kubernetes_api_available() bool {
 
-	cacertificate := AdminCerts + "/ca.crt"
-	clientcertificate := AdminCerts + "/request.crt"
-	keyfile := AdminCerts + "/request.key"
+	cacertificate := constants.AdminCerts + "/ca.crt"
+	clientcertificate := constants.AdminCerts + "/request.crt"
+	keyfile := constants.AdminCerts + "/request.key"
 	api_endpoint := ""
 
 	//https://github.com/kubernetes/kubernetes/pull/46589 for role bindings to appear
@@ -30,7 +32,7 @@ func kubernetes_api_available() bool {
 	if os.Getenv("ROLE") == "master" {
 		api_endpoint = "localhost"
 	} else {
-		api_endpoint = ip_for_http(os.Getenv("MASTER_IP"))
+		api_endpoint = Ip_for_http(os.Getenv("MASTER_IP"))
 	}
 
 	healthzUrl := "https://" + api_endpoint + ":" + os.Getenv("K8S_API_PORT") + "/healthz"
@@ -73,7 +75,7 @@ func kubernetes_api_available() bool {
 	return true
 }
 
-func ip_for_http(master_ip string) string {
+func Ip_for_http(master_ip string) string {
 
 	if net.ParseIP(master_ip).To4() != nil {
 		return master_ip
@@ -83,7 +85,7 @@ func ip_for_http(master_ip string) string {
 	return ""
 }
 
-func drain_node_from_apiserver(name string) error {
+func Drain_node_from_apiserver(name string) error {
 
 	kubeconfig := "/etc/pf9/kube.d/kubeconfigs/admin.yaml"
 
