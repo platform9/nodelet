@@ -7,7 +7,7 @@ DOCKER_PACKAGE_VERSION="5:19.03.11~3-0~ubuntu-$(lsb_release -cs)"
 DOCKER_CLI="docker-ce-cli"
 DOCKER_CLI_VERSION="5:19.03.11~3-0~ubuntu-$(lsb_release -cs)"
 CONTAINERD_PACKAGE="containerd.io"
-CONTAINERD_PACKAGE_VERSION="1.4.6-1"
+CONTAINERD_PACKAGE_VERSION="1.4.12-1"
 
 export DEBIAN_FRONTEND=noninteractive
 
