@@ -9,8 +9,10 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
+	"github.com/platform9/nodelet/pkg/utils/config"
 	"github.com/platform9/nodelet/pkg/utils/constants"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,7 +21,7 @@ import (
 	"k8s.io/kubectl/pkg/drain"
 )
 
-func Kubernetes_api_available() bool {
+func Kubernetes_api_available(cfg config.Config) bool {
 
 	cacertificate := constants.AdminCerts + "/ca.crt"
 	clientcertificate := constants.AdminCerts + "/request.crt"
@@ -29,13 +31,13 @@ func Kubernetes_api_available() bool {
 	//https://github.com/kubernetes/kubernetes/pull/46589 for role bindings to appear
 	//     #healthz is better indication for availability, use https
 
-	if os.Getenv("ROLE") == "master" {
+	if cfg.ClusterRole == "master" {
 		api_endpoint = "localhost"
 	} else {
-		api_endpoint = Ip_for_http(os.Getenv("MASTER_IP"))
+		api_endpoint = Ip_for_http(cfg.MasterIp)
 	}
 
-	healthzUrl := "https://" + api_endpoint + ":" + os.Getenv("K8S_API_PORT") + "/healthz"
+	healthzUrl := "https://" + api_endpoint + ":" + strconv.Itoa(cfg.K8sApiPort) + "/healthz"
 
 	caCert, err := ioutil.ReadFile(cacertificate)
 	if err != nil {
@@ -114,7 +116,7 @@ func Drain_node_from_apiserver(name string) error {
 
 	node, err := clientset.CoreV1().Nodes().Get(context.TODO(), name, metav1.GetOptions{})
 
-	err = drain.RunCordonOrUncordon(&helper, &node, true)
+	err = drain.RunCordonOrUncordon(&helper, node, true)
 	if err != nil {
 		return err
 	}

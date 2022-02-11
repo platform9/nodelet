@@ -75,6 +75,10 @@ type Config struct {
 	GRPCRetryMax              uint    `mapstructure:"GRPC_RETRY_MAX"`
 	GRPCRetryTimeoutSeconds   int     `mapstructure:"GRPC_RETRY_TIMEOUT_SECONDS"`
 	NumCmdOutputLinesToLog    int     `mapstructure:"NUM_CMD_OP_LINES_TO_LOG"`
+	CloudProviderType         string  `mapstructure:"CLOUD_PROVIDER_TYPE"`
+	UseHostname               string  `mapstructure:"USE_HOSTNAME"`
+	MasterIp                  string  `mapstructure:"MASTER_IP"`
+	K8sApiPort                int     `mapstructure:"K8S_API_PORT"`
 }
 
 // ToStringMap converts the Config struct to a map of strings
