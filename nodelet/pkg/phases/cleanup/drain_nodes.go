@@ -34,19 +34,26 @@ func (d *DrainNodePhasev2) Start(context.Context, config.Config) error {
 	return nil
 }
 
-func (d *DrainNodePhasev2) Stop(context.Context, config.Config) error {
+func (d *DrainNodePhasev2) Stop(ctx context.Context, cfg config.Config) error {
 
 	//TODO : ensure_http_proxy_configured
 
-	if kubeutils.Kubernetes_api_available() {
+	if kubeutils.Kubernetes_api_available(cfg) {
+
+		var err error
 		node_identifier := os.Getenv("NODE_NAME")
-		if os.Getenv("CLOUD_PROVIDER_TYPE") == "local" && os.Getenv("USE_HOSTNAME") == "true" {
-			node_identifier = os.Getenv("HOSTNAME")
+
+		if cfg.CloudProviderType == "local" && cfg.UseHostname == "true" {
+			node_identifier, err = os.Hostname()
+			if err != nil {
+				return err
+			}
 		}
-		err := kubeutils.Drain_node_from_apiserver(node_identifier)
+		err = kubeutils.Drain_node_from_apiserver(node_identifier)
 		if err != nil {
 			fmt.Println("Warning: failed to drain node")
 			log.Println(err)
+			return err
 		}
 	}
 
