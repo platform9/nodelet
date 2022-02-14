@@ -42,7 +42,6 @@ pf9     ALL = NOPASSWD: JOURNALCTL, DOCKER_CMDS, CONTAINERD_CMDS, NETWORK_CMDS, 
                         /bin/chown -R pf9\:pf9group /var/opt/pf9/kube/kubelet-config, \
                         /bin/chown -R pf9\:pf9group /var/opt/pf9/kube_status, \
                         /bin/chmod -R +r /var/opt/pf9/kube/kubelet-config, \
-                        /opt/pf9/pf9-kube/diagnostics_utils/node_check.sh, \
                         /opt/pf9/pf9-kube/tackboard_utils/configure_metallb.sh, \
                         /opt/pf9/pf9-kube/tackboard_utils/calicoctl.py, \
                         /opt/pf9/pf9-kube/tackboard_utils/calicoctl.sh, \

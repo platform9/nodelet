@@ -342,12 +342,6 @@ calicoctl:
 	curl -O -L ${CALICOCTL_URL} && \
 	chmod u=rwx,og=rx calicoctl
 
-############################################################
-# Miscellaneous
-tcp-reachability-test:
-	TEST=1 $(AGENT_SRC_DIR)/root/opt/pf9/pf9-kube/diagnostics_utils/tcp_reachability.sh
-
-############################################################
 # Auth Bootstrap test
 AUTHBS_SRC_DIR := $(ROOT_DIR)/authbs
 AUTHBS_TEST_DIR := $(BUILD_DIR)/authbs-test
