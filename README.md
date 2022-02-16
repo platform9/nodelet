@@ -1,5 +1,13 @@
 ## NODELET
 
+Nodelet is a Kubernetes lifecycle manager which can be used stand-alone or as part of a larger system (e.g. Cluster API). Nodelet is capable of performing the following tasks:
+- Installing a Kubernetes stack on one or more nodes
+- Configuring the cluster
+- Configuring a set of core add-ons
+- Upgrades
+
+Nodelet has a fine-grain orchestration system wherein individual steps needed to configure the stack are logically separated and report independent status, making it easier to assess the health of the system and pinpoint failures.
+
 ## Compiling and creating OS packages
 
 1. Install the build pre-reqs
