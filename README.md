@@ -8,6 +8,8 @@ Nodelet is a Kubernetes lifecycle manager which can be used stand-alone or as pa
 
 Nodelet has a fine-grain orchestration system wherein individual steps needed to configure the stack are logically separated and report independent status, making it easier to assess the health of the system and pinpoint failures.
 
+Currently nodelet supports k8s 1.21 only. Support for other k8s versions is in progress.
+
 ## Compiling and creating OS packages
 
 1. Install the build pre-reqs
@@ -144,7 +146,6 @@ We are actively working on documenting a more streamlined way of generating and 
    TOPOLOGY_MANAGER_POLICY: none
    USE_HOSTNAME: "false"
    STANDALONE: "true"
-   DOCKER_ROOT: /var/lib/docker
    ```
 
 4. Create /etc/pf9/nodelet/config_sunpike.yaml on all worker nodes with following contents -
@@ -203,7 +204,6 @@ We are actively working on documenting a more streamlined way of generating and 
    TOPOLOGY_MANAGER_POLICY: none
    USE_HOSTNAME: "false"
    STANDALONE: "true"
-   DOCKER_ROOT: /var/lib/docker
    ```
    Replace the master node IP address in this config file. 
 
