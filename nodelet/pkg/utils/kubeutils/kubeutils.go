@@ -4,8 +4,8 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"fmt"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
 	"os"
@@ -15,18 +15,20 @@ import (
 	"github.com/platform9/nodelet/pkg/utils/config"
 	"github.com/platform9/nodelet/pkg/utils/constants"
 
+	"golang.org/x/net/nettest"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/kubectl/pkg/drain"
 )
 
-func Kubernetes_api_available(cfg config.Config) bool {
+func Kubernetes_api_available(cfg config.Config) error {
 
 	cacertificate := constants.AdminCerts + "/ca.crt"
 	clientcertificate := constants.AdminCerts + "/request.crt"
 	keyfile := constants.AdminCerts + "/request.key"
 	api_endpoint := ""
+	var err error
 
 	//https://github.com/kubernetes/kubernetes/pull/46589 for role bindings to appear
 	//     #healthz is better indication for availability, use https
@@ -34,26 +36,32 @@ func Kubernetes_api_available(cfg config.Config) bool {
 	if cfg.ClusterRole == "master" {
 		api_endpoint = "localhost"
 	} else {
-		api_endpoint = Ip_for_http(cfg.MasterIp)
+		api_endpoint, err = Ip_for_http(cfg.MasterIp)
+		if err != nil {
+			return fmt.Errorf("failed to get apiendpoint for healthz : %v", err)
+		}
 	}
 
 	healthzUrl := "https://" + api_endpoint + ":" + strconv.Itoa(cfg.K8sApiPort) + "/healthz"
 
 	caCert, err := ioutil.ReadFile(cacertificate)
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("failed to readfile cacertificate")
 	}
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM(caCert)
 
 	clientCert, err := ioutil.ReadFile(clientcertificate)
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("failed to readfile clientcertificate")
 	}
 	clientCertPool := x509.NewCertPool()
 	clientCertPool.AppendCertsFromPEM(clientCert)
 
 	cert, err := tls.LoadX509KeyPair(clientcertificate, keyfile)
+	if err != nil {
+		return err
+	}
 
 	client := &http.Client{
 		Transport: &http.Transport{
@@ -67,38 +75,35 @@ func Kubernetes_api_available(cfg config.Config) bool {
 
 	res, err := client.Get(healthzUrl)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	switch res.StatusCode {
-	case 500, 501, 502, 503, 504, 505, 506, 507, 508, 510, 511:
-		return false
+	if res.StatusCode >= 500 {
+		return fmt.Errorf("apiServer not available")
 	}
-	return true
+	return nil
 }
 
-func Ip_for_http(master_ip string) string {
+func Ip_for_http(master_ip string) (string, error) {
 
 	if net.ParseIP(master_ip).To4() != nil {
-		return master_ip
+		return master_ip, nil
 	} else if net.ParseIP(master_ip).To16() != nil {
-		return "[" + master_ip + "]"
+		return "[" + master_ip + "]", nil
 	}
-	return ""
+	return "", fmt.Errorf("IP is invalid")
 }
 
-func Drain_node_from_apiserver(name string) error {
+func Drain_node_from_apiserver(NodeName string) error {
 
-	kubeconfig := "/etc/pf9/kube.d/kubeconfigs/admin.yaml"
-
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	config, err := clientcmd.BuildConfigFromFlags("", constants.KubeConfig)
 	if err != nil {
-		return err
+		return fmt.Errorf("error in building config from clientcmd using kubeconfig")
 	}
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return err
+		return fmt.Errorf("error in creating clienset")
 	}
 
 	helper := drain.Helper{
@@ -114,33 +119,54 @@ func Drain_node_from_apiserver(name string) error {
 		DisableEviction:     true,
 	}
 
-	node, err := clientset.CoreV1().Nodes().Get(context.TODO(), name, metav1.GetOptions{})
+	node, err := clientset.CoreV1().Nodes().Get(context.TODO(), NodeName, metav1.GetOptions{})
+	if err != nil {
 
+		return fmt.Errorf("failed to create node from CoreV1")
+	}
 	err = drain.RunCordonOrUncordon(&helper, node, true)
 	if err != nil {
-		return err
+
+		return fmt.Errorf("failed to cordon node")
 	}
 	err = drain.RunNodeDrain(&helper, node.Name)
 	if err != nil {
-		return err
+
+		return fmt.Errorf("failed to drain node")
 	}
 
 	// TODO :
 	// Add KubeStackShutDown annotation to the node on successful node drain
 	// add_annotation_to_node ${node_ip} KubeStackShutDown
-
 	return nil
 }
 
-//============================================
+func GetRoutedNetworkInterFace() (string, error) {
+	rinterface, err := nettest.RoutedInterface("ip", net.FlagUp|net.FlagBroadcast)
+	if err != nil {
+		return "", err
+	}
+	routedInterfaceName := rinterface.Name
+	return routedInterfaceName, nil
+}
 
-// function add_annotation_to_node()
-// {
-//     local node_identifier=$1
-//     local annotation=$2
-//     if ! err=$(${KUBECTL} annotate --overwrite node ${node_identifier} ${annotation}=true 2>&1 1>/dev/null ); then
-//             echo "Warning: failed to annotate node ${node_identifier}: ${err}" >&2
-//     fi
-// }
-
-//========================================
+func GetIPv4ForInterfaceName(ifname string) (string, error) {
+	interfaces, _ := net.Interfaces()
+	for _, inter := range interfaces {
+		if inter.Name == ifname {
+			if addrs, err := inter.Addrs(); err == nil {
+				for _, addr := range addrs {
+					switch ip := addr.(type) {
+					case *net.IPNet:
+						if ip.IP.DefaultMask() != nil {
+							return ip.IP.String(), nil
+						}
+					}
+				}
+			} else {
+				return "", err
+			}
+		}
+	}
+	return "", fmt.Errorf("routedinterface not found so can't find ip")
+}

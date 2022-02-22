@@ -71,17 +71,12 @@ const (
 	// TrueString represents true as a string in nodeletd
 	TrueString = "true"
 
-	//======================
-	ConfigDstDir = "/etc/pf9/kube.d"
-
-	AdminCerts = ConfigDstDir + "/certs/admin"
-
-	KubeConfig = ConfigDstDir + "/kubeconfigs/admin.yaml"
-
-	KubeCtlBin = "bin/kubectl -v=8"
-
-	KubeCtl = KubeCtlBin + " --kubeconfig=" + KubeConfig + " --context=default-context"
-
+	// Newly added constants from env variables
+	ConfigDstDir             = "/etc/pf9/kube.d"
+	AdminCerts               = ConfigDstDir + "/certs/admin"
+	KubeConfig               = ConfigDstDir + "/kubeconfigs/admin.yaml"
+	KubeCtlBin               = "bin/kubectl -v=8"
+	KubeCtl                  = KubeCtlBin + " --kubeconfig=" + KubeConfig + " --context=default-context"
 	KubeStackStartFileMarker = "var/opt/pf9/is_node_booting_up"
 )
 
