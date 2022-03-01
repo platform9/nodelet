@@ -107,7 +107,7 @@ var (
 	DeployAppCatalogPhaseOrder         = 160
 	ConfigureStartKeepalivedPhaseOrder = 180
 	PF9SentryPhaseOrder                = 205
-	PF9AddonOperatorPhaseOrder         = 206
+	PF9CoreDNSPhaseOrder               = 206
 	DrainPodsPhaseOrder                = 210
 	// PhaseBaseDir is the base directory in which all bash-based phase scripts are located
 	PhaseBaseDir = "/opt/pf9/pf9-kube/phases"
