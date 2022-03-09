@@ -70,14 +70,6 @@ const (
 	DefaultSunpikeConfigPath = "/etc/pf9/nodelet/config_sunpike.yaml"
 	// TrueString represents true as a string in nodeletd
 	TrueString = "true"
-
-	// Newly added constants from env variables
-	ConfigDstDir             = "/etc/pf9/kube.d"
-	AdminCerts               = ConfigDstDir + "/certs/admin"
-	KubeConfig               = ConfigDstDir + "/kubeconfigs/admin.yaml"
-	KubeCtlBin               = "bin/kubectl -v=8"
-	KubeCtl                  = KubeCtlBin + " --kubeconfig=" + KubeConfig + " --context=default-context"
-	KubeStackStartFileMarker = "var/opt/pf9/is_node_booting_up"
 )
 
 var (
@@ -94,6 +86,15 @@ var (
 	// ValidCgroupOps is a set of strings containing all the operations that can be performed inside the cgroup
 	// very basic replacement to sets with a constant time and simplified lookup.
 	ValidCgroupOps = map[string]struct{}{"status": {}}
+
+	// Newly added constants from env variables
+	ConfigDstDir             = "/etc/pf9/kube.d"
+	AdminCerts               = ConfigDstDir + "/certs/admin"
+	KubeConfig               = ConfigDstDir + "/kubeconfigs/admin.yaml"
+	KubeCtlBin               = "bin/kubectl -v=8"
+	KubeCtl                  = KubeCtlBin + " --kubeconfig=" + KubeConfig + " --context=default-context"
+	KubeStackStartFileMarker = "var/opt/pf9/is_node_booting_up"
+
 	// Phase orders of all the phases
 	NoRolePhaseOrder                   = 10
 	GenCertsPhaseOrder                 = 20
