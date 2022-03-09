@@ -17,14 +17,14 @@ func TestCommand(t *testing.T) {
 }
 
 var _ = Describe("kubeutils", func() {
-	Context("Checking IP type", func() {
+
+	Describe("Checking IP type", func() {
 		var (
 			ipv4    string
 			ipv6    string
 			outipv6 string
 			ipnull  string
 		)
-
 		BeforeEach(func() {
 			ipv4 = "10.126.2.34"
 			ipv6 = "2001:db8::2:1"
@@ -32,22 +32,26 @@ var _ = Describe("kubeutils", func() {
 			ipnull = ""
 
 		})
-		It("it should correctly identify ipv4", func() {
-			ip, err := kubeutils.Ip_for_http(ipv4)
-			Expect(err).To(BeNil())
-			Expect(ip).To(Equal(ipv4))
+		Context("ip is ipv4", func() {
+			It("it should correctly identify ipv4", func() {
+				ip, err := kubeutils.Ip_for_http(ipv4)
+				Expect(err).To(BeNil())
+				Expect(ip).To(Equal(ipv4))
+			})
 		})
-
-		It("it should correctly identify ipv6", func() {
-			ip, err := kubeutils.Ip_for_http(ipv6)
-			Expect(err).To(BeNil())
-			Expect(ip).To(Equal(outipv6))
+		Context("ip is ipv6", func() {
+			It("it should correctly identify ipv6", func() {
+				ip, err := kubeutils.Ip_for_http(ipv6)
+				Expect(err).To(BeNil())
+				Expect(ip).To(Equal(outipv6))
+			})
 		})
-
-		It("it should give error", func() {
-			ip, err := kubeutils.Ip_for_http(ipnull)
-			Expect(err).NotTo(BeNil())
-			Expect(ip).To(Equal(ipnull))
+		Context("ip is null", func() {
+			It("it should give error", func() {
+				ip, err := kubeutils.Ip_for_http(ipnull)
+				Expect(err).NotTo(BeNil())
+				Expect(ip).To(Equal(ipnull))
+			})
 		})
 
 	})

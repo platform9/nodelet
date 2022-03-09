@@ -40,43 +40,39 @@ func (d *DrainNodePhasev2) Start(context.Context, config.Config) error {
 func (d *DrainNodePhasev2) Stop(ctx context.Context, cfg config.Config) error {
 
 	//TODO : ensure_http_proxy_configured
-	err := kubeutils.Kubernetes_api_available(cfg)
+	err := kubeutils.KubernetesApiAvailable(cfg)
 	if err == nil {
 
 		var err error
-		routedInterfaceName, err := kubeutils.GetRoutedNetworkInterFace()
-		if err != nil {
-			d.log.Errorf("failed to get routedNetworkinterface: %v", err)
-			return err
-		}
-		routedIp, err := kubeutils.GetIPv4ForInterfaceName(routedInterfaceName)
-		if err != nil {
-			d.log.Errorf("failed to get IPv4 for node_identification: %v")
-			return err
-		}
-
-		var node_identifier string
+		var nodeIdentifier string
 		if cfg.CloudProviderType == "local" && cfg.UseHostname == "true" {
-			node_identifier, err = os.Hostname()
+			nodeIdentifier, err = os.Hostname()
 			if err != nil {
-				d.log.Errorf("failed to get hostName for node_identification: %v", err)
+				d.log.Errorf("failed to get hostName for node identification: %v", err)
 				return err
 			}
 		} else {
-			node_identifier = routedIp
+			nodeIdentifier, err = kubeutils.GetNodeIP()
+			if err != nil {
+				d.log.Errorf("failed to get hostName for node identification: %v", err)
+				return err
+			}
 		}
-		err = kubeutils.Drain_node_from_apiserver(node_identifier)
+		client, err := kubeutils.NewClient()
+		if err != nil {
+			d.log.Errorf("failed to get client: %v", err)
+			return err
+		}
+		err = client.DrainNodeFromApiServer(nodeIdentifier)
 		if err != nil {
 			fmt.Println("Warning: failed to drain node")
 			d.log.Errorf("failed to drain node :%v", err)
 			return err
 		}
-
 	} else {
-
+		d.log.Errorf("api not avaialble: %v", err)
 		return fmt.Errorf("api not avaialble: %v", err)
 	}
-
 	return nil
 }
 
@@ -97,4 +93,5 @@ func NewDrainNodePhaseV2() *DrainNodePhasev2 {
 		},
 		log: log,
 	}
+
 }
