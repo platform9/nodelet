@@ -15,6 +15,7 @@ github.com/PuerkitoBio/urlesc
 ## explicit
 github.com/cenkalti/backoff
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 # github.com/chai2010/gettext-go v0.0.0-20160711120539-c6fed771bfd5
 ## explicit
@@ -23,6 +24,8 @@ github.com/chai2010/gettext-go/gettext/mo
 github.com/chai2010/gettext-go/gettext/plural
 github.com/chai2010/gettext-go/gettext/po
 >>>>>>> Implementing Drain Nodes,Label and taint, and Uncordon node phases,adding required constants and config variables
+=======
+>>>>>>> fixing mock generation,adding mocks for kubeutils,updating vendor directory.
 # github.com/choria-io/go-validator v1.1.1
 ## explicit; go 1.12
 github.com/choria-io/go-validator/ipv6
@@ -99,8 +102,8 @@ github.com/golang/protobuf/ptypes/timestamp
 # github.com/google/btree v1.0.1
 ## explicit; go 1.12
 github.com/google/btree
-# github.com/google/go-cmp v0.5.5
-## explicit; go 1.8
+# github.com/google/go-cmp v0.5.7
+## explicit; go 1.11
 github.com/google/go-cmp/cmp
 github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
@@ -347,10 +350,14 @@ go.uber.org/zap/internal/color
 go.uber.org/zap/internal/exit
 go.uber.org/zap/zapcore
 <<<<<<< HEAD
+<<<<<<< HEAD
 # golang.org/x/net v0.0.0-20210226172049-e18ecbb05110
 ## explicit; go 1.11
 =======
 # golang.org/x/net v0.0.0-20211209124913-491a49abca63
+=======
+# golang.org/x/net v0.0.0-20220225172249-27dd8689420f
+>>>>>>> fixing mock generation,adding mocks for kubeutils,updating vendor directory.
 ## explicit; go 1.17
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
@@ -373,7 +380,7 @@ golang.org/x/net/trace
 ## explicit; go 1.11
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.0.0-20210831042530-f4d43177bf5e
+# golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e
 ## explicit; go 1.17
 >>>>>>> Implementing Drain Nodes,Label and taint, and Uncordon node phases,adding required constants and config variables
 golang.org/x/sys/internal/unsafeheader
@@ -381,10 +388,14 @@ golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 <<<<<<< HEAD
+<<<<<<< HEAD
 # golang.org/x/text v0.3.4
 ## explicit; go 1.11
 =======
 # golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b
+=======
+# golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
+>>>>>>> fixing mock generation,adding mocks for kubeutils,updating vendor directory.
 ## explicit; go 1.17
 golang.org/x/term
 # golang.org/x/text v0.3.7
@@ -416,7 +427,12 @@ golang.org/x/text/width
 # golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
 ## explicit
 golang.org/x/time/rate
+<<<<<<< HEAD
 >>>>>>> Implementing Drain Nodes,Label and taint, and Uncordon node phases,adding required constants and config variables
+=======
+# golang.org/x/tools v0.1.9
+## explicit; go 1.17
+>>>>>>> fixing mock generation,adding mocks for kubeutils,updating vendor directory.
 # golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 ## explicit; go 1.11
 golang.org/x/xerrors
@@ -540,6 +556,7 @@ gopkg.in/yaml.v2
 ## explicit
 gopkg.in/yaml.v3
 <<<<<<< HEAD
+<<<<<<< HEAD
 # k8s.io/api v0.20.6
 ## explicit; go 1.15
 k8s.io/api/core/v1
@@ -547,6 +564,9 @@ k8s.io/api/core/v1
 ## explicit; go 1.15
 =======
 # k8s.io/api v0.23.3
+=======
+# k8s.io/api v0.23.4
+>>>>>>> fixing mock generation,adding mocks for kubeutils,updating vendor directory.
 ## explicit; go 1.16
 k8s.io/api/admission/v1
 k8s.io/api/admission/v1beta1
@@ -596,13 +616,12 @@ k8s.io/api/scheduling/v1beta1
 k8s.io/api/storage/v1
 k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
-# k8s.io/apimachinery v0.23.3
+# k8s.io/apimachinery v0.23.4
 ## explicit; go 1.16
 k8s.io/apimachinery/pkg/api/errors
 k8s.io/apimachinery/pkg/api/meta
 >>>>>>> Implementing Drain Nodes,Label and taint, and Uncordon node phases,adding required constants and config variables
 k8s.io/apimachinery/pkg/api/resource
-k8s.io/apimachinery/pkg/apis/meta/internalversion
 k8s.io/apimachinery/pkg/apis/meta/v1
 k8s.io/apimachinery/pkg/apis/meta/v1/unstructured
 k8s.io/apimachinery/pkg/apis/meta/v1/unstructured/unstructuredscheme
@@ -646,6 +665,7 @@ k8s.io/apimachinery/third_party/forked/golang/json
 k8s.io/apimachinery/third_party/forked/golang/netutil
 k8s.io/apimachinery/third_party/forked/golang/reflect
 <<<<<<< HEAD
+<<<<<<< HEAD
 # k8s.io/klog/v2 v2.4.0
 ## explicit; go 1.13
 k8s.io/klog/v2
@@ -653,11 +673,14 @@ k8s.io/klog/v2
 ## explicit; go 1.13
 =======
 # k8s.io/cli-runtime v0.23.3
+=======
+# k8s.io/cli-runtime v0.23.4
+>>>>>>> fixing mock generation,adding mocks for kubeutils,updating vendor directory.
 ## explicit; go 1.16
 k8s.io/cli-runtime/pkg/genericclioptions
 k8s.io/cli-runtime/pkg/printers
 k8s.io/cli-runtime/pkg/resource
-# k8s.io/client-go v0.23.3
+# k8s.io/client-go v0.23.4
 ## explicit; go 1.16
 k8s.io/client-go/applyconfigurations/admissionregistration/v1
 k8s.io/client-go/applyconfigurations/admissionregistration/v1beta1
@@ -789,7 +812,7 @@ k8s.io/client-go/util/homedir
 k8s.io/client-go/util/jsonpath
 k8s.io/client-go/util/keyutil
 k8s.io/client-go/util/workqueue
-# k8s.io/component-base v0.23.3
+# k8s.io/component-base v0.23.0-alpha.0
 ## explicit; go 1.16
 k8s.io/component-base/version
 # k8s.io/klog/v2 v2.30.0
@@ -801,23 +824,17 @@ k8s.io/kube-openapi/pkg/schemaconv
 k8s.io/kube-openapi/pkg/util/proto
 k8s.io/kube-openapi/pkg/util/proto/validation
 k8s.io/kube-openapi/pkg/validation/spec
-# k8s.io/kubectl v0.23.3
+# k8s.io/kubectl v0.23.0-alpha.0
 ## explicit; go 1.16
 k8s.io/kubectl/pkg/cmd/util
 k8s.io/kubectl/pkg/drain
 k8s.io/kubectl/pkg/scheme
-k8s.io/kubectl/pkg/util/i18n
 k8s.io/kubectl/pkg/util/interrupt
 k8s.io/kubectl/pkg/util/openapi
 k8s.io/kubectl/pkg/util/openapi/validation
 k8s.io/kubectl/pkg/util/templates
 k8s.io/kubectl/pkg/util/term
 k8s.io/kubectl/pkg/validation
-# k8s.io/kubernetes v1.13.0
-## explicit
-k8s.io/kubernetes/pkg/apis/core
-k8s.io/kubernetes/pkg/apis/core/helper
-k8s.io/kubernetes/pkg/util/taints
 # k8s.io/utils v0.0.0-20211116205334-6203023598ed
 ## explicit; go 1.12
 k8s.io/utils/clock
