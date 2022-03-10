@@ -12,8 +12,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/platform9/nodelet/pkg/utils/config"
-	"github.com/platform9/nodelet/pkg/utils/constants"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 
 	"golang.org/x/net/nettest"
 	corev1 "k8s.io/api/core/v1"
@@ -24,6 +24,15 @@ import (
 	"k8s.io/kubernetes/pkg/util/taints"
 )
 
+type Utils interface {
+	AddLabelsToNode(string, map[string]string) error
+	AddAnnotationsToNode(string, map[string]string) error
+	RemoveAnnotationsFromNode(string, []string) error
+	AddTaintsToNode(string, []*corev1.Taint) error
+	DrainNodeFromApiServer(string) error
+	GetNodeFromK8sApi(string) (*corev1.Node, error)
+	UncordonNode(string) error
+}
 type Client struct {
 	Clientset *kubernetes.Clientset
 }
@@ -232,7 +241,7 @@ func GetNodeIP() (string, error) {
 	}
 	routedIp, err := GetIPv4ForInterfaceName(routedInterfaceName)
 	if err != nil {
-		return "", fmt.Errorf("failed to get IPv4 for node_identification: %v")
+		return "", fmt.Errorf("failed to get IPv4 for node_identification: %v", err)
 	}
 	return routedIp, nil
 }

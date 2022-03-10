@@ -10,7 +10,7 @@ set -x
 # NOTE: mock files need to be re-generated if new methods are added/removed/modified in the existing mocked modules.
 
 # To install mockgen uncomment the next line
-# GO111MODULE=on go get github.com/golang/mock/mockgen@v1.4.3
+GO111MODULE=on go get github.com/golang/mock/mockgen@v1.4.3
 
 # Observed that mockgen commands fail sometime after upgrading to golang 1.16+. Remove vendor directory to workaround this issue.
 
@@ -20,3 +20,4 @@ mockgen -destination=mocks/mock_phases.go -package=mocks github.com/platform9/no
 mockgen -destination=mocks/mock_command.go -package=mocks github.com/platform9/nodelet/nodelet/pkg/utils/command CLI
 mockgen -destination=mocks/mock_fileio.go -package=mocks github.com/platform9/nodelet/nodelet/pkg/utils/fileio FileInterface
 mockgen -destination=mocks/mock_extension.go -package=mocks github.com/platform9/nodelet/nodelet/pkg/utils/extensionfile ExtensionFile
+
