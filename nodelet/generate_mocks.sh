@@ -14,7 +14,7 @@ set -x
 
 # Observed that mockgen commands fail sometime after upgrading to golang 1.16+. Remove vendor directory to workaround this issue.
 
-rm -rf mocks
+rm -rf mocks/mock_*.go
 
 mockgen -destination=mocks/mock_phases.go -package=mocks github.com/platform9/nodelet/pkg/phases PhaseInterface
 mockgen -destination=mocks/mock_command.go -package=mocks github.com/platform9/nodelet/pkg/utils/command CLI
