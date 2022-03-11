@@ -10,7 +10,7 @@ set -x
 # NOTE: mock files need to be re-generated if new methods are added/removed/modified in the existing mocked modules.
 
 # To install mockgen uncomment the next line
-GO111MODULE=on go get github.com/golang/mock/mockgen@v1.4.3
+# GO111MODULE=on go get github.com/golang/mock/mockgen@v1.4.3
 
 # Observed that mockgen commands fail sometime after upgrading to golang 1.16+. Remove vendor directory to workaround this issue.
 
