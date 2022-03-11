@@ -16,8 +16,4 @@ set -x
 
 rm -rf mocks/mock_*.go
 
-mockgen -destination=mocks/mock_phases.go -package=mocks github.com/platform9/nodelet/pkg/phases PhaseInterface
-mockgen -destination=mocks/mock_command.go -package=mocks github.com/platform9/nodelet/pkg/utils/command CLI
-mockgen -destination=mocks/mock_fileio.go -package=mocks github.com/platform9/nodelet/pkg/utils/fileio FileInterface
-mockgen -destination=mocks/mock_extension.go -package=mocks github.com/platform9/nodelet/pkg/utils/extensionfile ExtensionFile
-# mockgen -destination=mocks/mock_kubeutils.go -package=mocks github.com/platform9/nodelet/pkg/utils/kubeutils ClientInterface
+go generate ./...
