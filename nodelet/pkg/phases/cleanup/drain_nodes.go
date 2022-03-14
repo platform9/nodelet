@@ -17,6 +17,7 @@ import (
 type DrainNodePhasev2 struct {
 	HostPhase *sunpikev1alpha1.HostPhase
 	log       *zap.SugaredLogger
+	kubeUtils kubeutils.Utils
 }
 
 func (d *DrainNodePhasev2) GetHostPhase() sunpikev1alpha1.HostPhase {
@@ -40,7 +41,7 @@ func (d *DrainNodePhasev2) Start(context.Context, config.Config) error {
 func (d *DrainNodePhasev2) Stop(ctx context.Context, cfg config.Config) error {
 
 	//TODO : ensure_http_proxy_configured
-	err := kubeutils.KubernetesApiAvailable(cfg)
+	err := d.kubeUtils.KubernetesApiAvailable(cfg)
 	if err == nil {
 
 		var err error
@@ -86,12 +87,15 @@ func (d *DrainNodePhasev2) GetOrder() int {
 
 func NewDrainNodePhaseV2() *DrainNodePhasev2 {
 	log := zap.S()
+	// TODO: handle err
+	kubeutils, _ := kubeutils.NewClient()
 	return &DrainNodePhasev2{
 		HostPhase: &sunpikev1alpha1.HostPhase{
 			Name:  "Drain all pods (stop only operation)",
 			Order: int32(constants.DrainPodsPhaseOrder),
 		},
-		log: log,
+		log:       log,
+		kubeUtils: kubeutils,
 	}
 
 }

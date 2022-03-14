@@ -33,6 +33,7 @@ type Utils interface {
 	DrainNodeFromApiServer(string) error
 	GetNodeFromK8sApi(string) (*corev1.Node, error)
 	UncordonNode(string) error
+	KubernetesApiAvailable(config.Config) error
 }
 type UtilsImpl struct {
 	Clientset *kubernetes.Clientset
@@ -269,7 +270,7 @@ func IpForHttp(masterIp string) (string, error) {
 	return "", fmt.Errorf("IP is invalid")
 }
 
-func KubernetesApiAvailable(cfg config.Config) error {
+func (c *UtilsImpl) KubernetesApiAvailable(cfg config.Config) error {
 
 	caCertificate := constants.AdminCerts + "/ca.crt"
 	clientCertificate := constants.AdminCerts + "/request.crt"

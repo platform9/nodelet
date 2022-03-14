@@ -8,6 +8,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+	config "github.com/platform9/nodelet/pkg/utils/config"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -103,6 +104,20 @@ func (m *MockUtils) GetNodeFromK8sApi(arg0 string) (*v1.Node, error) {
 func (mr *MockUtilsMockRecorder) GetNodeFromK8sApi(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNodeFromK8sApi", reflect.TypeOf((*MockUtils)(nil).GetNodeFromK8sApi), arg0)
+}
+
+// KubernetesApiAvailable mocks base method.
+func (m *MockUtils) KubernetesApiAvailable(arg0 config.Config) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "KubernetesApiAvailable", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// KubernetesApiAvailable indicates an expected call of KubernetesApiAvailable.
+func (mr *MockUtilsMockRecorder) KubernetesApiAvailable(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "KubernetesApiAvailable", reflect.TypeOf((*MockUtils)(nil).KubernetesApiAvailable), arg0)
 }
 
 // RemoveAnnotationsFromNode mocks base method.
