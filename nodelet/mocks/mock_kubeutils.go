@@ -8,7 +8,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-	config "github.com/platform9/nodelet/pkg/utils/config"
+	config "github.com/platform9/nodelet/nodelet/pkg/utils/config"
 	v1 "k8s.io/api/core/v1"
 )
 
