@@ -17,7 +17,7 @@ import (
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 
 	"golang.org/x/net/nettest"
-	corev1 "k8s.io/api/core/v1"
+	//corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -29,165 +29,19 @@ type Utils interface {
 	AddLabelsToNode(string, map[string]string) error
 	AddAnnotationsToNode(string, map[string]string) error
 	RemoveAnnotationsFromNode(string, []string) error
-	AddTaintsToNode(string, []*corev1.Taint) error
+	AddTaintsToNode(string, []*v1.Taint) error
 	DrainNodeFromApiServer(string) error
-	GetNodeFromK8sApi(string) (*corev1.Node, error)
+	GetNodeFromK8sApi(string) (*v1.Node, error)
 	UncordonNode(string) error
 	KubernetesApiAvailable(config.Config) error
+	PreventAutoReattach() error
+	GetRoutedNetworkInterFace() (string, error)
+	GetIPv4ForInterfaceName(string) (string, error)
+	GetNodeIP() (string, error)
+	IpForHttp(string) (string, error)
 }
 type UtilsImpl struct {
 	Clientset *kubernetes.Clientset
-}
-
-func (c *UtilsImpl) AddLabelsToNode(nodeName string, labelsToAdd map[string]string) error {
-	//implement waituntil
-	node, err := c.GetNodeFromK8sApi(nodeName)
-	if err != nil {
-		return err
-	}
-	metadata := node.ObjectMeta
-	if metadata.Labels == nil {
-		metadata.Labels = make(map[string]string)
-	}
-	for k, v := range labelsToAdd {
-		metadata.Labels[k] = v
-	}
-	return nil
-}
-
-func (c *UtilsImpl) AddAnnotationsToNode(nodeName string, annotsToAdd map[string]string) error {
-	node, err := c.GetNodeFromK8sApi(nodeName)
-	if err != nil {
-		return err
-	}
-	metadata := node.ObjectMeta
-	if metadata.Annotations == nil {
-		metadata.Annotations = make(map[string]string)
-	}
-	for k, v := range annotsToAdd {
-		metadata.Annotations[k] = v
-	}
-	_, err = c.Clientset.CoreV1().Nodes().Update(context.TODO(), node, metav1.UpdateOptions{})
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (c *UtilsImpl) RemoveAnnotationsFromNode(nodeName string, annotsToRemove []string) error {
-	node, err := c.GetNodeFromK8sApi(nodeName)
-	if err != nil {
-		return err
-	}
-	metadata := node.ObjectMeta
-	if metadata.Annotations == nil {
-		//metadata.Labels = make(map[string]string)
-		return nil
-	}
-	for _, v := range annotsToRemove {
-		delete(metadata.Annotations, v)
-	}
-	_, err = c.Clientset.CoreV1().Nodes().Update(context.TODO(), node, metav1.UpdateOptions{})
-	if err != nil {
-		return err
-	}
-	return nil
-}
-func (c *UtilsImpl) AddTaintsToNode(nodename string, taintsToadd []*corev1.Taint) error {
-	node, _ := c.GetNodeFromK8sApi(nodename)
-
-	for _, taint := range taintsToadd {
-		_, updated, err := AddOrUpdateTaint(node, taint)
-		if err != nil {
-			return err
-		}
-		if !updated {
-			return fmt.Errorf("taint not added")
-		}
-	}
-	_, err := c.Clientset.CoreV1().Nodes().Update(context.TODO(), node, metav1.UpdateOptions{})
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (c *UtilsImpl) DrainNodeFromApiServer(nodeName string) error {
-
-	helper := drain.Helper{
-		Ctx:                 context.TODO(),
-		Client:              c.Clientset,
-		Force:               true,
-		GracePeriodSeconds:  -1,
-		IgnoreAllDaemonSets: true,
-		Timeout:             time.Duration(300) * time.Second,
-		DeleteEmptyDirData:  true,
-		Out:                 os.Stdout,
-		ErrOut:              os.Stdout,
-		DisableEviction:     true,
-	}
-	node, err := c.GetNodeFromK8sApi(nodeName)
-	if err != nil {
-		return err
-	}
-	err = drain.RunCordonOrUncordon(&helper, node, true)
-	if err != nil {
-		return fmt.Errorf("failed to cordon node")
-	}
-	err = drain.RunNodeDrain(&helper, node.Name)
-	if err != nil {
-		return fmt.Errorf("failed to drain node")
-	}
-	// TODO :
-	// Add KubeStackShutDown annotation to the node on successful node drain
-	// add_annotation_to_node ${node_ip} KubeStackShutDown
-	return nil
-}
-
-func (c *UtilsImpl) GetNodeFromK8sApi(nodeName string) (*corev1.Node, error) {
-	var node *corev1.Node
-	node, err := c.Clientset.CoreV1().Nodes().Get(context.TODO(), nodeName, metav1.GetOptions{})
-	if err != nil {
-		return node, err
-	}
-	return node, nil
-}
-
-func (c *UtilsImpl) UncordonNode(nodename string) error {
-	//implement wait_until
-	helper := drain.Helper{
-		Ctx:                 context.TODO(),
-		Client:              c.Clientset,
-		Force:               true,
-		GracePeriodSeconds:  -1,
-		IgnoreAllDaemonSets: true,
-		Timeout:             time.Duration(300) * time.Second,
-		DeleteEmptyDirData:  true,
-		Out:                 os.Stdout,
-		ErrOut:              os.Stdout,
-		DisableEviction:     true,
-	}
-
-	node, err := c.GetNodeFromK8sApi(nodename)
-	if err != nil {
-		return err
-	}
-	err = drain.RunCordonOrUncordon(&helper, node, false)
-	if err != nil {
-		return err
-	}
-
-	if !node.Spec.Unschedulable {
-		return fmt.Errorf("warning: Node %v is still cordoned or cannot be fetched", nodename)
-	}
-	return nil
-}
-
-func PreventAutoReattach() error {
-
-	// Unconditionally delete the qbert metadata file to prevent re-auth
-	err := os.Remove("/opt/pf9/hostagent/extensions/fetch_qbert_metadata")
-	return err
 }
 
 func NewClient() (*UtilsImpl, error) {
@@ -216,7 +70,165 @@ func GetClientset() (*kubernetes.Clientset, error) {
 	return clientset, nil
 }
 
-func GetRoutedNetworkInterFace() (string, error) {
+func (u *UtilsImpl) AddLabelsToNode(nodeName string, labelsToAdd map[string]string) error {
+	//implement waituntil
+	node, err := u.GetNodeFromK8sApi(nodeName)
+	if err != nil {
+		return err
+	}
+	metadata := node.ObjectMeta
+	if metadata.Labels == nil {
+		metadata.Labels = make(map[string]string)
+	}
+	for k, v := range labelsToAdd {
+		metadata.Labels[k] = v
+	}
+	node.ObjectMeta = metadata
+	_, err = u.Clientset.CoreV1().Nodes().Update(context.TODO(), node, metav1.UpdateOptions{})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (u *UtilsImpl) AddAnnotationsToNode(nodeName string, annotsToAdd map[string]string) error {
+	node, err := u.GetNodeFromK8sApi(nodeName)
+	if err != nil {
+		return err
+	}
+	metadata := node.ObjectMeta
+	if metadata.Annotations == nil {
+		metadata.Annotations = make(map[string]string)
+	}
+	for k, v := range annotsToAdd {
+		metadata.Annotations[k] = v
+	}
+	node.ObjectMeta = metadata
+	_, err = u.Clientset.CoreV1().Nodes().Update(context.TODO(), node, metav1.UpdateOptions{})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (u *UtilsImpl) RemoveAnnotationsFromNode(nodeName string, annotsToRemove []string) error {
+	node, err := u.GetNodeFromK8sApi(nodeName)
+	if err != nil {
+		return err
+	}
+	metadata := node.ObjectMeta
+	if metadata.Annotations == nil {
+		//metadata.Labels = make(map[string]string)
+		return nil
+	}
+	for _, v := range annotsToRemove {
+		delete(metadata.Annotations, v)
+	}
+	node.ObjectMeta = metadata
+	_, err = u.Clientset.CoreV1().Nodes().Update(context.TODO(), node, metav1.UpdateOptions{})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (u *UtilsImpl) AddTaintsToNode(nodename string, taintsToadd []*v1.Taint) error {
+	node, _ := u.GetNodeFromK8sApi(nodename)
+
+	for _, taint := range taintsToadd {
+		_, updated, err := AddOrUpdateTaint(node, taint)
+		if err != nil {
+			return err
+		}
+		if !updated {
+			return fmt.Errorf("taint not added")
+		}
+	}
+	_, err := u.Clientset.CoreV1().Nodes().Update(context.TODO(), node, metav1.UpdateOptions{})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (u *UtilsImpl) DrainNodeFromApiServer(nodeName string) error {
+
+	helper := drain.Helper{
+		Ctx:                 context.TODO(),
+		Client:              u.Clientset,
+		Force:               true,
+		GracePeriodSeconds:  -1,
+		IgnoreAllDaemonSets: true,
+		Timeout:             time.Duration(300) * time.Second,
+		DeleteEmptyDirData:  true,
+		Out:                 os.Stdout,
+		ErrOut:              os.Stdout,
+		DisableEviction:     true,
+	}
+	node, err := u.GetNodeFromK8sApi(nodeName)
+	if err != nil {
+		return err
+	}
+	err = drain.RunCordonOrUncordon(&helper, node, true)
+	if err != nil {
+		return fmt.Errorf("failed to cordon node")
+	}
+	err = drain.RunNodeDrain(&helper, node.Name)
+	if err != nil {
+		return fmt.Errorf("failed to drain node")
+	}
+	// TODO :
+	// Add KubeStackShutDown annotation to the node on successful node drain
+	// add_annotation_to_node ${node_ip} KubeStackShutDown
+	return nil
+}
+
+func (u *UtilsImpl) GetNodeFromK8sApi(nodeName string) (*v1.Node, error) {
+	var node *v1.Node
+	node, err := u.Clientset.CoreV1().Nodes().Get(context.TODO(), nodeName, metav1.GetOptions{})
+	if err != nil {
+		return node, err
+	}
+	return node, nil
+}
+
+func (u *UtilsImpl) UncordonNode(nodename string) error {
+	//implement wait_until
+	helper := drain.Helper{
+		Ctx:                 context.TODO(),
+		Client:              u.Clientset,
+		Force:               true,
+		GracePeriodSeconds:  -1,
+		IgnoreAllDaemonSets: true,
+		Timeout:             time.Duration(300) * time.Second,
+		DeleteEmptyDirData:  true,
+		Out:                 os.Stdout,
+		ErrOut:              os.Stdout,
+		DisableEviction:     true,
+	}
+
+	node, err := u.GetNodeFromK8sApi(nodename)
+	if err != nil {
+		return err
+	}
+	err = drain.RunCordonOrUncordon(&helper, node, false)
+	if err != nil {
+		return err
+	}
+
+	if !node.Spec.Unschedulable {
+		return fmt.Errorf("warning: Node %v is still cordoned or cannot be fetched", nodename)
+	}
+	return nil
+}
+
+func (u *UtilsImpl) PreventAutoReattach() error {
+
+	// Unconditionally delete the qbert metadata file to prevent re-auth
+	err := os.Remove("/opt/pf9/hostagent/extensions/fetch_qbert_metadata")
+	return err
+}
+
+func (u *UtilsImpl) GetRoutedNetworkInterFace() (string, error) {
 	routedInterface, err := nettest.RoutedInterface("ip", net.FlagUp|net.FlagBroadcast)
 	if err != nil {
 		return "", err
@@ -225,7 +237,7 @@ func GetRoutedNetworkInterFace() (string, error) {
 	return routedInterfaceName, nil
 }
 
-func GetIPv4ForInterfaceName(interfaceName string) (string, error) {
+func (u *UtilsImpl) GetIPv4ForInterfaceName(interfaceName string) (string, error) {
 	interfaces, _ := net.Interfaces()
 	for _, inter := range interfaces {
 		if inter.Name == interfaceName {
@@ -247,20 +259,20 @@ func GetIPv4ForInterfaceName(interfaceName string) (string, error) {
 
 }
 
-func GetNodeIP() (string, error) {
+func (u *UtilsImpl) GetNodeIP() (string, error) {
 	var err error
-	routedInterfaceName, err := GetRoutedNetworkInterFace()
+	routedInterfaceName, err := u.GetRoutedNetworkInterFace()
 	if err != nil {
 		return "", fmt.Errorf("failed to get routedNetworkinterface: %v", err)
 	}
-	routedIp, err := GetIPv4ForInterfaceName(routedInterfaceName)
+	routedIp, err := u.GetIPv4ForInterfaceName(routedInterfaceName)
 	if err != nil {
 		return "", fmt.Errorf("failed to get IPv4 for node_identification: %v", err)
 	}
 	return routedIp, nil
 }
 
-func IpForHttp(masterIp string) (string, error) {
+func (u *UtilsImpl) IpForHttp(masterIp string) (string, error) {
 
 	if net.ParseIP(masterIp).To4() != nil {
 		return masterIp, nil
@@ -270,7 +282,7 @@ func IpForHttp(masterIp string) (string, error) {
 	return "", fmt.Errorf("IP is invalid")
 }
 
-func (c *UtilsImpl) KubernetesApiAvailable(cfg config.Config) error {
+func (u *UtilsImpl) KubernetesApiAvailable(cfg config.Config) error {
 
 	caCertificate := constants.AdminCerts + "/ca.crt"
 	clientCertificate := constants.AdminCerts + "/request.crt"
@@ -284,7 +296,7 @@ func (c *UtilsImpl) KubernetesApiAvailable(cfg config.Config) error {
 	if cfg.ClusterRole == "master" {
 		apiEndpoint = "localhost"
 	} else {
-		apiEndpoint, err = IpForHttp(cfg.MasterIp)
+		apiEndpoint, err = u.IpForHttp(cfg.MasterIp)
 		if err != nil {
 			return fmt.Errorf("failed to get apiendpoint for healthz : %v", err)
 		}

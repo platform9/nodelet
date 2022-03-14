@@ -16,6 +16,7 @@ import (
 type UncordonNodePhasev2 struct {
 	HostPhase *sunpikev1alpha1.HostPhase
 	log       *zap.SugaredLogger
+	kubeUtils kubeutils.Utils
 }
 
 func (d *UncordonNodePhasev2) GetHostPhase() sunpikev1alpha1.HostPhase {
@@ -32,12 +33,17 @@ func (d *UncordonNodePhasev2) GetOrder() int {
 
 func NewUncordonNodePhaseV2() *UncordonNodePhasev2 {
 	log := zap.S()
+	kubeutils, err := kubeutils.NewClient()
+	if err != nil {
+		fmt.Println("failed to initiate uncordon node phase: %v", err)
+	}
 	return &UncordonNodePhasev2{
 		HostPhase: &sunpikev1alpha1.HostPhase{
 			Name:  "Uncordon the node",
 			Order: int32(constants.UncordonNodePhaseOrder),
 		},
-		log: log,
+		log:       log,
+		kubeUtils: kubeutils,
 	}
 }
 
@@ -49,15 +55,13 @@ func (d *UncordonNodePhasev2) Status(ctx context.Context, cfg config.Config) err
 
 		nodeIdentifier, err = os.Hostname()
 		if err != nil {
-			d.log.Errorf("failed to get hostName for node_identification: %v", err)
+			d.log.Errorf("failed to get hostName for node_identification: %w", err)
 			return err
 		}
-
 	} else {
-
-		nodeIdentifier, err = kubeutils.GetNodeIP()
+		nodeIdentifier, err = d.kubeUtils.GetNodeIP()
 		if err != nil {
-			d.log.Errorf("failed to get hostName for node identification: %v", err)
+			d.log.Errorf("failed to get node IP address for node identification: %w", err)
 			return err
 		}
 	}
@@ -68,12 +72,12 @@ func (d *UncordonNodePhasev2) Status(ctx context.Context, cfg config.Config) err
 		return nil
 	}
 
-	client, err := kubeutils.NewClient()
-	if err != nil {
-		d.log.Errorf("failed to get client: %v", err)
-		return err
-	}
-	node, _ := client.GetNodeFromK8sApi(nodeIdentifier)
+	// client, err := kubeutils.NewClient()
+	// if err != nil {
+	// 	d.log.Errorf("failed to get client: %v", err)
+	// 	return err
+	// }
+	node, _ := d.kubeUtils.GetNodeFromK8sApi(nodeIdentifier)
 	metadata := &node.ObjectMeta
 
 	//if KubeStackShutDown is present then node was cordoned by PF9
@@ -89,7 +93,7 @@ func (d *UncordonNodePhasev2) Status(ctx context.Context, cfg config.Config) err
 		annotsToAdd := map[string]string{
 			"UserNodeCordon": "true",
 		}
-		err = client.AddAnnotationsToNode(nodeIdentifier, annotsToAdd)
+		err = d.kubeUtils.AddAnnotationsToNode(nodeIdentifier, annotsToAdd)
 		if err != nil {
 			d.log.Errorf("failed to add annotations: %v, Error: %v", annotsToAdd, err)
 			return err
@@ -97,7 +101,7 @@ func (d *UncordonNodePhasev2) Status(ctx context.Context, cfg config.Config) err
 	} else if !nodeCordoned {
 		annotsToRemove := []string{"UserNodeCordon"}
 
-		err = client.RemoveAnnotationsFromNode(nodeIdentifier, annotsToRemove)
+		err = d.kubeUtils.RemoveAnnotationsFromNode(nodeIdentifier, annotsToRemove)
 		if err != nil {
 			d.log.Errorf("failed to remove annotations: %v, Error: %v", annotsToRemove, err)
 			return err
@@ -113,13 +117,13 @@ func (d *UncordonNodePhasev2) Start(ctx context.Context, cfg config.Config) erro
 	if cfg.CloudProviderType == "local" && cfg.UseHostname == "true" {
 		nodeIdentifier, err = os.Hostname()
 		if err != nil {
-			d.log.Errorf("failed to get hostName for node_identification: %v", err)
+			d.log.Errorf("failed to get hostName for node_identification: %w", err)
 			return err
 		}
 	} else {
-		nodeIdentifier, err = kubeutils.GetNodeIP()
+		nodeIdentifier, err = d.kubeUtils.GetNodeIP()
 		if err != nil {
-			d.log.Errorf("failed to get hostName for node identification: %v", err)
+			d.log.Errorf("failed to get node IP address for node identification: %w", err)
 			return err
 		}
 	}
@@ -131,18 +135,18 @@ func (d *UncordonNodePhasev2) Start(ctx context.Context, cfg config.Config) erro
 		return fmt.Errorf("node interface might have lost IP address. Failing")
 	}
 
-	client, err := kubeutils.NewClient()
-	if err != nil {
-		d.log.Errorf("failed to get client: %v", err)
-		return err
-	}
-	node, _ := client.GetNodeFromK8sApi(nodeIdentifier)
+	// client, err := kubeutils.NewClient()
+	// if err != nil {
+	// 	d.log.Errorf("failed to get client: %v", err)
+	// 	return err
+	// }
+	node, _ := d.kubeUtils.GetNodeFromK8sApi(nodeIdentifier)
 	metadata := node.ObjectMeta
 
 	//remove KubeStackShutDown annotation (if present) as this is kube stack startup
 	annotsToRemove := []string{"KubeStackShutDown"}
 
-	err = client.RemoveAnnotationsFromNode(nodeIdentifier, annotsToRemove)
+	err = d.kubeUtils.RemoveAnnotationsFromNode(nodeIdentifier, annotsToRemove)
 	if err != nil {
 		d.log.Errorf("failed to remove annotations: %v, Error: %v", annotsToRemove, err)
 		return err
@@ -157,12 +161,12 @@ func (d *UncordonNodePhasev2) Start(ctx context.Context, cfg config.Config) erro
 		}
 	}
 
-	err = client.UncordonNode(nodeIdentifier)
+	err = d.kubeUtils.UncordonNode(nodeIdentifier)
 	if err != nil {
 		d.log.Errorf("failed to uncordon: %v", err)
 		return err
 	}
-	err = kubeutils.PreventAutoReattach()
+	err = d.kubeUtils.PreventAutoReattach()
 	if err != nil {
 		return err
 	}

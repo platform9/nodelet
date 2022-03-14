@@ -12,12 +12,14 @@ import (
 
 	sunpikev1alpha1 "github.com/platform9/pf9-qbert/sunpike/apiserver/pkg/apis/sunpike/v1alpha1"
 	//corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
-	corev1 "k8s.io/api/core/v1"
+	//corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 )
 
 type LabelTaintNodePhasev2 struct {
 	HostPhase *sunpikev1alpha1.HostPhase
 	log       *zap.SugaredLogger
+	kubeUtils kubeutils.Utils
 }
 
 func (d *LabelTaintNodePhasev2) GetHostPhase() sunpikev1alpha1.HostPhase {
@@ -42,13 +44,13 @@ func (d *LabelTaintNodePhasev2) Start(ctx context.Context, cfg config.Config) er
 	if cfg.CloudProviderType == "local" && cfg.UseHostname == "true" {
 		nodeIdentifier, err = os.Hostname()
 		if err != nil {
-			d.log.Errorf("failed to get hostName for node identification: %v", err)
+			d.log.Errorf("failed to get hostName for node identification: %w", err)
 			return err
 		}
 	} else {
-		nodeIdentifier, err = kubeutils.GetNodeIP()
+		nodeIdentifier, err = d.kubeUtils.GetNodeIP()
 		if err != nil {
-			d.log.Errorf("failed to get hostName for node identification: %v", err)
+			d.log.Errorf("failed to node IP address for node identification: %w", err)
 			return err
 		}
 	}
@@ -61,16 +63,16 @@ func (d *LabelTaintNodePhasev2) Start(ctx context.Context, cfg config.Config) er
 		return fmt.Errorf("node interface might have lost IP address. Failing")
 	}
 
-	client, err := kubeutils.NewClient()
-	if err != nil {
-		d.log.Errorf("failed to get client: %v", err)
-		return err
-	}
+	// client, err := kubeutils.NewClient()
+	// if err != nil {
+	// 	d.log.Errorf("failed to get client: %v", err)
+	// 	return err
+	// }
 	labelsToAdd := map[string]string{
 		"node-role.kubernetes.io/" + cfg.ClusterRole: "",
 	}
 
-	err = client.AddLabelsToNode(nodeIdentifier, labelsToAdd)
+	err = d.kubeUtils.AddLabelsToNode(nodeIdentifier, labelsToAdd)
 	if err != nil {
 		d.log.Errorf("failed to add labels: %v ,Error: %v", labelsToAdd, err)
 		return err
@@ -78,14 +80,14 @@ func (d *LabelTaintNodePhasev2) Start(ctx context.Context, cfg config.Config) er
 
 	if !cfg.MasterSchedulable && cfg.ClusterRole == "master" {
 
-		taintsToAdd := []*corev1.Taint{
-			&corev1.Taint{
+		taintsToAdd := []*v1.Taint{
+			&v1.Taint{
 				Key:    "node-role.kubernetes.io/master",
 				Value:  "true",
 				Effect: "NoSchedule", //use TaintEffect which is enum type
 			},
 		}
-		err = client.AddTaintsToNode(nodeIdentifier, taintsToAdd)
+		err = d.kubeUtils.AddTaintsToNode(nodeIdentifier, taintsToAdd)
 		if err != nil {
 			d.log.Errorf("failed to add taints: %v, Error: %v", labelsToAdd, err)
 			return err
@@ -100,11 +102,16 @@ func (d *LabelTaintNodePhasev2) Stop(ctx context.Context, cfg config.Config) err
 
 func NewLabelTaintNodePhaseV2() *LabelTaintNodePhasev2 {
 	log := zap.S()
+	kubeutils, err := kubeutils.NewClient()
+	if err != nil {
+		fmt.Println("failed to initiate label and taint node phase: %w", err)
+	}
 	return &LabelTaintNodePhasev2{
 		HostPhase: &sunpikev1alpha1.HostPhase{
 			Name:  "label and taint the node",
 			Order: int32(constants.LabelTaintNodePhaseOrder),
 		},
-		log: log,
+		log:       log,
+		kubeUtils: kubeutils,
 	}
 }
