@@ -53,18 +53,18 @@ func (d *DrainNodePhasev2) Stop(ctx context.Context, cfg config.Config) error {
 				return err
 			}
 		} else {
-			nodeIdentifier, err = kubeutils.GetNodeIP()
+			nodeIdentifier, err = d.kubeUtils.GetNodeIP()
 			if err != nil {
 				d.log.Errorf("failed to get node IP address for node identification: %w", err)
 				return err
 			}
 		}
-		client, err := kubeutils.NewClient()
-		if err != nil {
-			d.log.Errorf("failed to get client: %v", err)
-			return err
-		}
-		err = client.DrainNodeFromApiServer(nodeIdentifier)
+		// client, err := kubeutils.NewClient()
+		// if err != nil {
+		// 	d.log.Errorf("failed to get client: %v", err)
+		// 	return err
+		// }
+		err = d.kubeUtils.DrainNodeFromApiServer(nodeIdentifier)
 		if err != nil {
 			fmt.Println("Warning: failed to drain node")
 			d.log.Errorf("failed to drain node :%v", err)
@@ -88,7 +88,10 @@ func (d *DrainNodePhasev2) GetOrder() int {
 func NewDrainNodePhaseV2() *DrainNodePhasev2 {
 	log := zap.S()
 	// TODO: handle err
-	kubeutils, _ := kubeutils.NewClient()
+	kubeutils, err := kubeutils.NewClient()
+	if err!=nil{
+		fmt.Println("failed to initiate drain node phase: %v",err)
+	}
 	return &DrainNodePhasev2{
 		HostPhase: &sunpikev1alpha1.HostPhase{
 			Name:  "Drain all pods (stop only operation)",
