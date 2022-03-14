@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -17,11 +18,11 @@ import (
 
 	"golang.org/x/net/nettest"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/kubectl/pkg/drain"
-	"k8s.io/kubernetes/pkg/util/taints"
 )
 
 type Utils interface {
@@ -33,11 +34,11 @@ type Utils interface {
 	GetNodeFromK8sApi(string) (*corev1.Node, error)
 	UncordonNode(string) error
 }
-type Client struct {
+type UtilsImpl struct {
 	Clientset *kubernetes.Clientset
 }
 
-func (c *Client) AddLabelsToNode(nodeName string, labelsToAdd map[string]string) error {
+func (c *UtilsImpl) AddLabelsToNode(nodeName string, labelsToAdd map[string]string) error {
 	//implement waituntil
 	node, err := c.GetNodeFromK8sApi(nodeName)
 	if err != nil {
@@ -53,7 +54,7 @@ func (c *Client) AddLabelsToNode(nodeName string, labelsToAdd map[string]string)
 	return nil
 }
 
-func (c *Client) AddAnnotationsToNode(nodeName string, annotsToAdd map[string]string) error {
+func (c *UtilsImpl) AddAnnotationsToNode(nodeName string, annotsToAdd map[string]string) error {
 	node, err := c.GetNodeFromK8sApi(nodeName)
 	if err != nil {
 		return err
@@ -65,10 +66,14 @@ func (c *Client) AddAnnotationsToNode(nodeName string, annotsToAdd map[string]st
 	for k, v := range annotsToAdd {
 		metadata.Annotations[k] = v
 	}
+	_, err = c.Clientset.CoreV1().Nodes().Update(context.TODO(), node, metav1.UpdateOptions{})
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
-func (c *Client) RemoveAnnotationsFromNode(nodeName string, annotsToRemove []string) error {
+func (c *UtilsImpl) RemoveAnnotationsFromNode(nodeName string, annotsToRemove []string) error {
 	node, err := c.GetNodeFromK8sApi(nodeName)
 	if err != nil {
 		return err
@@ -81,13 +86,17 @@ func (c *Client) RemoveAnnotationsFromNode(nodeName string, annotsToRemove []str
 	for _, v := range annotsToRemove {
 		delete(metadata.Annotations, v)
 	}
+	_, err = c.Clientset.CoreV1().Nodes().Update(context.TODO(), node, metav1.UpdateOptions{})
+	if err != nil {
+		return err
+	}
 	return nil
 }
-func (c *Client) AddTaintsToNode(nodename string, taintsToadd []*corev1.Taint) error {
+func (c *UtilsImpl) AddTaintsToNode(nodename string, taintsToadd []*corev1.Taint) error {
 	node, _ := c.GetNodeFromK8sApi(nodename)
 
 	for _, taint := range taintsToadd {
-		_, updated, err := taints.AddOrUpdateTaint(node, taint)
+		_, updated, err := AddOrUpdateTaint(node, taint)
 		if err != nil {
 			return err
 		}
@@ -95,10 +104,14 @@ func (c *Client) AddTaintsToNode(nodename string, taintsToadd []*corev1.Taint) e
 			return fmt.Errorf("taint not added")
 		}
 	}
+	_, err := c.Clientset.CoreV1().Nodes().Update(context.TODO(), node, metav1.UpdateOptions{})
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
-func (c *Client) DrainNodeFromApiServer(nodeName string) error {
+func (c *UtilsImpl) DrainNodeFromApiServer(nodeName string) error {
 
 	helper := drain.Helper{
 		Ctx:                 context.TODO(),
@@ -130,7 +143,7 @@ func (c *Client) DrainNodeFromApiServer(nodeName string) error {
 	return nil
 }
 
-func (c *Client) GetNodeFromK8sApi(nodeName string) (*corev1.Node, error) {
+func (c *UtilsImpl) GetNodeFromK8sApi(nodeName string) (*corev1.Node, error) {
 	var node *corev1.Node
 	node, err := c.Clientset.CoreV1().Nodes().Get(context.TODO(), nodeName, metav1.GetOptions{})
 	if err != nil {
@@ -139,7 +152,7 @@ func (c *Client) GetNodeFromK8sApi(nodeName string) (*corev1.Node, error) {
 	return node, nil
 }
 
-func (c *Client) UncordonNode(nodename string) error {
+func (c *UtilsImpl) UncordonNode(nodename string) error {
 	//implement wait_until
 	helper := drain.Helper{
 		Ctx:                 context.TODO(),
@@ -176,14 +189,14 @@ func PreventAutoReattach() error {
 	return err
 }
 
-func NewClient() (*Client, error) {
-	var client *Client
+func NewClient() (*UtilsImpl, error) {
+	var client *UtilsImpl
 	clientset, err := GetClientset()
 	if err != nil {
 		return client, err
 	}
 
-	client = &Client{
+	client = &UtilsImpl{
 		Clientset: clientset,
 	}
 	return client, nil
@@ -316,4 +329,36 @@ func KubernetesApiAvailable(cfg config.Config) error {
 		return fmt.Errorf("apiServer not available")
 	}
 	return nil
+}
+
+// Copied from https://github.com/kubernetes/kubernetes/blob/39c76ba2edeadb84a115cc3fbd9204a2177f1c28/pkg/util/taints/taints.go#L241
+// to avoid importing k8s.io/kubernetes as it leads to import errors and is not supported by upstream community.
+// This function is not an exact copy. The difference is in how the taint on node is compared against the taint argument.
+// AddOrUpdateTaint tries to add a taint to annotations list. Returns a new copy of updated Node and true if something was updated
+// false otherwise.
+func AddOrUpdateTaint(node *v1.Node, taint *v1.Taint) (*v1.Node, bool, error) {
+	newNode := node.DeepCopy()
+	nodeTaints := newNode.Spec.Taints
+
+	var newTaints []v1.Taint
+	updated := false
+	for i := range nodeTaints {
+		if taint.MatchTaint(&nodeTaints[i]) {
+			if reflect.DeepEqual(*taint, nodeTaints[i]) {
+				return newNode, false, nil
+			}
+			newTaints = append(newTaints, *taint)
+			updated = true
+			continue
+		}
+
+		newTaints = append(newTaints, nodeTaints[i])
+	}
+
+	if !updated {
+		newTaints = append(newTaints, *taint)
+	}
+
+	newNode.Spec.Taints = newTaints
+	return newNode, true, nil
 }
