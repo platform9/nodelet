@@ -5,46 +5,35 @@
 package mocks
 
 import (
-	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
+
+	gomock "github.com/golang/mock/gomock"
 )
 
-// MockExtensionFile is a mock of ExtensionFile interface
+// MockExtensionFile is a mock of ExtensionFile interface.
 type MockExtensionFile struct {
 	ctrl     *gomock.Controller
 	recorder *MockExtensionFileMockRecorder
 }
 
-// MockExtensionFileMockRecorder is the mock recorder for MockExtensionFile
+// MockExtensionFileMockRecorder is the mock recorder for MockExtensionFile.
 type MockExtensionFileMockRecorder struct {
 	mock *MockExtensionFile
 }
 
-// NewMockExtensionFile creates a new mock instance
+// NewMockExtensionFile creates a new mock instance.
 func NewMockExtensionFile(ctrl *gomock.Controller) *MockExtensionFile {
 	mock := &MockExtensionFile{ctrl: ctrl}
 	mock.recorder = &MockExtensionFileMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockExtensionFile) EXPECT() *MockExtensionFileMockRecorder {
 	return m.recorder
 }
 
-// Write mocks base method
-func (m *MockExtensionFile) Write() {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Write")
-}
-
-// Write indicates an expected call of Write
-func (mr *MockExtensionFileMockRecorder) Write() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Write", reflect.TypeOf((*MockExtensionFile)(nil).Write))
-}
-
-// Load mocks base method
+// Load mocks base method.
 func (m *MockExtensionFile) Load() error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Load")
@@ -52,8 +41,20 @@ func (m *MockExtensionFile) Load() error {
 	return ret0
 }
 
-// Load indicates an expected call of Load
+// Load indicates an expected call of Load.
 func (mr *MockExtensionFileMockRecorder) Load() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Load", reflect.TypeOf((*MockExtensionFile)(nil).Load))
+}
+
+// Write mocks base method.
+func (m *MockExtensionFile) Write() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Write")
+}
+
+// Write indicates an expected call of Write.
+func (mr *MockExtensionFileMockRecorder) Write() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Write", reflect.TypeOf((*MockExtensionFile)(nil).Write))
 }

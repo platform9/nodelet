@@ -176,8 +176,8 @@ func (c *UtilsImpl) UncordonNode(nodename string) error {
 		return err
 	}
 
-	if node.Spec.Unschedulable != false {
-		return fmt.Errorf("Warning: Node %v is still cordoned or cannot be fetched", nodename)
+	if !node.Spec.Unschedulable {
+		return fmt.Errorf("warning: Node %v is still cordoned or cannot be fetched", nodename)
 	}
 	return nil
 }
