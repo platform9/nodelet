@@ -48,13 +48,13 @@ func (d *DrainNodePhasev2) Stop(ctx context.Context, cfg config.Config) error {
 		if cfg.CloudProviderType == "local" && cfg.UseHostname == "true" {
 			nodeIdentifier, err = os.Hostname()
 			if err != nil {
-				d.log.Errorf("failed to get hostName for node identification: %v", err)
+				d.log.Errorf("failed to get hostName for node identification: %w", err)
 				return err
 			}
 		} else {
 			nodeIdentifier, err = kubeutils.GetNodeIP()
 			if err != nil {
-				d.log.Errorf("failed to get hostName for node identification: %v", err)
+				d.log.Errorf("failed to get node IP address for node identification: %w", err)
 				return err
 			}
 		}
