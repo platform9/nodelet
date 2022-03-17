@@ -9,8 +9,8 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/platform9/nodelet/pkg/utils/config"
-	"github.com/platform9/nodelet/pkg/utils/constants"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 	"github.com/spf13/viper"
 )
 

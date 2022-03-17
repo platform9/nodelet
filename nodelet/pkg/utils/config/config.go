@@ -14,8 +14,8 @@ import (
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 
-	"github.com/platform9/nodelet/pkg/utils/constants"
-	"github.com/platform9/nodelet/pkg/utils/fileio"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/fileio"
 )
 
 // DefaultConfig contains sane defaults for nodelet service

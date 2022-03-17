@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/platform9/nodelet/pkg/utils/config"
-	"github.com/platform9/nodelet/pkg/utils/constants"
-	"github.com/platform9/nodelet/pkg/utils/fileio"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/fileio"
 	"go.uber.org/zap"
 )
 

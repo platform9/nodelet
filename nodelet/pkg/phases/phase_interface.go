@@ -3,7 +3,7 @@ package phases
 import (
 	"context"
 
-	"github.com/platform9/nodelet/pkg/utils/config"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
 	sunpikev1alpha1 "github.com/platform9/pf9-qbert/sunpike/apiserver/pkg/apis/sunpike/v1alpha1"
 )
 

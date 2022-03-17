@@ -19,9 +19,9 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"github.com/platform9/nodelet/pkg/nodelet"
-	"github.com/platform9/nodelet/pkg/utils/config"
-	"github.com/platform9/nodelet/pkg/utils/constants"
+	"github.com/platform9/nodelet/nodelet/pkg/nodelet"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 )
 
 type RootOptions struct {

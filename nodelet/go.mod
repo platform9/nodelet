@@ -1,4 +1,4 @@
-module github.com/platform9/nodelet
+module github.com/platform9/nodelet/nodelet
 
 go 1.17
 
