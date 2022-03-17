@@ -10,9 +10,9 @@ import (
 	. "github.com/onsi/ginkgo"
 	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
-	. "github.com/platform9/nodelet/pkg/utils/fileio"
+	. "github.com/platform9/nodelet/nodelet/pkg/utils/fileio"
 
-	"github.com/platform9/nodelet/pkg/utils/command"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/command"
 )
 
 func TestCommand(t *testing.T) {

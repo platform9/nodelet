@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
-	. "github.com/platform9/nodelet/pkg/utils/command"
+	. "github.com/platform9/nodelet/nodelet/pkg/utils/command"
 )
 
 func TestCommand(t *testing.T) {
@@ -36,7 +36,7 @@ var _ = Describe("Command", func() {
 				env = map[string]string{
 					"TEST_ENV": "test",
 				}
-				cwd = "/go/src/github.com/platform9/nodelet/pkg/utils/command"
+				cwd = "/go/src/github.com/platform9/nodelet/nodelet/pkg/utils/command"
 				path = "ls"
 				args = []string{"-l", "-r", "-t", "-h"}
 				cmdObj = New()
@@ -110,7 +110,7 @@ var _ = Describe("Command", func() {
 				env = map[string]string{
 					"TEST_ENV": "test",
 				}
-				cwd = "/go/src/github.com/platform9/nodelet/pkg/utils/command"
+				cwd = "/go/src/github.com/platform9/nodelet/nodelet/pkg/utils/command"
 				path = "ls"
 				args = []string{"-l", "-r", "-t", "-h"}
 				cmdObj = New()

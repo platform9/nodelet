@@ -7,7 +7,7 @@
 package <sub-directory name>
 
 import (
-	"github.com/platform9/nodelet/pkg/utils/phases/base"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/phases/base"
 	sunpikev1alpha1 "github.com/platform9/pf9-qbert/sunpike/apiserver/pkg/apis/sunpike/v1alpha1"
 )
 

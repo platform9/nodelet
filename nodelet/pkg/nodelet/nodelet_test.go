@@ -13,13 +13,13 @@ import (
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 
-	"github.com/platform9/nodelet/mocks"
-	"github.com/platform9/nodelet/pkg/phases"
-	"github.com/platform9/nodelet/pkg/utils/config"
-	"github.com/platform9/nodelet/pkg/utils/constants"
-	"github.com/platform9/nodelet/pkg/utils/extensionfile"
-	"github.com/platform9/nodelet/pkg/utils/fileio"
-	"github.com/platform9/nodelet/pkg/utils/sunpikeutils"
+	"github.com/platform9/nodelet/nodelet/mocks"
+	"github.com/platform9/nodelet/nodelet/pkg/phases"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/extensionfile"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/fileio"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/sunpikeutils"
 	sunpikev1alpha1 "github.com/platform9/pf9-qbert/sunpike/apiserver/pkg/apis/sunpike/v1alpha1"
 )
 

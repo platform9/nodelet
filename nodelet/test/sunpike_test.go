@@ -19,9 +19,9 @@ import (
 	"google.golang.org/grpc"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	nodeletcmd "github.com/platform9/nodelet/pkg/nodelet/cmd"
-	"github.com/platform9/nodelet/pkg/utils/config"
-	"github.com/platform9/nodelet/pkg/utils/constants"
+	nodeletcmd "github.com/platform9/nodelet/nodelet/pkg/nodelet/cmd"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 	sunpikev1alpha1 "github.com/platform9/pf9-qbert/sunpike/apiserver/pkg/apis/sunpike/v1alpha1"
 	"github.com/platform9/pf9-qbert/sunpike/apiserver/pkg/hosts"
 	"github.com/platform9/pf9-qbert/sunpike/conductor/pkg/api"
