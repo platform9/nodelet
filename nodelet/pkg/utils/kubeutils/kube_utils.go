@@ -17,7 +17,6 @@ import (
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 
 	"golang.org/x/net/nettest"
-	//corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -26,20 +25,22 @@ import (
 )
 
 type Utils interface {
-	AddLabelsToNode(string, map[string]string) error
-	AddAnnotationsToNode(string, map[string]string) error
-	RemoveAnnotationsFromNode(string, []string) error
-	AddTaintsToNode(string, []*v1.Taint) error
-	DrainNodeFromApiServer(string) error
-	GetNodeFromK8sApi(string) (*v1.Node, error)
-	UncordonNode(string) error
-	KubernetesApiAvailable(config.Config) error
-	PreventAutoReattach() error
+	GetNodeIP() (string, error)
 	GetRoutedNetworkInterFace() (string, error)
 	GetIPv4ForInterfaceName(string) (string, error)
-	GetNodeIP() (string, error)
+	GetNodeIdentifier(config.Config) (string, error)
+	GetNodeFromK8sApi(context.Context, string) (*v1.Node, error)
+	AddLabelsToNode(context.Context, string, map[string]string) error
+	AddAnnotationsToNode(context.Context, string, map[string]string) error
+	RemoveAnnotationsFromNode(context.Context, string, []string) error
+	AddTaintsToNode(context.Context, string, []*v1.Taint) error
+	DrainNodeFromApiServer(context.Context, string) error
+	UncordonNode(context.Context, string) error
+	K8sApiAvailable(config.Config) error
+	PreventAutoReattach() error
 	IpForHttp(string) (string, error)
 }
+
 type UtilsImpl struct {
 	Clientset *kubernetes.Clientset
 }
@@ -56,6 +57,7 @@ func NewClient() (*UtilsImpl, error) {
 	}
 	return client, nil
 }
+
 func GetClientset() (*kubernetes.Clientset, error) {
 	var clientset *kubernetes.Clientset
 	config, err := clientcmd.BuildConfigFromFlags("", constants.KubeConfig)
@@ -70,9 +72,9 @@ func GetClientset() (*kubernetes.Clientset, error) {
 	return clientset, nil
 }
 
-func (u *UtilsImpl) AddLabelsToNode(nodeName string, labelsToAdd map[string]string) error {
+func (u *UtilsImpl) AddLabelsToNode(ctx context.Context, nodeName string, labelsToAdd map[string]string) error {
 	//implement waituntil
-	node, err := u.GetNodeFromK8sApi(nodeName)
+	node, err := u.GetNodeFromK8sApi(ctx, nodeName)
 	if err != nil {
 		return err
 	}
@@ -84,15 +86,15 @@ func (u *UtilsImpl) AddLabelsToNode(nodeName string, labelsToAdd map[string]stri
 		metadata.Labels[k] = v
 	}
 	node.ObjectMeta = metadata
-	_, err = u.Clientset.CoreV1().Nodes().Update(context.TODO(), node, metav1.UpdateOptions{})
+	_, err = u.Clientset.CoreV1().Nodes().Update(ctx, node, metav1.UpdateOptions{})
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (u *UtilsImpl) AddAnnotationsToNode(nodeName string, annotsToAdd map[string]string) error {
-	node, err := u.GetNodeFromK8sApi(nodeName)
+func (u *UtilsImpl) AddAnnotationsToNode(ctx context.Context, nodeName string, annotsToAdd map[string]string) error {
+	node, err := u.GetNodeFromK8sApi(ctx, nodeName)
 	if err != nil {
 		return err
 	}
@@ -104,35 +106,35 @@ func (u *UtilsImpl) AddAnnotationsToNode(nodeName string, annotsToAdd map[string
 		metadata.Annotations[k] = v
 	}
 	node.ObjectMeta = metadata
-	_, err = u.Clientset.CoreV1().Nodes().Update(context.TODO(), node, metav1.UpdateOptions{})
+	_, err = u.Clientset.CoreV1().Nodes().Update(ctx, node, metav1.UpdateOptions{})
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (u *UtilsImpl) RemoveAnnotationsFromNode(nodeName string, annotsToRemove []string) error {
-	node, err := u.GetNodeFromK8sApi(nodeName)
+func (u *UtilsImpl) RemoveAnnotationsFromNode(ctx context.Context, nodeName string, annotsToRemove []string) error {
+	node, err := u.GetNodeFromK8sApi(ctx, nodeName)
 	if err != nil {
 		return err
 	}
 	metadata := node.ObjectMeta
 	if metadata.Annotations == nil {
-		//metadata.Labels = make(map[string]string)
 		return nil
 	}
 	for _, v := range annotsToRemove {
 		delete(metadata.Annotations, v)
 	}
 	node.ObjectMeta = metadata
-	_, err = u.Clientset.CoreV1().Nodes().Update(context.TODO(), node, metav1.UpdateOptions{})
+	_, err = u.Clientset.CoreV1().Nodes().Update(ctx, node, metav1.UpdateOptions{})
 	if err != nil {
 		return err
 	}
 	return nil
 }
-func (u *UtilsImpl) AddTaintsToNode(nodename string, taintsToadd []*v1.Taint) error {
-	node, _ := u.GetNodeFromK8sApi(nodename)
+
+func (u *UtilsImpl) AddTaintsToNode(ctx context.Context, nodename string, taintsToadd []*v1.Taint) error {
+	node, _ := u.GetNodeFromK8sApi(ctx, nodename)
 
 	for _, taint := range taintsToadd {
 		_, updated, err := AddOrUpdateTaint(node, taint)
@@ -143,17 +145,17 @@ func (u *UtilsImpl) AddTaintsToNode(nodename string, taintsToadd []*v1.Taint) er
 			return fmt.Errorf("taint not added")
 		}
 	}
-	_, err := u.Clientset.CoreV1().Nodes().Update(context.TODO(), node, metav1.UpdateOptions{})
+	_, err := u.Clientset.CoreV1().Nodes().Update(ctx, node, metav1.UpdateOptions{})
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (u *UtilsImpl) DrainNodeFromApiServer(nodeName string) error {
+func (u *UtilsImpl) DrainNodeFromApiServer(ctx context.Context, nodeName string) error {
 
 	helper := drain.Helper{
-		Ctx:                 context.TODO(),
+		Ctx:                 ctx,
 		Client:              u.Clientset,
 		Force:               true,
 		GracePeriodSeconds:  -1,
@@ -164,7 +166,7 @@ func (u *UtilsImpl) DrainNodeFromApiServer(nodeName string) error {
 		ErrOut:              os.Stdout,
 		DisableEviction:     true,
 	}
-	node, err := u.GetNodeFromK8sApi(nodeName)
+	node, err := u.GetNodeFromK8sApi(ctx, nodeName)
 	if err != nil {
 		return err
 	}
@@ -176,25 +178,29 @@ func (u *UtilsImpl) DrainNodeFromApiServer(nodeName string) error {
 	if err != nil {
 		return fmt.Errorf("failed to drain node")
 	}
-	// TODO :
-	// Add KubeStackShutDown annotation to the node on successful node drain
-	// add_annotation_to_node ${node_ip} KubeStackShutDown
+	annotsToAdd := map[string]string{
+		"KubeStackShutDown": "true",
+	}
+	err = u.AddAnnotationsToNode(ctx, nodeName, annotsToAdd)
+	if err != nil {
+		return fmt.Errorf("failed to add annotations: %v beacause of: %w ", annotsToAdd, err)
+	}
 	return nil
 }
 
-func (u *UtilsImpl) GetNodeFromK8sApi(nodeName string) (*v1.Node, error) {
+func (u *UtilsImpl) GetNodeFromK8sApi(ctx context.Context, nodeName string) (*v1.Node, error) {
 	var node *v1.Node
-	node, err := u.Clientset.CoreV1().Nodes().Get(context.TODO(), nodeName, metav1.GetOptions{})
+	node, err := u.Clientset.CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
 	if err != nil {
 		return node, err
 	}
 	return node, nil
 }
 
-func (u *UtilsImpl) UncordonNode(nodename string) error {
+func (u *UtilsImpl) UncordonNode(ctx context.Context, nodename string) error {
 	//implement wait_until
 	helper := drain.Helper{
-		Ctx:                 context.TODO(),
+		Ctx:                 ctx,
 		Client:              u.Clientset,
 		Force:               true,
 		GracePeriodSeconds:  -1,
@@ -206,7 +212,7 @@ func (u *UtilsImpl) UncordonNode(nodename string) error {
 		DisableEviction:     true,
 	}
 
-	node, err := u.GetNodeFromK8sApi(nodename)
+	node, err := u.GetNodeFromK8sApi(ctx, nodename)
 	if err != nil {
 		return err
 	}
@@ -282,7 +288,7 @@ func (u *UtilsImpl) IpForHttp(masterIp string) (string, error) {
 	return "", fmt.Errorf("IP is invalid")
 }
 
-func (u *UtilsImpl) KubernetesApiAvailable(cfg config.Config) error {
+func (u *UtilsImpl) K8sApiAvailable(cfg config.Config) error {
 
 	caCertificate := constants.AdminCerts + "/ca.crt"
 	clientCertificate := constants.AdminCerts + "/request.crt"
@@ -374,4 +380,22 @@ func AddOrUpdateTaint(node *v1.Node, taint *v1.Taint) (*v1.Node, bool, error) {
 
 	newNode.Spec.Taints = newTaints
 	return newNode, true, nil
+}
+
+func (u *UtilsImpl) GetNodeIdentifier(cfg config.Config) (string, error) {
+
+	var err error
+	var nodeIdentifier string
+	if cfg.CloudProviderType == "local" && cfg.UseHostname == "true" {
+		nodeIdentifier, err = os.Hostname()
+		if err != nil {
+			return nodeIdentifier, fmt.Errorf("failed to get hostName for node identification: %w", err)
+		}
+	} else {
+		nodeIdentifier, err = u.GetNodeIP()
+		if err != nil {
+			return nodeIdentifier, fmt.Errorf("failed to get node IP address for node identification: %w", err)
+		}
+	}
+	return nodeIdentifier, nil
 }
