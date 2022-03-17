@@ -5,11 +5,12 @@
 package mocks
 
 import (
+	context "context"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
 	config "github.com/platform9/nodelet/nodelet/pkg/utils/config"
-	v1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"	
 )
 
 // MockUtils is a mock of Utils interface.
@@ -36,114 +37,203 @@ func (m *MockUtils) EXPECT() *MockUtilsMockRecorder {
 }
 
 // AddAnnotationsToNode mocks base method.
-func (m *MockUtils) AddAnnotationsToNode(arg0 string, arg1 map[string]string) error {
+func (m *MockUtils) AddAnnotationsToNode(arg0 context.Context, arg1 string, arg2 map[string]string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddAnnotationsToNode", arg0, arg1)
+	ret := m.ctrl.Call(m, "AddAnnotationsToNode", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AddAnnotationsToNode indicates an expected call of AddAnnotationsToNode.
-func (mr *MockUtilsMockRecorder) AddAnnotationsToNode(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockUtilsMockRecorder) AddAnnotationsToNode(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddAnnotationsToNode", reflect.TypeOf((*MockUtils)(nil).AddAnnotationsToNode), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddAnnotationsToNode", reflect.TypeOf((*MockUtils)(nil).AddAnnotationsToNode), arg0, arg1, arg2)
 }
 
 // AddLabelsToNode mocks base method.
-func (m *MockUtils) AddLabelsToNode(arg0 string, arg1 map[string]string) error {
+func (m *MockUtils) AddLabelsToNode(arg0 context.Context, arg1 string, arg2 map[string]string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddLabelsToNode", arg0, arg1)
+	ret := m.ctrl.Call(m, "AddLabelsToNode", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AddLabelsToNode indicates an expected call of AddLabelsToNode.
-func (mr *MockUtilsMockRecorder) AddLabelsToNode(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockUtilsMockRecorder) AddLabelsToNode(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddLabelsToNode", reflect.TypeOf((*MockUtils)(nil).AddLabelsToNode), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddLabelsToNode", reflect.TypeOf((*MockUtils)(nil).AddLabelsToNode), arg0, arg1, arg2)
 }
 
 // AddTaintsToNode mocks base method.
-func (m *MockUtils) AddTaintsToNode(arg0 string, arg1 []*v1.Taint) error {
+func (m *MockUtils) AddTaintsToNode(arg0 context.Context, arg1 string, arg2 []*v1.Taint) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddTaintsToNode", arg0, arg1)
+	ret := m.ctrl.Call(m, "AddTaintsToNode", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AddTaintsToNode indicates an expected call of AddTaintsToNode.
-func (mr *MockUtilsMockRecorder) AddTaintsToNode(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockUtilsMockRecorder) AddTaintsToNode(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddTaintsToNode", reflect.TypeOf((*MockUtils)(nil).AddTaintsToNode), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddTaintsToNode", reflect.TypeOf((*MockUtils)(nil).AddTaintsToNode), arg0, arg1, arg2)
 }
 
 // DrainNodeFromApiServer mocks base method.
-func (m *MockUtils) DrainNodeFromApiServer(arg0 string) error {
+func (m *MockUtils) DrainNodeFromApiServer(arg0 context.Context, arg1 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DrainNodeFromApiServer", arg0)
+	ret := m.ctrl.Call(m, "DrainNodeFromApiServer", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DrainNodeFromApiServer indicates an expected call of DrainNodeFromApiServer.
-func (mr *MockUtilsMockRecorder) DrainNodeFromApiServer(arg0 interface{}) *gomock.Call {
+func (mr *MockUtilsMockRecorder) DrainNodeFromApiServer(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DrainNodeFromApiServer", reflect.TypeOf((*MockUtils)(nil).DrainNodeFromApiServer), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DrainNodeFromApiServer", reflect.TypeOf((*MockUtils)(nil).DrainNodeFromApiServer), arg0, arg1)
+}
+
+// GetIPv4ForInterfaceName mocks base method.
+func (m *MockUtils) GetIPv4ForInterfaceName(arg0 string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetIPv4ForInterfaceName", arg0)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetIPv4ForInterfaceName indicates an expected call of GetIPv4ForInterfaceName.
+func (mr *MockUtilsMockRecorder) GetIPv4ForInterfaceName(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetIPv4ForInterfaceName", reflect.TypeOf((*MockUtils)(nil).GetIPv4ForInterfaceName), arg0)
 }
 
 // GetNodeFromK8sApi mocks base method.
-func (m *MockUtils) GetNodeFromK8sApi(arg0 string) (*v1.Node, error) {
+func (m *MockUtils) GetNodeFromK8sApi(arg0 context.Context, arg1 string) (*v1.Node, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetNodeFromK8sApi", arg0)
+	ret := m.ctrl.Call(m, "GetNodeFromK8sApi", arg0, arg1)
 	ret0, _ := ret[0].(*v1.Node)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetNodeFromK8sApi indicates an expected call of GetNodeFromK8sApi.
-func (mr *MockUtilsMockRecorder) GetNodeFromK8sApi(arg0 interface{}) *gomock.Call {
+func (mr *MockUtilsMockRecorder) GetNodeFromK8sApi(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNodeFromK8sApi", reflect.TypeOf((*MockUtils)(nil).GetNodeFromK8sApi), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNodeFromK8sApi", reflect.TypeOf((*MockUtils)(nil).GetNodeFromK8sApi), arg0, arg1)
 }
 
-// KubernetesApiAvailable mocks base method.
-func (m *MockUtils) KubernetesApiAvailable(arg0 config.Config) error {
+// GetNodeIP mocks base method.
+func (m *MockUtils) GetNodeIP() (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "KubernetesApiAvailable", arg0)
+	ret := m.ctrl.Call(m, "GetNodeIP")
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetNodeIP indicates an expected call of GetNodeIP.
+func (mr *MockUtilsMockRecorder) GetNodeIP() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNodeIP", reflect.TypeOf((*MockUtils)(nil).GetNodeIP))
+}
+
+// GetNodeIdentifier mocks base method.
+func (m *MockUtils) GetNodeIdentifier(arg0 config.Config) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetNodeIdentifier", arg0)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetNodeIdentifier indicates an expected call of GetNodeIdentifier.
+func (mr *MockUtilsMockRecorder) GetNodeIdentifier(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNodeIdentifier", reflect.TypeOf((*MockUtils)(nil).GetNodeIdentifier), arg0)
+}
+
+// GetRoutedNetworkInterFace mocks base method.
+func (m *MockUtils) GetRoutedNetworkInterFace() (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRoutedNetworkInterFace")
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRoutedNetworkInterFace indicates an expected call of GetRoutedNetworkInterFace.
+func (mr *MockUtilsMockRecorder) GetRoutedNetworkInterFace() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRoutedNetworkInterFace", reflect.TypeOf((*MockUtils)(nil).GetRoutedNetworkInterFace))
+}
+
+// IpForHttp mocks base method.
+func (m *MockUtils) IpForHttp(arg0 string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IpForHttp", arg0)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IpForHttp indicates an expected call of IpForHttp.
+func (mr *MockUtilsMockRecorder) IpForHttp(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IpForHttp", reflect.TypeOf((*MockUtils)(nil).IpForHttp), arg0)
+}
+
+// K8sApiAvailable mocks base method.
+func (m *MockUtils) K8sApiAvailable(arg0 config.Config) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "K8sApiAvailable", arg0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// KubernetesApiAvailable indicates an expected call of KubernetesApiAvailable.
-func (mr *MockUtilsMockRecorder) KubernetesApiAvailable(arg0 interface{}) *gomock.Call {
+// K8sApiAvailable indicates an expected call of K8sApiAvailable.
+func (mr *MockUtilsMockRecorder) K8sApiAvailable(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "KubernetesApiAvailable", reflect.TypeOf((*MockUtils)(nil).KubernetesApiAvailable), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "K8sApiAvailable", reflect.TypeOf((*MockUtils)(nil).K8sApiAvailable), arg0)
+}
+
+// PreventAutoReattach mocks base method.
+func (m *MockUtils) PreventAutoReattach() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PreventAutoReattach")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PreventAutoReattach indicates an expected call of PreventAutoReattach.
+func (mr *MockUtilsMockRecorder) PreventAutoReattach() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PreventAutoReattach", reflect.TypeOf((*MockUtils)(nil).PreventAutoReattach))
 }
 
 // RemoveAnnotationsFromNode mocks base method.
-func (m *MockUtils) RemoveAnnotationsFromNode(arg0 string, arg1 []string) error {
+func (m *MockUtils) RemoveAnnotationsFromNode(arg0 context.Context, arg1 string, arg2 []string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemoveAnnotationsFromNode", arg0, arg1)
+	ret := m.ctrl.Call(m, "RemoveAnnotationsFromNode", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // RemoveAnnotationsFromNode indicates an expected call of RemoveAnnotationsFromNode.
-func (mr *MockUtilsMockRecorder) RemoveAnnotationsFromNode(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockUtilsMockRecorder) RemoveAnnotationsFromNode(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveAnnotationsFromNode", reflect.TypeOf((*MockUtils)(nil).RemoveAnnotationsFromNode), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveAnnotationsFromNode", reflect.TypeOf((*MockUtils)(nil).RemoveAnnotationsFromNode), arg0, arg1, arg2)
 }
 
 // UncordonNode mocks base method.
-func (m *MockUtils) UncordonNode(arg0 string) error {
+func (m *MockUtils) UncordonNode(arg0 context.Context, arg1 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UncordonNode", arg0)
+	ret := m.ctrl.Call(m, "UncordonNode", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UncordonNode indicates an expected call of UncordonNode.
-func (mr *MockUtilsMockRecorder) UncordonNode(arg0 interface{}) *gomock.Call {
+func (mr *MockUtilsMockRecorder) UncordonNode(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UncordonNode", reflect.TypeOf((*MockUtils)(nil).UncordonNode), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UncordonNode", reflect.TypeOf((*MockUtils)(nil).UncordonNode), arg0, arg1)
 }

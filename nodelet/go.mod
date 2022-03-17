@@ -15,6 +15,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/onsi/ginkgo v1.14.2
 	github.com/onsi/gomega v1.10.3
+	github.com/pkg/errors v0.9.1
 	github.com/platform9/pf9-qbert/sunpike/apiserver v0.0.0
 	github.com/platform9/pf9-qbert/sunpike/conductor v0.0.0-20210928133414-c4e8ce211671
 	github.com/sirupsen/logrus v1.8.1
@@ -25,9 +26,9 @@ require (
 	go.uber.org/zap v1.19.0
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
 	google.golang.org/grpc v1.40.0
-	k8s.io/api v0.23.4
-	k8s.io/apimachinery v0.23.4
-	k8s.io/client-go v0.23.4
+	k8s.io/api v0.23.5
+	k8s.io/apimachinery v0.23.5
+	k8s.io/client-go v0.23.5
 	k8s.io/kubectl v0.23.0-alpha.0
 )
 
@@ -71,7 +72,6 @@ require (
 	github.com/nxadm/tail v1.4.5 // indirect
 	github.com/pelletier/go-toml v1.9.3 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/russross/blackfriday v1.5.2 // indirect
 	github.com/spf13/afero v1.6.0 // indirect
