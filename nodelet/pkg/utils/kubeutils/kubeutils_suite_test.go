@@ -7,7 +7,7 @@ import (
 	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
 
-	"github.com/platform9/nodelet/pkg/utils/kubeutils"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/kubeutils"
 )
 
 func TestCommand(t *testing.T) {

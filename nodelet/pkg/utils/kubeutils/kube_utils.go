@@ -13,8 +13,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/platform9/nodelet/pkg/utils/config"
-	"github.com/platform9/nodelet/pkg/utils/constants"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 
 	"golang.org/x/net/nettest"
 	corev1 "k8s.io/api/core/v1"

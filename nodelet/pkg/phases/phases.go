@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/platform9/nodelet/pkg/utils/command"
-	"github.com/platform9/nodelet/pkg/utils/config"
-	"github.com/platform9/nodelet/pkg/utils/constants"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/command"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 
 	"go.uber.org/zap"
 )
