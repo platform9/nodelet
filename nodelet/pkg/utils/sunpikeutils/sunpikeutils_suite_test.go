@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
-	"github.com/platform9/nodelet/mocks"
+	"github.com/platform9/nodelet/nodelet/mocks"
 	"github.com/platform9/nodelet/nodelet/pkg/phases"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
