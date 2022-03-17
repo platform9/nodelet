@@ -13,10 +13,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    
-    - name: configure
-      run: ./configure
-      
+  
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
