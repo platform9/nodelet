@@ -59,6 +59,7 @@ func NewCmdRoot() *cobra.Command {
 	cmd.Flags().AddFlagSet(opts.Flags())
 	cmd.AddCommand(newPhasesCommand())
 	cmd.AddCommand(newAdvancedCommand())
+	cmd.AddCommand(initCommand())
 	cmd.AddCommand(goversionext.NewCobraCmdWithDefaults())
 
 	return cmd
