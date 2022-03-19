@@ -482,8 +482,10 @@ $(COMMON_SRC_ROOT): easyrsa $(AUTHBS_SRC_DIR) bouncer-docker-image kubernetes no
 	echo "make COMMON_SRC_ROOT $(COMMON_SRC_ROOT)"
 	echo "COMMON_SRC_ROOT is $(COMMON_SRC_ROOT)" # i.e. /vagrant/build/pf9-kube/pf9-kube-src/common
 	echo "AGENT_SRC_DIR is $(AGENT_SRC_DIR)" # cp -a /vagrant/agent/root/* /vagrant/build/pf9-kube/pf9-kube-src/common/
-	mkdir -p $(COMMON_SRC_ROOT)
-	cp -a $(AGENT_SRC_DIR)/root/* $(COMMON_SRC_ROOT)/
+	mkdir -p $(COMMON_SRC_ROOT)/opt/pf9/
+	mkdir -p $(COMMON_SRC_ROOT)/etc/
+	cp -a $(AGENT_SRC_DIR)/nodelet/pkg/pf9kube/pf9/* $(COMMON_SRC_ROOT)/opt/pf9/
+	cp -a $(AGENT_SRC_DIR)/nodelet/pkg/pf9kube/etc/* $(COMMON_SRC_ROOT)/etc/
 	sed -i s/__KUBERNETES_VERSION__/$(KUBERNETES_VERSION)/ $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/defaults.env
 	sed -i s/__FLANNEL_VERSION__/$(FLANNEL_VERSION)/ $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/defaults.env
 	mkdir -p $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/bin/
