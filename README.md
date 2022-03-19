@@ -1,5 +1,6 @@
 # NODELET
 [![Makefile CI](https://github.com/platform9/nodelet/actions/workflows/unit-test.yml/badge.svg)](https://github.com/platform9/nodelet/actions/workflows/unit-test.yml)
+[![rpm-deb-build](https://github.com/platform9/nodelet/actions/workflows/rpm-deb-build.yml/badge.svg)](https://github.com/platform9/nodelet/actions/workflows/rpm-deb-build.yml)
 
 Nodelet is a Kubernetes lifecycle manager which can be used stand-alone or as part of a larger system (e.g. Cluster API). Nodelet is capable of performing the following tasks:
 - Installing a Kubernetes stack on one or more nodes
