@@ -11,6 +11,7 @@ import (
 
 	"github.com/ghodss/yaml"
 	"go.uber.org/zap"
+	"github.com/platform9/nodelet/nodelet/pkg/pf9kube"
 
 	"github.com/platform9/nodelet/nodelet/pkg/phases"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
@@ -35,9 +36,15 @@ type Nodelet struct {
 }
 
 func (n *Nodelet) Run(ctx context.Context) error {
+	n.log.Info("Starting nodelet...")
+	err := pf9kube.Extract()
+	if err != nil {
+		n.log.Errorf("Failed to extract pf9-kube: %v", err)
+		return fmt.Errorf("failed to extract pf9-kube: %v", err)
+	}
 	// Do an initial persist + config check here to ensure that the Host makes
 	// itself known to Sunpike, even if things go wrong in the reconciling itself.
-	err := n.persistStatusAndUpdateConfigIfChanged(ctx)
+	err = n.persistStatusAndUpdateConfigIfChanged(ctx)
 	if err != nil {
 		n.log.Errorf("Failed to perform the initial status update: %v", err)
 	}
