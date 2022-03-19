@@ -14,7 +14,7 @@ var kube embed.FS
 //go:embed etc/*
 var etc embed.FS
 
-func Extract(fs embed.FS) error {
+func Extract() error {
 	zap.S().Infof("Extracting pf9-kube to '%s'", "/opt/pf9/")
 	efs := &embedutil.EmbedFS{Fs: kube, Root: "pf9"}
 	err := efs.Extract("/opt/pf9/")
