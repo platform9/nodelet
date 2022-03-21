@@ -23,7 +23,7 @@ func TestCommand(t *testing.T) {
 	RunSpecsWithDefaultAndCustomReporters(t, "Phases Suite", []Reporter{junitReporter})
 }
 
-var _ = Describe("Drain nodes phase", func() {
+var _ = Describe("Test Drain nodes phase", func() {
 
 	var (
 		mockCtrl      *gomock.Controller

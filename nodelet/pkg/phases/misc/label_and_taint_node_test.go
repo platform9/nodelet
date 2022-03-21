@@ -22,7 +22,7 @@ func TestCommand(t *testing.T) {
 	RunSpecsWithDefaultAndCustomReporters(t, "Phases Suite", []Reporter{junitReporter})
 }
 
-var _ = Describe("Apply and validate node taints phase", func() {
+var _ = Describe("Test Apply and validate node taints phase", func() {
 
 	var (
 		mockCtrl      *gomock.Controller
@@ -65,7 +65,7 @@ var _ = Describe("Apply and validate node taints phase", func() {
 	})
 
 	Context("validates start command", func() {
-		It("fails when nodeIdentifier is null", func() {
+		It("fails when can't get nodeIdentifier or it's null", func() {
 			err := errors.New("fake error")
 
 			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return("", err).Times(1)
@@ -97,7 +97,7 @@ var _ = Describe("Apply and validate node taints phase", func() {
 			assert.Equal(GinkgoT(), reterr, err)
 		})
 
-		Context("role is master", func() {
+		Context("when role is master", func() {
 			var (
 				labels map[string]string
 				taints []*v1.Taint
@@ -146,7 +146,7 @@ var _ = Describe("Apply and validate node taints phase", func() {
 			})
 
 		})
-		Context("role is worker", func() {
+		Context("when role is worker", func() {
 			var labels map[string]string
 			BeforeEach(func() {
 				labels = map[string]string{
@@ -154,7 +154,7 @@ var _ = Describe("Apply and validate node taints phase", func() {
 				}
 				fakeCfg.ClusterRole = "worker"
 			})
-			It("should not add taints when role is worker and master is schedulable", func() {
+			It("should not add taints", func() {
 				fakeCfg.MasterSchedulable = true
 
 				fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return("10.128.240.67", nil).Times(1)

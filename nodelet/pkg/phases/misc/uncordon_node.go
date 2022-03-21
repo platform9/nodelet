@@ -61,7 +61,11 @@ func (d *UncordonNodePhasev2) Status(ctx context.Context, cfg config.Config) err
 		return nil
 	}
 
-	node, _ := d.kubeUtils.GetNodeFromK8sApi(ctx, nodeIdentifier)
+	node, err := d.kubeUtils.GetNodeFromK8sApi(ctx, nodeIdentifier)
+	if err != nil {
+		d.log.Errorf(err.Error())
+		return err
+	}
 	metadata := &node.ObjectMeta
 
 	//if KubeStackShutDown is present then node was cordoned by PF9
@@ -109,7 +113,11 @@ func (d *UncordonNodePhasev2) Start(ctx context.Context, cfg config.Config) erro
 		return fmt.Errorf("node interface might have lost IP address. Failing")
 	}
 
-	node, _ := d.kubeUtils.GetNodeFromK8sApi(ctx, nodeIdentifier)
+	node, err := d.kubeUtils.GetNodeFromK8sApi(ctx, nodeIdentifier)
+	if err != nil {
+		d.log.Errorf("Error: Failed to get node from k8s api, beacause: %v", err)
+		return err
+	}
 	metadata := node.ObjectMeta
 
 	//remove KubeStackShutDown annotation (if present) as this is kube stack startup

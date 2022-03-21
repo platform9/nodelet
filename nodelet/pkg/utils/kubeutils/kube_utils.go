@@ -391,10 +391,16 @@ func (u *UtilsImpl) GetNodeIdentifier(cfg config.Config) (string, error) {
 		if err != nil {
 			return nodeIdentifier, fmt.Errorf("failed to get hostName for node identification: %w", err)
 		}
+		if nodeIdentifier == "" {
+			return nodeIdentifier, fmt.Errorf("nodeIdentifier is null")
+		}
 	} else {
 		nodeIdentifier, err = u.GetNodeIP()
 		if err != nil {
 			return nodeIdentifier, fmt.Errorf("failed to get node IP address for node identification: %w", err)
+		}
+		if nodeIdentifier == "" {
+			return nodeIdentifier, fmt.Errorf("nodeIdentifier is null")
 		}
 	}
 	return nodeIdentifier, nil
