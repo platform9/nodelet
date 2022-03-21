@@ -25,7 +25,7 @@ func Extract() error {
 	efs = &embedutil.EmbedFS{Fs: etc, Root: "etc"}
 	err = efs.Extract("/etc")
 	if err != nil {
-		return fmt.Errorf("failed to extract pf9-kube: %s", err)
+		return fmt.Errorf("failed to extract pf9-kube to /etc: %s", err)
 	}
 	return nil
 }
