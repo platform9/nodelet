@@ -42,7 +42,7 @@ type Utils interface {
 }
 
 type UtilsImpl struct {
-	Clientset *kubernetes.Clientset
+	Clientset kubernetes.Interface
 }
 
 func NewClient() (*UtilsImpl, error) {
@@ -58,8 +58,8 @@ func NewClient() (*UtilsImpl, error) {
 	return client, nil
 }
 
-func GetClientset() (*kubernetes.Clientset, error) {
-	var clientset *kubernetes.Clientset
+func GetClientset() (kubernetes.Interface, error) {
+	var clientset kubernetes.Interface
 	config, err := clientcmd.BuildConfigFromFlags("", constants.KubeConfig)
 	if err != nil {
 		return clientset, err
@@ -134,20 +134,23 @@ func (u *UtilsImpl) RemoveAnnotationsFromNode(ctx context.Context, nodeName stri
 }
 
 func (u *UtilsImpl) AddTaintsToNode(ctx context.Context, nodename string, taintsToadd []*v1.Taint) error {
-	node, _ := u.GetNodeFromK8sApi(ctx, nodename)
-
+	node, err := u.GetNodeFromK8sApi(ctx, nodename)
+	if err != nil {
+		return err
+	}
 	for _, taint := range taintsToadd {
-		_, updated, err := AddOrUpdateTaint(node, taint)
+		taintedNode, updated, err := AddOrUpdateTaint(node, taint)
 		if err != nil {
 			return err
 		}
 		if !updated {
+			fmt.Println("taint not added")
 			return fmt.Errorf("taint not added")
 		}
-	}
-	_, err := u.Clientset.CoreV1().Nodes().Update(ctx, node, metav1.UpdateOptions{})
-	if err != nil {
-		return err
+		_, err = u.Clientset.CoreV1().Nodes().Update(ctx, taintedNode, metav1.UpdateOptions{})
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
