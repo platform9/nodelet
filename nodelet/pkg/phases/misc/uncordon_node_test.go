@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	//"os"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -55,6 +54,7 @@ var _ = Describe("Test Uncordon node phase", func() {
 			ObjectMeta: metav1.ObjectMeta{
 				Annotations: map[string]string{
 					"KubeStackShutDown": "false",
+					"UserNodeCordon":    "false",
 				},
 			},
 		}
@@ -160,6 +160,10 @@ var _ = Describe("Test Uncordon node phase", func() {
 
 	})
 	Context("validates start command", func() {
+		var annotsToRemove []string
+		BeforeEach(func() {
+			annotsToRemove = []string{"KubeStackShutDown"}
+		})
 		It("fails when can't get nodeIdentifier or its null", func() {
 			err := errors.New("fake error")
 			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, err).Times(1)
@@ -182,6 +186,54 @@ var _ = Describe("Test Uncordon node phase", func() {
 			reterr := fakePhase.Start(ctx, *fakeCfg)
 			assert.NotNil(GinkgoT(), reterr)
 			assert.Equal(GinkgoT(), reterr, err)
+		})
+		It("fails when can't remove KubeStackShutDown annotation (if present) as this is kube stack startup", func() {
+
+			err := errors.New("fake error")
+			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
+			fakeKubeUtils.EXPECT().GetNodeFromK8sApi(ctx, fakeNodeIdentifier).Return(fakeNode, nil).Times(1)
+			fakeKubeUtils.EXPECT().RemoveAnnotationsFromNode(ctx, fakeNodeIdentifier, annotsToRemove).Return(err).Times(1)
+			reterr := fakePhase.Start(ctx, *fakeCfg)
+			assert.NotNil(GinkgoT(), reterr)
+			assert.Equal(GinkgoT(), reterr, err)
+		})
+		It("if node cordoned (By User) DO NOT uncordon, exit", func() {
+			fakeNode.ObjectMeta.Annotations["UserNodeCordon"] = "true"
+			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
+			fakeKubeUtils.EXPECT().GetNodeFromK8sApi(ctx, fakeNodeIdentifier).Return(fakeNode, nil).Times(1)
+			fakeKubeUtils.EXPECT().RemoveAnnotationsFromNode(ctx, fakeNodeIdentifier, annotsToRemove).Return(nil).Times(1)
+			ret := fakePhase.Start(ctx, *fakeCfg)
+			assert.Nil(GinkgoT(), ret)
+		})
+		It("fails when can't uncordon node", func() {
+			err := errors.New("fake error")
+			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
+			fakeKubeUtils.EXPECT().GetNodeFromK8sApi(ctx, fakeNodeIdentifier).Return(fakeNode, nil).Times(1)
+			fakeKubeUtils.EXPECT().RemoveAnnotationsFromNode(ctx, fakeNodeIdentifier, annotsToRemove).Return(nil).Times(1)
+			fakeKubeUtils.EXPECT().UncordonNode(ctx, fakeNodeIdentifier).Return(err).Times(1)
+			reterr := fakePhase.Start(ctx, *fakeCfg)
+			assert.NotNil(GinkgoT(), reterr)
+			assert.Equal(GinkgoT(), reterr, err)
+		})
+		It("fails when can't prevent auto reattach (i.e. can't delete the qbert metadata file)", func() {
+			err := errors.New("fake error")
+			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
+			fakeKubeUtils.EXPECT().GetNodeFromK8sApi(ctx, fakeNodeIdentifier).Return(fakeNode, nil).Times(1)
+			fakeKubeUtils.EXPECT().RemoveAnnotationsFromNode(ctx, fakeNodeIdentifier, annotsToRemove).Return(nil).Times(1)
+			fakeKubeUtils.EXPECT().UncordonNode(ctx, fakeNodeIdentifier).Return(nil).Times(1)
+			fakeKubeUtils.EXPECT().PreventAutoReattach().Return(err).Times(1)
+			reterr := fakePhase.Start(ctx, *fakeCfg)
+			assert.NotNil(GinkgoT(), reterr)
+			assert.Equal(GinkgoT(), reterr, err)
+		})
+		It("to succeed)", func() {
+			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
+			fakeKubeUtils.EXPECT().GetNodeFromK8sApi(ctx, fakeNodeIdentifier).Return(fakeNode, nil).Times(1)
+			fakeKubeUtils.EXPECT().RemoveAnnotationsFromNode(ctx, fakeNodeIdentifier, annotsToRemove).Return(nil).Times(1)
+			fakeKubeUtils.EXPECT().UncordonNode(ctx, fakeNodeIdentifier).Return(nil).Times(1)
+			fakeKubeUtils.EXPECT().PreventAutoReattach().Return(nil).Times(1)
+			ret := fakePhase.Start(ctx, *fakeCfg)
+			assert.Nil(GinkgoT(), ret)
 		})
 	})
 })
