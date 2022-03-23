@@ -330,20 +330,6 @@ function prepare_conf_files()
     local tiller_svc=appcatalog/tiller/tiller-svc.yaml
     local toleration_patch="toleration_patch.yaml"
 
-    # pf9-sentry files
-    local pf9_sentry_namespace="addons/pf9-sentry/pf9-sentry-namespace.yaml"
-    local pf9_sentry_serviceaccount="addons/pf9-sentry/pf9-sentry-serviceaccount.yaml"
-    local pf9_sentry_clusterrole="addons/pf9-sentry/pf9-sentry-clusterrole.yaml"
-    local pf9_sentry_clusterrolebinding="addons/pf9-sentry/pf9-sentry-clusterrolebinding.yaml"
-    local pf9_sentry_deployment="addons/pf9-sentry/pf9-sentry-deployment.yaml"
-    local pf9_sentry_service="addons/pf9-sentry/pf9-sentry-service.yaml"
-
-    # pf9-addon-operator files
-    local pf9_addon_operator_crd="addons/pf9-addon-operator/pf9-addon-operator-crd.yaml"
-    local pf9_addon_operator_namespace="addons/pf9-addon-operator/pf9-addon-operator-namespace.yaml"
-    local pf9_addon_operator_rbac="addons/pf9-addon-operator/pf9-addon-operator-rbac.yaml"
-    local pf9_addon_operator_deployment="addons/pf9-addon-operator/pf9-addon-operator-deployment.yaml"
-
     # Image registries
     local quay_registry="${QUAY_PRIVATE_REGISTRY:-quay.io}"
     local k8s_registry="${K8S_PRIVATE_REGISTRY:-k8s.gcr.io}"
@@ -372,17 +358,6 @@ function prepare_conf_files()
     prepare_conf_file $master_pod prepare_master_pod
 
     prepare_conf_file $kube_scheduler
-    prepare_conf_file $pf9_sentry_namespace
-    prepare_conf_file $pf9_sentry_serviceaccount
-    prepare_conf_file $pf9_sentry_clusterrole
-    prepare_conf_file $pf9_sentry_clusterrolebinding
-    prepare_conf_file $pf9_sentry_deployment
-    prepare_conf_file $pf9_sentry_service
-
-    prepare_conf_file $pf9_addon_operator_crd
-    prepare_conf_file $pf9_addon_operator_namespace
-    prepare_conf_file $pf9_addon_operator_rbac
-    prepare_conf_file $pf9_addon_operator_deployment
 
     prepare_conf_file $monocular_api_cm
     prepare_conf_file $monocular_api_deploy
@@ -899,17 +874,6 @@ function heapster_running()
     ${KUBECTL} get deployment -n kube-system ${heapster_deployment} &> /dev/null
 }
 
-function ensure_pf9_sentry()
-{
-    local pf9_sentry="${CONF_DST_DIR}/addons/pf9-sentry"
-    ${KUBECTL_SYSTEM} apply -f "${pf9_sentry}/pf9-sentry-namespace.yaml"
-    ${KUBECTL_SYSTEM} apply -f "${pf9_sentry}/pf9-sentry-serviceaccount.yaml"
-    ${KUBECTL_SYSTEM} apply -f "${pf9_sentry}/pf9-sentry-clusterrole.yaml"
-    ${KUBECTL_SYSTEM} apply -f "${pf9_sentry}/pf9-sentry-clusterrolebinding.yaml"
-    ${KUBECTL_SYSTEM} apply -f "${pf9_sentry}/pf9-sentry-deployment.yaml"
-    ${KUBECTL_SYSTEM} apply -f "${pf9_sentry}/pf9-sentry-service.yaml"
-}
-
 function delete_cluster_autoscaler_post_upgrade()
 {
     if [[ "$CLOUD_PROVIDER_TYPE" == 'aws' ]]; then
@@ -918,34 +882,6 @@ function delete_cluster_autoscaler_post_upgrade()
         ${KUBECTL_SYSTEM} -n pf9-addons delete addon ${CLUSTER_ID}-cluster-auto-scaler-azure --ignore-not-found
     fi
 }
-
-function ensure_pf9_addon_operator()
-{
-    ensure_dashboard_secret
-
-    local pf9_addon_operator="${CONF_DST_DIR}/addons/pf9-addon-operator"
-    ${KUBECTL_SYSTEM} apply -f "${pf9_addon_operator}/pf9-addon-operator-crd.yaml"
-    ${KUBECTL_SYSTEM} apply -f "${pf9_addon_operator}/pf9-addon-operator-namespace.yaml"
-    ${KUBECTL_SYSTEM} apply -f "${pf9_addon_operator}/pf9-addon-operator-rbac.yaml"
-    local addon_operator="${pf9_addon_operator}/pf9-addon-operator-deployment.yaml"
-    local du_fqdn=`grep host= /etc/pf9/hostagent.conf | grep -v localhost | cut -d= -f2`
-
-    cat $addon_operator | sed -e "s/__CLUSTER_ID__/${CLUSTER_ID}/g"  \
-    | sed -e "s/__PROJECT_ID__/${CLUSTER_PROJECT_ID}/" \
-    | sed -e "s/__DU_FQDN__/${du_fqdn}/" \
-    | sed -e "s/__CLOUD_PROVIDER_TYPE__/${CLOUD_PROVIDER_TYPE}/" \
-    | sed -e "s/__QUAY_REGISTRY__/${QUAY_PRIVATE_REGISTRY}/" \
-    | sed -e "s/__K8S_REGISTRY__/${K8S_PRIVATE_REGISTRY}/" \
-    | sed -e "s/__GCR_REGISTRY__/${GCR_PRIVATE_REGISTRY}/" \
-    | sed -e "s/__DOCKER_REGISTRY__/${DOCKER_PRIVATE_REGISTRY}/" \
-    | sed -e "s#__HTTP_PROXY__#${HTTP_PROXY}#" \
-    | sed -e "s#__HTTPS_PROXY__#${HTTPS_PROXY}#" \
-    | sed -e "s#__NO_PROXY__#${NO_PROXY}#" \
-    | ${KUBECTL_SYSTEM} apply -f -
-
-    ensure_addon_secret
-}
-
 
 function ensure_addon_secret()
 {
@@ -1062,4 +998,18 @@ function ensure_etcd_cluster_status()
         echo "ERROR: etcd-raft-checker binary missing; could not check raft indices"
     fi
     return ${exitCode}
+}
+
+function ensure_dns()
+{
+    local coredns_template="${CONF_SRC_DIR}/networkapps/coredns.yaml"
+    local coredns_file="${CONF_SRC_DIR}/networkapps/coredns-applied.yaml"
+    local k8s_registry="${K8S_PRIVATE_REGISTRY:-k8s.gcr.io}"
+
+    # Replace configuration values in calico spec with user input
+    sed -e "s|__DNS_IP__|${DNS_IP}|g" \
+        -e "s|__K8S_REGISTRY__|${k8s_registry}|g" \
+        < ${coredns_template} > ${coredns_file}
+    # Apply daemon set yaml
+    ${KUBECTL_SYSTEM} apply -f ${coredns_file}
 }

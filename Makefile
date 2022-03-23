@@ -486,10 +486,6 @@ $(COMMON_SRC_ROOT): easyrsa $(AUTHBS_SRC_DIR) bouncer-docker-image kubernetes no
 	cp -a $(AGENT_SRC_DIR)/root/* $(COMMON_SRC_ROOT)/
 	sed -i s/__KUBERNETES_VERSION__/$(KUBERNETES_VERSION)/ $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/defaults.env
 	sed -i s/__FLANNEL_VERSION__/$(FLANNEL_VERSION)/ $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/defaults.env
-	mkdir -p $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/conf/addons/pf9-sentry
-	cp -a $(AGENT_SRC_DIR)/pf9-addons/pf9-sentry/tooling/manifests/pf9-sentry/pf9-sentry*.yaml $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/conf/addons/pf9-sentry
-	mkdir -p $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/conf/addons/pf9-addon-operator
-	cp -a $(AGENT_SRC_DIR)/pf9-addons/pf9-addon-operator/tooling/manifests/pf9-addon-operator/pf9-addon-operator*.yaml $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/conf/addons/pf9-addon-operator
 	mkdir -p $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/bin/
 	cp -a $(KUBECTL_BIN) $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/bin/
 	cp -a $(KUBELET_BIN) $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/bin/

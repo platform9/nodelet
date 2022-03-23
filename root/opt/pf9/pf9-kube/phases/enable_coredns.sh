@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This task configures and starts pf9-addon-operator service in pf9-addons namespace.
+# This task configures and starts CoreDNS.
 # This task runs on master nodes only.
 
 set -e
@@ -12,7 +12,7 @@ source master_utils.sh
 [ "$DEBUG" == "true" ] && set -x
 
 function start() {
-    ensure_pf9_addon_operator
+    ensure_dns
 }
 
 function stop() {
@@ -20,7 +20,7 @@ function stop() {
 }
 
 function status() {
-    #TODO: Add status check for pf9-addon-operator
+    #TODO: Add status check for coredns
     exit 0
 }
 
@@ -37,7 +37,7 @@ case $operation in
         stop
         ;;
     "name")
-        echo "${ADDON_OPERATOR_CFG}"
+        echo "${COREDNS_CFG}"
         ;;
     "can_run_status")
         echo "no"

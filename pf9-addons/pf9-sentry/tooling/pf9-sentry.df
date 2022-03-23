@@ -1,7 +1,0 @@
-FROM alpine:3.11
-
-MAINTAINER support@platform9.com
-
-COPY ./bin/pf9-sentry /
-RUN chmod +x /pf9-sentry
-ENTRYPOINT ["/pf9-sentry"]

@@ -8,13 +8,13 @@ import (
 	sunpikev1alpha1 "github.com/platform9/pf9-qbert/sunpike/apiserver/pkg/apis/sunpike/v1alpha1"
 )
 
-func NewPF9AddonOperatorPhase(baseDir string) *bashscript.Phase {
-	addonOperatorPhase := &bashscript.Phase{
-		Filename: path.Join(baseDir, "enable_pf9_addon_operator.sh"),
+func NewPF9CoreDNSPhase(baseDir string) *bashscript.Phase {
+	coreDNSPhase := &bashscript.Phase{
+		Filename: path.Join(baseDir, "enable_coredns.sh"),
 		HostPhase: &sunpikev1alpha1.HostPhase{
-			Name:  "Configure and start pf9-addon-operator",
-			Order: int32(constants.PF9AddonOperatorPhaseOrder),
+			Name:  "Configure and start coredns",
+			Order: int32(constants.PF9CoreDNSPhaseOrder),
 		},
 	}
-	return addonOperatorPhase
+	return coreDNSPhase
 }
