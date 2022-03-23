@@ -23,7 +23,7 @@ func NewLabelTaintNodePhaseV2() *LabelTaintNodePhasev2 {
 	log := zap.S()
 	kubeutils, err := kubeutils.NewClient()
 	if err != nil {
-		fmt.Println("failed to initiate label and taint node phase: %w", err)
+		log.Errorf("failed to initiate Apply and validate node taints phase: %v", err)
 	}
 	return &LabelTaintNodePhasev2{
 		HostPhase: &sunpikev1alpha1.HostPhase{
@@ -58,11 +58,10 @@ func (d *LabelTaintNodePhasev2) Start(ctx context.Context, cfg config.Config) er
 		d.log.Errorf(err.Error())
 		return err
 	}
-	fmt.Printf("Node name is %v\n", nodeIdentifier)
+	d.log.Infof("Node name is %v\n", nodeIdentifier)
 
 	if nodeIdentifier == "127.0.0.1" {
 		d.log.Errorf("Fetched node endpoint as 127.0.0.1. Node interface might have lost IP address. Failing.")
-		fmt.Println("Fetched node endpoint as 127.0.0.1. Node interface might have lost IP address. Failing.")
 		return fmt.Errorf("node interface might have lost IP address. Failing")
 	}
 
@@ -82,12 +81,12 @@ func (d *LabelTaintNodePhasev2) Start(ctx context.Context, cfg config.Config) er
 			{
 				Key:    "node-role.kubernetes.io/master",
 				Value:  "true",
-				Effect: "NoSchedule", //use TaintEffect which is enum type
+				Effect: "NoSchedule",
 			},
 		}
 		err = d.kubeUtils.AddTaintsToNode(ctx, nodeIdentifier, taintsToAdd)
 		if err != nil {
-			d.log.Errorf("failed to add taints: %v, Error: %v", labelsToAdd, err)
+			d.log.Errorf("failed to add taints: %v, Error: %v", taintsToAdd, err)
 			return err
 		}
 	}

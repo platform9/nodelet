@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"reflect"
-	"strconv"
 	"time"
 
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
@@ -73,7 +72,7 @@ func GetClientset() (kubernetes.Interface, error) {
 }
 
 func (u *UtilsImpl) AddLabelsToNode(ctx context.Context, nodeName string, labelsToAdd map[string]string) error {
-	//implement waituntil
+
 	node, err := u.GetNodeFromK8sApi(ctx, nodeName)
 	if err != nil {
 		return err
@@ -181,13 +180,6 @@ func (u *UtilsImpl) DrainNodeFromApiServer(ctx context.Context, nodeName string)
 	if err != nil {
 		return fmt.Errorf("failed to drain node")
 	}
-	annotsToAdd := map[string]string{
-		"KubeStackShutDown": "true",
-	}
-	err = u.AddAnnotationsToNode(ctx, nodeName, annotsToAdd)
-	if err != nil {
-		return fmt.Errorf("failed to add annotations: %v beacause of: %w ", annotsToAdd, err)
-	}
 	return nil
 }
 
@@ -201,7 +193,7 @@ func (u *UtilsImpl) GetNodeFromK8sApi(ctx context.Context, nodeName string) (*v1
 }
 
 func (u *UtilsImpl) UncordonNode(ctx context.Context, nodename string) error {
-	//implement wait_until
+
 	helper := drain.Helper{
 		Ctx:                 ctx,
 		Client:              u.Clientset,
@@ -224,7 +216,7 @@ func (u *UtilsImpl) UncordonNode(ctx context.Context, nodename string) error {
 		return err
 	}
 
-	if !node.Spec.Unschedulable {
+	if node.Spec.Unschedulable {
 		return fmt.Errorf("warning: Node %v is still cordoned or cannot be fetched", nodename)
 	}
 	return nil
@@ -234,7 +226,13 @@ func (u *UtilsImpl) PreventAutoReattach() error {
 
 	// Unconditionally delete the qbert metadata file to prevent re-auth
 	err := os.Remove("/opt/pf9/hostagent/extensions/fetch_qbert_metadata")
-	return err
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	return nil
 }
 
 func (u *UtilsImpl) GetRoutedNetworkInterFace() (string, error) {
@@ -311,7 +309,7 @@ func (u *UtilsImpl) K8sApiAvailable(cfg config.Config) error {
 		}
 	}
 
-	healthzUrl := "https://" + apiEndpoint + ":" + strconv.Itoa(cfg.K8sApiPort) + "/healthz"
+	healthzUrl := "https://" + apiEndpoint + ":" + cfg.K8sApiPort + "/healthz"
 
 	caCert, err := ioutil.ReadFile(caCertificate)
 	if err != nil {

@@ -2,16 +2,14 @@ package kubeutils
 
 import (
 	"context"
+	"errors"
 	"testing"
 
-	//"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	//	"github.com/platform9/nodelet/nodelet/mocks"
-	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
-
 	"github.com/onsi/ginkgo/reporters"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,16 +25,16 @@ func TestCommand(t *testing.T) {
 var _ = Describe("Test Kube Utils", func() {
 
 	var (
-		//mockCtrl      *gomock.Controller
-		ctx       context.Context
-		fakeCfg   *config.Config
+		ctx     context.Context
+		fakeCfg *config.Config
+
 		utilsImpl *UtilsImpl
 		nodeName  string
 		fakeNode  *v1.Node
 	)
 	BeforeEach(func() {
 		var err error
-		//mockCtrl = gomock.NewController(GinkgoT())
+
 		utilsImpl = &UtilsImpl{
 			Clientset: fake.NewSimpleClientset(),
 		}
@@ -174,4 +172,49 @@ var _ = Describe("Test Kube Utils", func() {
 			Expect(err).NotTo(BeNil())
 		})
 	})
+	Context("Validates if Drain Nodes", func() {
+		It("Drains node from k8s api", func() {
+			err := utilsImpl.DrainNodeFromApiServer(ctx, nodeName)
+			Expect(err).To(BeNil())
+			node, err := utilsImpl.GetNodeFromK8sApi(ctx, nodeName)
+			Expect(err).To(BeNil())
+			Expect(node.Spec.Unschedulable).To(Equal(true))
+		})
+		It("fails to drain node if nodename is empty", func() {
+			err := utilsImpl.DrainNodeFromApiServer(ctx, "")
+			Expect(err).ToNot(BeNil())
+		})
+	})
+	Context("Validates if Uncordon Node", func() {
+		It("uncordons node from k8s api", func() {
+			err := utilsImpl.UncordonNode(ctx, nodeName)
+			Expect(err).To(BeNil())
+			node, err := utilsImpl.GetNodeFromK8sApi(ctx, nodeName)
+			Expect(err).To(BeNil())
+			Expect(node.Spec.Unschedulable).To(Equal(false))
+		})
+		It("fails to uncordon node if nodename is empty", func() {
+			err := utilsImpl.DrainNodeFromApiServer(ctx, "")
+			Expect(err).ToNot(BeNil())
+		})
+	})
+	Context("Validates IP ", func() {
+		It("if ipv4 it returns as it is", func() {
+			ip, err := utilsImpl.IpForHttp("10.12.13.14")
+			Expect(err).To(BeNil())
+			Expect(ip).To(Equal("10.12.13.14"))
+		})
+		It("if ipv6 it adds bracket", func() {
+			ip, err := utilsImpl.IpForHttp("2001:db8::1234:5678")
+			Expect(err).To(BeNil())
+			Expect(ip).To(Equal("[2001:db8::1234:5678]"))
+		})
+		It("fails if invalid ip ", func() {
+			err := errors.New("IP is invalid")
+			_, reterr := utilsImpl.IpForHttp("10.12.1314")
+			Expect(reterr).ToNot(BeNil())
+			Expect(reterr).To(Equal(err))
+		})
+	})
+
 })
