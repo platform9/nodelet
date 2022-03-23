@@ -35,6 +35,9 @@ var _ = Describe("Test Apply and validate node taints phase", func() {
 		mockCtrl = gomock.NewController(GinkgoT())
 		fakePhase = NewLabelTaintNodePhaseV2()
 		ctx = context.TODO()
+		// utils:=kubeutils.UtilsImpl{
+		// 	Clientset: fake.NewSimpleClientset(),
+		// }
 
 		// Setup config
 		var err error
@@ -42,7 +45,9 @@ var _ = Describe("Test Apply and validate node taints phase", func() {
 		assert.Nil(GinkgoT(), err)
 		fakeCfg.UseCgroups = false
 		fakeKubeUtils = mocks.NewMockUtils(mockCtrl)
+		//fakeKubeUtils.clie
 		fakePhase.kubeUtils = fakeKubeUtils
+		//fakePhase.kubeUtils.Clientset
 	})
 
 	AfterEach(func() {

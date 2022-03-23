@@ -10,7 +10,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	config "github.com/platform9/nodelet/nodelet/pkg/utils/config"
-	v1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"	
 )
 
 // MockUtils is a mock of Utils interface.

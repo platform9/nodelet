@@ -78,7 +78,7 @@ type Config struct {
 	CloudProviderType         string  `mapstructure:"CLOUD_PROVIDER_TYPE"`
 	UseHostname               string  `mapstructure:"USE_HOSTNAME"`
 	MasterIp                  string  `mapstructure:"MASTER_IP"`
-	K8sApiPort                int     `mapstructure:"K8S_API_PORT"`
+	K8sApiPort                string  `mapstructure:"K8S_API_PORT"`
 	MasterSchedulable         bool    `mapstructure:"ALLOW_WORKLOADS_ON_MASTER"`
 }
 

@@ -38,7 +38,6 @@ var _ = Describe("Test Drain nodes phase", func() {
 		fakeKubeUtils = mocks.NewMockUtils(mockCtrl)
 		fakePhase.kubeUtils = fakeKubeUtils
 		ctx = context.TODO()
-
 		// Setup config
 		var err error
 		fakeCfg, err = config.GetDefaultConfig()
@@ -78,30 +77,51 @@ var _ = Describe("Test Drain nodes phase", func() {
 			assert.NotNil(GinkgoT(), reterr)
 			assert.Equal(GinkgoT(), reterr, err)
 		})
-		It("succeeds when k8s api is available and drain node works", func() {
 
+		It("fails if cant drain node", func() {
+			err := errors.New("fake error")
+			fakeKubeUtils.EXPECT().K8sApiAvailable(*fakeCfg).Return(nil).Times(1)
+			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return("10.28.243.97", nil).Times(1)
+			fakeKubeUtils.EXPECT().DrainNodeFromApiServer(ctx, "10.28.243.97").Return(err).Times(1)
+
+			reterr := fakePhase.Stop(ctx, *fakeCfg)
+			assert.NotNil(GinkgoT(), reterr)
+			assert.Equal(GinkgoT(), reterr, err)
+		})
+		It("fails if cant add 'KubeStackShutDown' annotation", func() {
+			err := errors.New("fake error")
+			annotsToAdd := map[string]string{
+				"KubeStackShutDown": "true",
+			}
 			fakeKubeUtils.EXPECT().K8sApiAvailable(*fakeCfg).Return(nil).Times(1)
 			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return("10.28.243.97", nil).Times(1)
 			fakeKubeUtils.EXPECT().DrainNodeFromApiServer(ctx, "10.28.243.97").Return(nil).Times(1)
-
+			fakeKubeUtils.EXPECT().AddAnnotationsToNode(ctx, "10.28.243.97", annotsToAdd).Return(err).Times(1)
 			reterr := fakePhase.Stop(ctx, *fakeCfg)
-			assert.Nil(GinkgoT(), reterr)
+			assert.NotNil(GinkgoT(), reterr)
+			assert.Equal(GinkgoT(), reterr, err)
 		})
-
+		It("succeeds", func() {
+			annotsToAdd := map[string]string{
+				"KubeStackShutDown": "true",
+			}
+			fakeKubeUtils.EXPECT().K8sApiAvailable(*fakeCfg).Return(nil).Times(1)
+			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return("10.28.243.97", nil).Times(1)
+			fakeKubeUtils.EXPECT().DrainNodeFromApiServer(ctx, "10.28.243.97").Return(nil).Times(1)
+			fakeKubeUtils.EXPECT().AddAnnotationsToNode(ctx, "10.28.243.97", annotsToAdd).Return(nil).Times(1)
+			ret := fakePhase.Stop(ctx, *fakeCfg)
+			assert.Nil(GinkgoT(), ret)
+		})
 	})
 
 	Context("validates start command", func() {
 		BeforeEach(func() {
 			_, _ = os.Create("testdata/dummy.txt")
 		})
-		AfterEach(func() {
-			constants.KubeStackStartFileMarker = "var/opt/pf9/is_node_booting_up"
-		})
-
-		It("fails if KubeStackStartFileMarker is not present", func() {
+		It("succeeds if KubeStackStartFileMarker is not present", func() {
 			constants.KubeStackStartFileMarker = "testdata/abc.txt"
 			ret := fakePhase.Start(ctx, *fakeCfg)
-			assert.NotNil(GinkgoT(), ret)
+			assert.Nil(GinkgoT(), ret)
 		})
 		It("succeeds if KubeStackStartFileMarker is present", func() {
 			constants.KubeStackStartFileMarker = "testdata/dummy.txt"
