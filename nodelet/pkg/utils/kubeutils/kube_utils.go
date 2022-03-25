@@ -15,6 +15,7 @@ import (
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 
+	"github.com/pkg/errors"
 	"golang.org/x/net/nettest"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -61,12 +62,12 @@ func GetClientset() (kubernetes.Interface, error) {
 	var clientset kubernetes.Interface
 	config, err := clientcmd.BuildConfigFromFlags("", constants.KubeConfig)
 	if err != nil {
-		return clientset, err
+		return clientset, errors.Wrapf(err, "failed to build config from kubeconfig")
 	}
 
 	clientset, err = kubernetes.NewForConfig(config)
 	if err != nil {
-		return clientset, err
+		return clientset, errors.Wrapf(err, "failed to create clientset")
 	}
 	return clientset, nil
 }
@@ -75,19 +76,19 @@ func (u *UtilsImpl) AddLabelsToNode(ctx context.Context, nodeName string, labels
 
 	node, err := u.GetNodeFromK8sApi(ctx, nodeName)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to add labels: %v to node: %v", labelsToAdd, nodeName)
 	}
-	metadata := node.ObjectMeta
-	if metadata.Labels == nil {
-		metadata.Labels = make(map[string]string)
+	metaData := node.ObjectMeta
+	if metaData.Labels == nil {
+		metaData.Labels = make(map[string]string)
 	}
 	for k, v := range labelsToAdd {
-		metadata.Labels[k] = v
+		metaData.Labels[k] = v
 	}
-	node.ObjectMeta = metadata
+	node.ObjectMeta = metaData
 	_, err = u.Clientset.CoreV1().Nodes().Update(ctx, node, metav1.UpdateOptions{})
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to update node with newly added labels")
 	}
 	return nil
 }
@@ -95,19 +96,19 @@ func (u *UtilsImpl) AddLabelsToNode(ctx context.Context, nodeName string, labels
 func (u *UtilsImpl) AddAnnotationsToNode(ctx context.Context, nodeName string, annotsToAdd map[string]string) error {
 	node, err := u.GetNodeFromK8sApi(ctx, nodeName)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to add annotations: %v to node: %v", annotsToAdd, nodeName)
 	}
-	metadata := node.ObjectMeta
-	if metadata.Annotations == nil {
-		metadata.Annotations = make(map[string]string)
+	metaData := node.ObjectMeta
+	if metaData.Annotations == nil {
+		metaData.Annotations = make(map[string]string)
 	}
 	for k, v := range annotsToAdd {
-		metadata.Annotations[k] = v
+		metaData.Annotations[k] = v
 	}
-	node.ObjectMeta = metadata
+	node.ObjectMeta = metaData
 	_, err = u.Clientset.CoreV1().Nodes().Update(ctx, node, metav1.UpdateOptions{})
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to update node with newly added annotations")
 	}
 	return nil
 }
@@ -115,40 +116,39 @@ func (u *UtilsImpl) AddAnnotationsToNode(ctx context.Context, nodeName string, a
 func (u *UtilsImpl) RemoveAnnotationsFromNode(ctx context.Context, nodeName string, annotsToRemove []string) error {
 	node, err := u.GetNodeFromK8sApi(ctx, nodeName)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to remove annotations: %v from node: %v", annotsToRemove, nodeName)
 	}
-	metadata := node.ObjectMeta
-	if metadata.Annotations == nil {
+	metaData := node.ObjectMeta
+	if metaData.Annotations == nil {
 		return nil
 	}
 	for _, v := range annotsToRemove {
-		delete(metadata.Annotations, v)
+		delete(metaData.Annotations, v)
 	}
-	node.ObjectMeta = metadata
+	node.ObjectMeta = metaData
 	_, err = u.Clientset.CoreV1().Nodes().Update(ctx, node, metav1.UpdateOptions{})
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to update node with removed annotations")
 	}
 	return nil
 }
 
-func (u *UtilsImpl) AddTaintsToNode(ctx context.Context, nodename string, taintsToadd []*v1.Taint) error {
-	node, err := u.GetNodeFromK8sApi(ctx, nodename)
+func (u *UtilsImpl) AddTaintsToNode(ctx context.Context, nodeName string, taintsToAdd []*v1.Taint) error {
+	node, err := u.GetNodeFromK8sApi(ctx, nodeName)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to add taints: %v to node: %v", taintsToAdd, nodeName)
 	}
-	for _, taint := range taintsToadd {
+	for _, taint := range taintsToAdd {
 		taintedNode, updated, err := AddOrUpdateTaint(node, taint)
 		if err != nil {
-			return err
+			return errors.Wrapf(err, "failed to add taints: %v to node: %v", taintsToAdd, nodeName)
 		}
 		if !updated {
-			fmt.Println("taint not added")
-			return fmt.Errorf("taint not added")
+			return errors.Wrapf(err, "failed to add taints: %v to node: %v", taintsToAdd, nodeName)
 		}
 		_, err = u.Clientset.CoreV1().Nodes().Update(ctx, taintedNode, metav1.UpdateOptions{})
 		if err != nil {
-			return err
+			return errors.Wrapf(err, "failed to update node with newly added taints")
 		}
 	}
 	return nil
@@ -170,15 +170,15 @@ func (u *UtilsImpl) DrainNodeFromApiServer(ctx context.Context, nodeName string)
 	}
 	node, err := u.GetNodeFromK8sApi(ctx, nodeName)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to drain node")
 	}
 	err = drain.RunCordonOrUncordon(&helper, node, true)
 	if err != nil {
-		return fmt.Errorf("failed to cordon node")
+		return errors.Wrapf(err, "failed to cordon node")
 	}
 	err = drain.RunNodeDrain(&helper, node.Name)
 	if err != nil {
-		return fmt.Errorf("failed to drain node")
+		return errors.Wrapf(err, "failed to drain node")
 	}
 	return nil
 }
@@ -187,12 +187,12 @@ func (u *UtilsImpl) GetNodeFromK8sApi(ctx context.Context, nodeName string) (*v1
 	var node *v1.Node
 	node, err := u.Clientset.CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
 	if err != nil {
-		return node, err
+		return node, errors.Wrapf(err, "failed to get node")
 	}
 	return node, nil
 }
 
-func (u *UtilsImpl) UncordonNode(ctx context.Context, nodename string) error {
+func (u *UtilsImpl) UncordonNode(ctx context.Context, nodeName string) error {
 
 	helper := drain.Helper{
 		Ctx:                 ctx,
@@ -207,30 +207,29 @@ func (u *UtilsImpl) UncordonNode(ctx context.Context, nodename string) error {
 		DisableEviction:     true,
 	}
 
-	node, err := u.GetNodeFromK8sApi(ctx, nodename)
+	node, err := u.GetNodeFromK8sApi(ctx, nodeName)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to uncordon node")
 	}
 	err = drain.RunCordonOrUncordon(&helper, node, false)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to uncordon node")
 	}
-
 	if node.Spec.Unschedulable {
-		return fmt.Errorf("warning: Node %v is still cordoned or cannot be fetched", nodename)
+		return errors.Wrapf(err, "warning: node is still cordoned or cannot be fetched")
 	}
 	return nil
 }
 
 func (u *UtilsImpl) PreventAutoReattach() error {
 
-	// Unconditionally delete the qbert metadata file to prevent re-auth
+	// Unconditionally delete the qbert metaData file to prevent re-auth
 	err := os.Remove("/opt/pf9/hostagent/extensions/fetch_qbert_metadata")
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil
 		}
-		return err
+		return errors.Wrapf(err, "failed to remove qbert metadata file")
 	}
 	return nil
 }
@@ -248,33 +247,32 @@ func (u *UtilsImpl) GetIPv4ForInterfaceName(interfaceName string) (string, error
 	interfaces, _ := net.Interfaces()
 	for _, inter := range interfaces {
 		if inter.Name == interfaceName {
-			if addrs, err := inter.Addrs(); err == nil {
-				for _, addr := range addrs {
-					switch ip := addr.(type) {
-					case *net.IPNet:
-						if ip.IP.DefaultMask() != nil {
-							return ip.IP.String(), nil
-						}
+			addrs, err := inter.Addrs()
+			if err != nil {
+				return "", err
+			}
+			for _, addr := range addrs {
+				switch ip := addr.(type) {
+				case *net.IPNet:
+					if ip.IP.DefaultMask() != nil {
+						return ip.IP.String(), nil
 					}
 				}
-			} else {
-				return "", err
 			}
 		}
 	}
 	return "", fmt.Errorf("routedinterface not found so can't find ip")
-
 }
 
 func (u *UtilsImpl) GetNodeIP() (string, error) {
 	var err error
 	routedInterfaceName, err := u.GetRoutedNetworkInterFace()
 	if err != nil {
-		return "", fmt.Errorf("failed to get routedNetworkinterface: %v", err)
+		return "", errors.Wrapf(err, "failed to get routed network interface")
 	}
 	routedIp, err := u.GetIPv4ForInterfaceName(routedInterfaceName)
 	if err != nil {
-		return "", fmt.Errorf("failed to get IPv4 for node_identification: %v", err)
+		return "", errors.Wrapf(err, "failed to get node IP")
 	}
 	return routedIp, nil
 }
@@ -286,48 +284,47 @@ func (u *UtilsImpl) IpForHttp(masterIp string) (string, error) {
 	} else if net.ParseIP(masterIp).To16() != nil {
 		return "[" + masterIp + "]", nil
 	}
-	return "", fmt.Errorf("IP is invalid")
+	return "", fmt.Errorf("invalid IP")
 }
 
 func (u *UtilsImpl) K8sApiAvailable(cfg config.Config) error {
 
-	caCertificate := constants.AdminCerts + "/ca.crt"
-	clientCertificate := constants.AdminCerts + "/request.crt"
-	keyFile := constants.AdminCerts + "/request.key"
+	caCertificate := fmt.Sprintf("%s/ca.crt", constants.AdminCerts)
+	clientCertificate := fmt.Sprintf("%s/request.crt", constants.AdminCerts)
+	keyFile := fmt.Sprintf("%s/request.key", constants.AdminCerts)
 	apiEndpoint := ""
 	var err error
+
+	if cfg.ClusterRole == constants.RoleMaster {
+		apiEndpoint = constants.LocalHostString
+	} else {
+		apiEndpoint, err = u.IpForHttp(cfg.MasterIp)
+		if err != nil {
+			return errors.Wrapf(err, "failed to check K8s API available")
+		}
+	}
 
 	//https://github.com/kubernetes/kubernetes/pull/46589 for role bindings to appear
 	//     #healthz is better indication for availability, use https
 
-	if cfg.ClusterRole == "master" {
-		apiEndpoint = "localhost"
-	} else {
-		apiEndpoint, err = u.IpForHttp(cfg.MasterIp)
-		if err != nil {
-			return fmt.Errorf("failed to get apiendpoint for healthz : %v", err)
-		}
-	}
-
-	healthzUrl := "https://" + apiEndpoint + ":" + cfg.K8sApiPort + "/healthz"
-
+	healthzUrl := fmt.Sprintf("https://%s:%s/healthz", apiEndpoint, cfg.K8sApiPort)
 	caCert, err := ioutil.ReadFile(caCertificate)
 	if err != nil {
-		return fmt.Errorf("failed to readfile cacertificate")
+		return errors.Wrapf(err, "failed to read ca certificate")
 	}
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM(caCert)
 
 	clientCert, err := ioutil.ReadFile(clientCertificate)
 	if err != nil {
-		return fmt.Errorf("failed to readfile clientcertificate")
+		return errors.Wrapf(err, "failed to read client certificate")
 	}
 	clientCertPool := x509.NewCertPool()
 	clientCertPool.AppendCertsFromPEM(clientCert)
 
 	cert, err := tls.LoadX509KeyPair(clientCertificate, keyFile)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "could not load x509 key pair")
 	}
 
 	client := &http.Client{
@@ -342,11 +339,11 @@ func (u *UtilsImpl) K8sApiAvailable(cfg config.Config) error {
 
 	res, err := client.Get(healthzUrl)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "could not get to healthz")
 	}
 
-	if res.StatusCode >= 500 {
-		return fmt.Errorf("apiServer not available")
+	if res.StatusCode >= http.StatusInternalServerError {
+		return fmt.Errorf("api server not available")
 	}
 	return nil
 }
@@ -387,10 +384,10 @@ func (u *UtilsImpl) GetNodeIdentifier(cfg config.Config) (string, error) {
 
 	var err error
 	var nodeIdentifier string
-	if cfg.CloudProviderType == "local" && cfg.UseHostname == "true" {
+	if cfg.CloudProviderType == constants.LocalCloudProvider && cfg.UseHostname == constants.TrueString {
 		nodeIdentifier, err = os.Hostname()
 		if err != nil {
-			return nodeIdentifier, fmt.Errorf("failed to get hostName for node identification: %w", err)
+			return nodeIdentifier, errors.Wrapf(err, "failed to get hostName for node identification")
 		}
 		if nodeIdentifier == "" {
 			return nodeIdentifier, fmt.Errorf("nodeIdentifier is null")
@@ -398,7 +395,7 @@ func (u *UtilsImpl) GetNodeIdentifier(cfg config.Config) (string, error) {
 	} else {
 		nodeIdentifier, err = u.GetNodeIP()
 		if err != nil {
-			return nodeIdentifier, fmt.Errorf("failed to get node IP address for node identification: %w", err)
+			return nodeIdentifier, errors.Wrapf(err, "failed to get node IP address for node identification")
 		}
 		if nodeIdentifier == "" {
 			return nodeIdentifier, fmt.Errorf("nodeIdentifier is null")

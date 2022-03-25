@@ -36,16 +36,13 @@ func GetMasterPhases() ([]PhaseInterface, error) {
 		kubelet.NewKubeletConfigureStartPhase(constants.PhaseBaseDir),              // Order 80
 		kubeproxy.NewKubeProxyStartPhase(constants.PhaseBaseDir),                   // Order 90
 		misc.NewWaitForK8sSvcPhase(constants.PhaseBaseDir),                         // Order 100
-		//misc.NewLabelTaintNodePhase(constants.PhaseBaseDir),                        // Order 110
-		misc.NewLabelTaintNodePhaseV2(),
-		kubelet.NewDynamicKubeletConfigPhase(constants.PhaseBaseDir), // Order 120
-		//misc.NewUncordonNodePhase(constants.PhaseBaseDir),                          // Order 130
-		misc.NewUncordonNodePhaseV2(),
-		addons.NewDeployAppCatalogPhase(constants.PhaseBaseDir),             // Order 160
-		keepalived.NewConfigureStartKeepalivedPhase(constants.PhaseBaseDir), // Order 180
-		addons.NewPF9AddonOperatorPhase(constants.PhaseBaseDir),             // Order 206
-		// cleanup.NewDrainPodsPhase(constants.PhaseBaseDir),                          // Order 210
-		cleanup.NewDrainNodePhaseV2(), // Order 210
+		misc.NewLabelTaintNodePhase(),                                              // Order 110
+		kubelet.NewDynamicKubeletConfigPhase(constants.PhaseBaseDir),               // Order 120
+		misc.NewUncordonNodePhase(),                                                // Order 130
+		addons.NewDeployAppCatalogPhase(constants.PhaseBaseDir),                    // Order 160
+		keepalived.NewConfigureStartKeepalivedPhase(constants.PhaseBaseDir),        // Order 180
+		addons.NewPF9AddonOperatorPhase(constants.PhaseBaseDir),                    // Order 206
+		cleanup.NewDrainNodePhase(),                                                // Order 210
 	}
 	if err := validatePhaseOrdering(masterPhaseList); err != nil {
 		return []PhaseInterface{}, err
@@ -65,13 +62,10 @@ func GetWorkerPhases() ([]PhaseInterface, error) {
 		kubelet.NewKubeletConfigureStartPhase(constants.PhaseBaseDir),              // Order 80
 		kubeproxy.NewKubeProxyStartPhase(constants.PhaseBaseDir),                   // Order 90
 		misc.NewWaitForK8sSvcPhase(constants.PhaseBaseDir),                         // Order 100
-		//misc.NewLabelTaintNodePhase(constants.PhaseBaseDir),                        // Order 110
-		misc.NewLabelTaintNodePhaseV2(),
-		kubelet.NewDynamicKubeletConfigPhase(constants.PhaseBaseDir), // Order 120
-		//misc.NewUncordonNodePhase(constants.PhaseBaseDir),                          // Order 130
-		misc.NewUncordonNodePhaseV2(),
-		// cleanup.NewDrainPodsPhase(constants.PhaseBaseDir),                          // Order 210
-		cleanup.NewDrainNodePhaseV2(), // Order 210
+		misc.NewLabelTaintNodePhase(),                                              // Order 110
+		kubelet.NewDynamicKubeletConfigPhase(constants.PhaseBaseDir),               // Order 120
+		misc.NewUncordonNodePhase(),                                                // Order 130
+		cleanup.NewDrainNodePhase(),                                                // Order 210
 	}
 	if err := validatePhaseOrdering(workerPhaseList); err != nil {
 		return []PhaseInterface{}, err

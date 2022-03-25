@@ -13,19 +13,19 @@ import (
 	sunpikev1alpha1 "github.com/platform9/pf9-qbert/sunpike/apiserver/pkg/apis/sunpike/v1alpha1"
 )
 
-type UncordonNodePhasev2 struct {
+type UncordonNodePhase struct {
 	HostPhase *sunpikev1alpha1.HostPhase
 	log       *zap.SugaredLogger
 	kubeUtils kubeutils.Utils
 }
 
-func NewUncordonNodePhaseV2() *UncordonNodePhasev2 {
+func NewUncordonNodePhase() *UncordonNodePhase {
 	log := zap.S()
 	kubeutils, err := kubeutils.NewClient()
 	if err != nil {
-		log.Errorf("failed to initiate Uncordon node phase: %v", err)
+		log.Errorf("failed to initiate Uncordon node phase: %w", err)
 	}
-	return &UncordonNodePhasev2{
+	return &UncordonNodePhase{
 		HostPhase: &sunpikev1alpha1.HostPhase{
 			Name:  "Uncordon node",
 			Order: int32(constants.UncordonNodePhaseOrder),
@@ -35,19 +35,19 @@ func NewUncordonNodePhaseV2() *UncordonNodePhasev2 {
 	}
 }
 
-func (d *UncordonNodePhasev2) GetHostPhase() sunpikev1alpha1.HostPhase {
+func (d *UncordonNodePhase) GetHostPhase() sunpikev1alpha1.HostPhase {
 	return *d.HostPhase
 }
 
-func (d *UncordonNodePhasev2) GetPhaseName() string {
+func (d *UncordonNodePhase) GetPhaseName() string {
 	return d.HostPhase.Name
 }
 
-func (d *UncordonNodePhasev2) GetOrder() int {
+func (d *UncordonNodePhase) GetOrder() int {
 	return int(d.HostPhase.Order)
 }
 
-func (d *UncordonNodePhasev2) Status(ctx context.Context, cfg config.Config) error {
+func (d *UncordonNodePhase) Status(ctx context.Context, cfg config.Config) error {
 
 	nodeIdentifier, err := d.kubeUtils.GetNodeIdentifier(cfg)
 	if err != nil {
@@ -56,13 +56,13 @@ func (d *UncordonNodePhasev2) Status(ctx context.Context, cfg config.Config) err
 	}
 
 	if _, err := os.Stat(constants.KubeStackStartFileMarker); err == nil {
-		d.log.Infof("Kube stack is still booting up, nodes not ready yet")
+		d.log.Infof("kube stack is still booting up, nodes not ready yet")
 		return nil
 	}
 
 	node, err := d.kubeUtils.GetNodeFromK8sApi(ctx, nodeIdentifier)
 	if err != nil {
-		d.log.Errorf("failed to get node from K8s api : %v", err)
+		d.log.Errorf(err.Error())
 		return err
 	}
 	metadata := &node.ObjectMeta
@@ -70,7 +70,7 @@ func (d *UncordonNodePhasev2) Status(ctx context.Context, cfg config.Config) err
 	//if KubeStackShutDown is present then node was cordoned by PF9
 	if metadata.Annotations != nil {
 		kubeStackShutDown := metadata.Annotations["KubeStackShutDown"]
-		if kubeStackShutDown == "true" {
+		if kubeStackShutDown == constants.TrueString {
 			return nil
 		}
 	}
@@ -82,21 +82,21 @@ func (d *UncordonNodePhasev2) Status(ctx context.Context, cfg config.Config) err
 		}
 		err = d.kubeUtils.AddAnnotationsToNode(ctx, nodeIdentifier, annotsToAdd)
 		if err != nil {
-			d.log.Errorf("failed to add annotations: %v, Error: %v", annotsToAdd, err)
+			d.log.Errorf(err.Error())
 			return err
 		}
 	} else if !nodeCordoned {
 		annotsToRemove := []string{"UserNodeCordon"}
 		err = d.kubeUtils.RemoveAnnotationsFromNode(ctx, nodeIdentifier, annotsToRemove)
 		if err != nil {
-			d.log.Errorf("failed to remove annotations: %v, Error: %v", annotsToRemove, err)
+			d.log.Errorf(err.Error())
 			return err
 		}
 	}
 	return nil
 }
 
-func (d *UncordonNodePhasev2) Start(ctx context.Context, cfg config.Config) error {
+func (d *UncordonNodePhase) Start(ctx context.Context, cfg config.Config) error {
 
 	nodeIdentifier, err := d.kubeUtils.GetNodeIdentifier(cfg)
 	if err != nil {
@@ -104,9 +104,9 @@ func (d *UncordonNodePhasev2) Start(ctx context.Context, cfg config.Config) erro
 		return err
 	}
 
-	d.log.Infof("Node name is %v\n", nodeIdentifier)
+	d.log.Infof("Node name is %v", nodeIdentifier)
 
-	if nodeIdentifier == "127.0.0.1" {
+	if nodeIdentifier == constants.LoopBackIpString {
 		d.log.Errorf("Fetched node endpoint as 127.0.0.1. Node interface might have lost IP address. Failing.")
 		return fmt.Errorf("node interface might have lost IP address. Failing")
 	}
@@ -116,13 +116,13 @@ func (d *UncordonNodePhasev2) Start(ctx context.Context, cfg config.Config) erro
 
 	err = d.kubeUtils.RemoveAnnotationsFromNode(ctx, nodeIdentifier, annotsToRemove)
 	if err != nil {
-		d.log.Errorf("failed to remove annotations: %v, Error: %v", annotsToRemove, err)
+		d.log.Errorf(err.Error())
 		return err
 	}
 
 	node, err := d.kubeUtils.GetNodeFromK8sApi(ctx, nodeIdentifier)
 	if err != nil {
-		d.log.Errorf("failed to get node from k8s api, beacause: %v", err)
+		d.log.Errorf(err.Error())
 		return err
 	}
 	metadata := node.ObjectMeta
@@ -131,24 +131,25 @@ func (d *UncordonNodePhasev2) Start(ctx context.Context, cfg config.Config) erro
 	if metadata.Annotations != nil {
 		userNodeCordon := metadata.Annotations["UserNodeCordon"]
 		//If cordoned by user DO NOT uncordon, exit
-		if userNodeCordon == "true" {
+		if userNodeCordon == constants.TrueString {
 			return nil
 		}
 	}
 
 	err = d.kubeUtils.UncordonNode(ctx, nodeIdentifier)
 	if err != nil {
-		d.log.Errorf("failed to uncordon: %v", err)
+		d.log.Errorf(err.Error())
 		return err
 	}
 	err = d.kubeUtils.PreventAutoReattach()
 	if err != nil {
+		d.log.Errorf(err.Error())
 		return err
 	}
 	//post_upgrade_cleanup (not implemented ,not needed)
 	return nil
 }
 
-func (d *UncordonNodePhasev2) Stop(ctx context.Context, cfg config.Config) error {
+func (d *UncordonNodePhase) Stop(ctx context.Context, cfg config.Config) error {
 	return nil
 }

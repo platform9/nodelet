@@ -2,13 +2,13 @@ package kubeutils
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-
 	"github.com/onsi/ginkgo/reporters"
+	. "github.com/onsi/gomega"
+	"github.com/pkg/errors"
+
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
@@ -25,16 +25,14 @@ func TestCommand(t *testing.T) {
 var _ = Describe("Test Kube Utils", func() {
 
 	var (
-		ctx     context.Context
-		fakeCfg *config.Config
-
+		ctx       context.Context
+		fakeCfg   *config.Config
 		utilsImpl *UtilsImpl
 		nodeName  string
 		fakeNode  *v1.Node
 	)
 	BeforeEach(func() {
 		var err error
-
 		utilsImpl = &UtilsImpl{
 			Clientset: fake.NewSimpleClientset(),
 		}
@@ -57,14 +55,15 @@ var _ = Describe("Test Kube Utils", func() {
 	})
 
 	Context("Validates Node", func() {
-		It("Gives node from k8s api", func() {
+		It("Gets node from k8s API", func() {
 			node, err := utilsImpl.GetNodeFromK8sApi(ctx, nodeName)
-			Expect(err).To(BeNil())
-			Expect(node).To(Equal(fakeNode))
+			assert.Nil(GinkgoT(), err)
+			assert.Equal(GinkgoT(), node, fakeNode)
 		})
-		It("fails to get node from k8s api if nodename is empty", func() {
-			_, err := utilsImpl.GetNodeFromK8sApi(ctx, "")
-			Expect(err).ToNot(BeNil())
+		It("Fails to get node from k8s API if nodename is empty", func() {
+			nodeName = ""
+			_, err := utilsImpl.GetNodeFromK8sApi(ctx, nodeName)
+			assert.NotNil(GinkgoT(), err)
 		})
 	})
 	Context("Validates labels", func() {
@@ -78,16 +77,18 @@ var _ = Describe("Test Kube Utils", func() {
 				"node-role.kubernetes.io/master": "",
 			}
 		})
-		It("should add labels to node", func() {
+		It("Should add labels to node", func() {
+
 			err := utilsImpl.AddLabelsToNode(ctx, nodeName, labelsToAdd)
-			Expect(err).To(BeNil())
+			assert.Nil(GinkgoT(), err)
 			node, err := utilsImpl.GetNodeFromK8sApi(ctx, nodeName)
-			Expect(err).To(BeNil())
-			Expect(node).To(Equal(fakeNode))
+			assert.Nil(GinkgoT(), err)
+			assert.Equal(GinkgoT(), node, fakeNode)
 		})
-		It("fails to add labels to node if nodename is empty", func() {
-			err := utilsImpl.AddLabelsToNode(ctx, "", labelsToAdd)
-			Expect(err).NotTo(BeNil())
+		It("Fails to add labels to node if nodename is empty", func() {
+			nodeName = ""
+			err := utilsImpl.AddLabelsToNode(ctx, nodeName, labelsToAdd)
+			assert.NotNil(GinkgoT(), err)
 		})
 	})
 	Context("Validates taints", func() {
@@ -114,24 +115,25 @@ var _ = Describe("Test Kube Utils", func() {
 				},
 			}
 		})
-		It("should add single taint to node", func() {
+		It("Should add single taint to node", func() {
 			node, err := utilsImpl.GetNodeFromK8sApi(ctx, nodeName)
-			Expect(err).To(BeNil())
+			assert.Nil(GinkgoT(), err)
 			taintedNode, updated, err := AddOrUpdateTaint(node, taint)
-			Expect(err).To(BeNil())
-			Expect(taintedNode).To(Equal(fakeNode))
-			Expect(updated).To(Equal(true))
+			assert.Nil(GinkgoT(), err)
+			assert.Equal(GinkgoT(), taintedNode, fakeNode)
+			assert.Equal(GinkgoT(), updated, true)
 		})
-		It("should add slice of taints to node", func() {
+		It("Should add slice of taints to node", func() {
 			err := utilsImpl.AddTaintsToNode(ctx, nodeName, taintsToAdd)
-			Expect(err).To(BeNil())
+			assert.Nil(GinkgoT(), err)
 			taintedNode, err := utilsImpl.GetNodeFromK8sApi(ctx, nodeName)
-			Expect(err).To(BeNil())
-			Expect(taintedNode).To(Equal(fakeNode))
+			assert.Nil(GinkgoT(), err)
+			assert.Equal(GinkgoT(), taintedNode, fakeNode)
 		})
-		It("fails to add taints to node if nodename is empty", func() {
-			err := utilsImpl.AddTaintsToNode(ctx, "", taintsToAdd)
-			Expect(err).NotTo(BeNil())
+		It("Fails to add taints to node if nodename is empty", func() {
+			nodeName = ""
+			err := utilsImpl.AddTaintsToNode(ctx, nodeName, taintsToAdd)
+			assert.NotNil(GinkgoT(), err)
 		})
 	})
 	Context("Validates Annotations", func() {
@@ -143,77 +145,78 @@ var _ = Describe("Test Kube Utils", func() {
 			}
 			annotsToRemove = []string{"UserNodeCordon"}
 		})
-		It("should add annots to node", func() {
+		It("Should add annots to node", func() {
 			fakeNode.ObjectMeta.Annotations = map[string]string{
 				"UserNodeCordon": "true",
 			}
 			err := utilsImpl.AddAnnotationsToNode(ctx, nodeName, annotsToAdd)
-			Expect(err).To(BeNil())
+			assert.Nil(GinkgoT(), err)
 			node, err := utilsImpl.GetNodeFromK8sApi(ctx, nodeName)
-			Expect(err).To(BeNil())
-			Expect(node).To(Equal(fakeNode))
+			assert.Nil(GinkgoT(), err)
+			assert.Equal(GinkgoT(), node, fakeNode)
 		})
-		It("fails to add annots to node if nodename is empty", func() {
+		It("Fails to add annots to node if nodename is empty", func() {
 			err := utilsImpl.AddAnnotationsToNode(ctx, "", annotsToAdd)
-			Expect(err).NotTo(BeNil())
+			assert.NotNil(GinkgoT(), err)
 		})
-		It("should remove annots from node", func() {
+		It("Should remove annots from node", func() {
 			fakeNode.ObjectMeta.Annotations = map[string]string{}
 			err := utilsImpl.AddAnnotationsToNode(ctx, nodeName, annotsToAdd)
-			Expect(err).To(BeNil())
+			assert.Nil(GinkgoT(), err)
 			err = utilsImpl.RemoveAnnotationsFromNode(ctx, nodeName, annotsToRemove)
-			Expect(err).To(BeNil())
+			assert.Nil(GinkgoT(), err)
 			node, err := utilsImpl.GetNodeFromK8sApi(ctx, nodeName)
-			Expect(err).To(BeNil())
-			Expect(node).To(Equal(fakeNode))
+			assert.Nil(GinkgoT(), err)
+			assert.Equal(GinkgoT(), node, fakeNode)
 		})
-		It("fails to remove annots from node if nodename is empty", func() {
-			err := utilsImpl.RemoveAnnotationsFromNode(ctx, "", annotsToRemove)
-			Expect(err).NotTo(BeNil())
+		It("Fails to remove annots from node if nodename is empty", func() {
+			nodeName = ""
+			err := utilsImpl.RemoveAnnotationsFromNode(ctx, nodeName, annotsToRemove)
+			assert.NotNil(GinkgoT(), err)
 		})
 	})
 	Context("Validates if Drain Nodes", func() {
 		It("Drains node from k8s api", func() {
 			err := utilsImpl.DrainNodeFromApiServer(ctx, nodeName)
-			Expect(err).To(BeNil())
+			assert.Nil(GinkgoT(), err)
 			node, err := utilsImpl.GetNodeFromK8sApi(ctx, nodeName)
-			Expect(err).To(BeNil())
-			Expect(node.Spec.Unschedulable).To(Equal(true))
+			assert.Nil(GinkgoT(), err)
+			assert.Equal(GinkgoT(), node.Spec.Unschedulable, true)
 		})
-		It("fails to drain node if nodename is empty", func() {
+		It("Fails to drain node if nodename is empty", func() {
 			err := utilsImpl.DrainNodeFromApiServer(ctx, "")
-			Expect(err).ToNot(BeNil())
+			assert.NotNil(GinkgoT(), err)
 		})
 	})
 	Context("Validates if Uncordon Node", func() {
-		It("uncordons node from k8s api", func() {
+		It("Uncordons node from k8s api", func() {
 			err := utilsImpl.UncordonNode(ctx, nodeName)
-			Expect(err).To(BeNil())
+			assert.Nil(GinkgoT(), err)
 			node, err := utilsImpl.GetNodeFromK8sApi(ctx, nodeName)
-			Expect(err).To(BeNil())
-			Expect(node.Spec.Unschedulable).To(Equal(false))
+			assert.Nil(GinkgoT(), err)
+			assert.Equal(GinkgoT(), node.Spec.Unschedulable, false)
 		})
-		It("fails to uncordon node if nodename is empty", func() {
+		It("Fails to uncordon node if nodename is empty", func() {
 			err := utilsImpl.DrainNodeFromApiServer(ctx, "")
-			Expect(err).ToNot(BeNil())
+			assert.NotNil(GinkgoT(), err)
 		})
 	})
 	Context("Validates IP ", func() {
-		It("if ipv4 it returns as it is", func() {
+		It("If ipv4 it returns as it is", func() {
 			ip, err := utilsImpl.IpForHttp("10.12.13.14")
-			Expect(err).To(BeNil())
-			Expect(ip).To(Equal("10.12.13.14"))
+			assert.Nil(GinkgoT(), err)
+			assert.Equal(GinkgoT(), ip, "10.12.13.14")
 		})
-		It("if ipv6 it adds bracket", func() {
+		It("If ipv6 it adds bracket", func() {
 			ip, err := utilsImpl.IpForHttp("2001:db8::1234:5678")
-			Expect(err).To(BeNil())
-			Expect(ip).To(Equal("[2001:db8::1234:5678]"))
+			assert.Nil(GinkgoT(), err)
+			assert.Equal(GinkgoT(), ip, "[2001:db8::1234:5678]")
 		})
-		It("fails if invalid ip ", func() {
-			err := errors.New("IP is invalid")
+		It("Fails if invalid ip ", func() {
+			err := errors.New("invalid IP")
 			_, reterr := utilsImpl.IpForHttp("10.12.1314")
-			Expect(reterr).ToNot(BeNil())
-			Expect(reterr).To(Equal(err))
+			assert.NotNil(GinkgoT(), err)
+			assert.Equal(GinkgoT(), reterr.Error(), err.Error())
 		})
 	})
 

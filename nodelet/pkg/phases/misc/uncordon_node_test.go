@@ -2,11 +2,11 @@ package misc
 
 import (
 	"context"
-	"errors"
+	"fmt"
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
-
+	"github.com/pkg/errors"
 	"github.com/platform9/nodelet/nodelet/mocks"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
@@ -20,7 +20,7 @@ var _ = Describe("Test Uncordon node phase", func() {
 
 	var (
 		mockCtrl           *gomock.Controller
-		fakePhase          *UncordonNodePhasev2
+		fakePhase          *UncordonNodePhase
 		ctx                context.Context
 		fakeCfg            *config.Config
 		fakeKubeUtils      *mocks.MockUtils
@@ -29,7 +29,7 @@ var _ = Describe("Test Uncordon node phase", func() {
 	)
 	BeforeEach(func() {
 		mockCtrl = gomock.NewController(GinkgoT())
-		fakePhase = NewUncordonNodePhaseV2()
+		fakePhase = NewUncordonNodePhase()
 		ctx = context.TODO()
 
 		// Setup config
@@ -138,7 +138,7 @@ var _ = Describe("Test Uncordon node phase", func() {
 				ret := fakePhase.Status(ctx, *fakeCfg)
 				assert.Nil(GinkgoT(), ret)
 			})
-			It("it fails to remove userNodeCordon annotation when add annotation fails", func() {
+			It("it fails to remove userNodeCordon annotation when remove annotation fails", func() {
 				fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
 				fakeKubeUtils.EXPECT().GetNodeFromK8sApi(ctx, fakeNodeIdentifier).Return(fakeNode, nil).Times(1)
 				err := errors.New("fake error")
@@ -163,7 +163,7 @@ var _ = Describe("Test Uncordon node phase", func() {
 			assert.Equal(GinkgoT(), reterr, err)
 		})
 		It("fails when nodeIdentifier is 127.0.0.1", func() {
-			err := errors.New("node interface might have lost IP address. Failing")
+			err := fmt.Errorf("node interface might have lost IP address. Failing")
 			fakeNodeIdentifier = "127.0.0.1"
 			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
 			reterr := fakePhase.Start(ctx, *fakeCfg)

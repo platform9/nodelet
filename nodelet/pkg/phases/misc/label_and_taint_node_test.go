@@ -10,6 +10,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/platform9/nodelet/nodelet/mocks"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/onsi/ginkgo/reporters"
@@ -25,29 +26,25 @@ func TestCommand(t *testing.T) {
 var _ = Describe("Test Apply and validate node taints phase", func() {
 
 	var (
-		mockCtrl      *gomock.Controller
-		fakePhase     *LabelTaintNodePhasev2
-		ctx           context.Context
-		fakeCfg       *config.Config
-		fakeKubeUtils *mocks.MockUtils
+		mockCtrl       *gomock.Controller
+		fakePhase      *LabelTaintNodePhase
+		ctx            context.Context
+		fakeCfg        *config.Config
+		fakeKubeUtils  *mocks.MockUtils
+		nodeIdentifier string
 	)
 	BeforeEach(func() {
 		mockCtrl = gomock.NewController(GinkgoT())
-		fakePhase = NewLabelTaintNodePhaseV2()
+		fakePhase = NewLabelTaintNodePhase()
 		ctx = context.TODO()
-		// utils:=kubeutils.UtilsImpl{
-		// 	Clientset: fake.NewSimpleClientset(),
-		// }
-
 		// Setup config
 		var err error
 		fakeCfg, err = config.GetDefaultConfig()
 		assert.Nil(GinkgoT(), err)
 		fakeCfg.UseCgroups = false
 		fakeKubeUtils = mocks.NewMockUtils(mockCtrl)
-		//fakeKubeUtils.clie
 		fakePhase.kubeUtils = fakeKubeUtils
-		//fakePhase.kubeUtils.Clientset
+		nodeIdentifier = "10.128.240.67"
 	})
 
 	AfterEach(func() {
@@ -55,22 +52,22 @@ var _ = Describe("Test Apply and validate node taints phase", func() {
 		ctx.Done()
 	})
 
-	Context("validates status command", func() {
-		It("to succeed", func() {
+	Context("Validates status command", func() {
+		It("To succeed", func() {
 			ret := fakePhase.Status(ctx, *fakeCfg)
 			assert.Nil(GinkgoT(), ret)
 		})
 	})
 
-	Context("validates stop command", func() {
-		It("to succeed", func() {
+	Context("Validates stop command", func() {
+		It("To succeed", func() {
 			ret := fakePhase.Stop(ctx, *fakeCfg)
 			assert.Nil(GinkgoT(), ret)
 		})
 	})
 
-	Context("validates start command", func() {
-		It("fails when can't get nodeIdentifier or it's null", func() {
+	Context("Validates start command", func() {
+		It("Fails when can't get nodeIdentifier or it's null", func() {
 			err := errors.New("fake error")
 
 			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return("", err).Times(1)
@@ -79,7 +76,7 @@ var _ = Describe("Test Apply and validate node taints phase", func() {
 			assert.NotNil(GinkgoT(), reterr)
 			assert.Equal(GinkgoT(), reterr, err)
 		})
-		It("fails when nodeIdentifier is 127.0.0.1", func() {
+		It("Fails when nodeIdentifier is 127.0.0.1", func() {
 			err := errors.New("node interface might have lost IP address. Failing")
 
 			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return("127.0.0.1", nil).Times(1)
@@ -88,27 +85,27 @@ var _ = Describe("Test Apply and validate node taints phase", func() {
 			assert.NotNil(GinkgoT(), reterr)
 			assert.Equal(GinkgoT(), reterr, err)
 		})
-		It("fails when labels are not added", func() {
+		It("Fails when labels are not added", func() {
 			err := errors.New("fake error")
 			labels := map[string]string{
 				"node-role.kubernetes.io/master": "",
 			}
-			fakeCfg.ClusterRole = "master"
-			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return("10.128.240.67", nil).Times(1)
-			fakeKubeUtils.EXPECT().AddLabelsToNode(ctx, "10.128.240.67", labels).Return(err).Times(1)
+			fakeCfg.ClusterRole = constants.RoleMaster
+			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(nodeIdentifier, nil).Times(1)
+			fakeKubeUtils.EXPECT().AddLabelsToNode(ctx, nodeIdentifier, labels).Return(err).Times(1)
 
 			reterr := fakePhase.Start(ctx, *fakeCfg)
 			assert.NotNil(GinkgoT(), reterr)
 			assert.Equal(GinkgoT(), reterr, err)
 		})
 
-		Context("when role is master", func() {
+		Context("When role is master", func() {
 			var (
 				labels map[string]string
 				taints []*v1.Taint
 			)
 			BeforeEach(func() {
-				fakeCfg.ClusterRole = "master"
+				fakeCfg.ClusterRole = constants.RoleMaster
 				labels = map[string]string{
 					"node-role.kubernetes.io/master": "",
 				}
@@ -120,50 +117,50 @@ var _ = Describe("Test Apply and validate node taints phase", func() {
 					},
 				}
 			})
-			It("should not add taints when it is schedulable", func() {
+			It("Should not add taints when it is schedulable", func() {
 				fakeCfg.MasterSchedulable = true
 
-				fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return("10.128.240.67", nil).Times(1)
-				fakeKubeUtils.EXPECT().AddLabelsToNode(ctx, "10.128.240.67", labels).Return(nil).Times(1)
+				fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(nodeIdentifier, nil).Times(1)
+				fakeKubeUtils.EXPECT().AddLabelsToNode(ctx, nodeIdentifier, labels).Return(nil).Times(1)
 
 				err := fakePhase.Start(ctx, *fakeCfg)
 				assert.Nil(GinkgoT(), err)
 			})
-			It("should add taints when it is not schedulable", func() {
+			It("Should add taints when it is not schedulable", func() {
 				fakeCfg.MasterSchedulable = false
 
-				fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return("10.128.240.67", nil).Times(1)
-				fakeKubeUtils.EXPECT().AddLabelsToNode(ctx, "10.128.240.67", labels).Return(nil).Times(1)
-				fakeKubeUtils.EXPECT().AddTaintsToNode(ctx, "10.128.240.67", taints).Return(nil).Times(1)
+				fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(nodeIdentifier, nil).Times(1)
+				fakeKubeUtils.EXPECT().AddLabelsToNode(ctx, nodeIdentifier, labels).Return(nil).Times(1)
+				fakeKubeUtils.EXPECT().AddTaintsToNode(ctx, nodeIdentifier, taints).Return(nil).Times(1)
 				err := fakePhase.Start(ctx, *fakeCfg)
 				assert.Nil(GinkgoT(), err)
 			})
-			It("fails when cant add taint", func() {
+			It("Fails when can't add taint", func() {
 				fakeCfg.MasterSchedulable = false
 
-				fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return("10.128.240.67", nil).Times(1)
-				fakeKubeUtils.EXPECT().AddLabelsToNode(ctx, "10.128.240.67", labels).Return(nil).Times(1)
+				fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(nodeIdentifier, nil).Times(1)
+				fakeKubeUtils.EXPECT().AddLabelsToNode(ctx, nodeIdentifier, labels).Return(nil).Times(1)
 				err := errors.New("fake error")
-				fakeKubeUtils.EXPECT().AddTaintsToNode(ctx, "10.128.240.67", taints).Return(err).Times(1)
+				fakeKubeUtils.EXPECT().AddTaintsToNode(ctx, nodeIdentifier, taints).Return(err).Times(1)
 				reterr := fakePhase.Start(ctx, *fakeCfg)
 				assert.NotNil(GinkgoT(), reterr)
 				assert.Equal(GinkgoT(), reterr, err)
 			})
 
 		})
-		Context("when role is worker", func() {
+		Context("When role is worker", func() {
 			var labels map[string]string
 			BeforeEach(func() {
 				labels = map[string]string{
 					"node-role.kubernetes.io/worker": "",
 				}
-				fakeCfg.ClusterRole = "worker"
+				fakeCfg.ClusterRole = constants.RoleWorker
 			})
-			It("should not add taints", func() {
+			It("Should not add taints", func() {
 				fakeCfg.MasterSchedulable = true
 
-				fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return("10.128.240.67", nil).Times(1)
-				fakeKubeUtils.EXPECT().AddLabelsToNode(ctx, "10.128.240.67", labels).Return(nil).Times(1)
+				fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(nodeIdentifier, nil).Times(1)
+				fakeKubeUtils.EXPECT().AddLabelsToNode(ctx, nodeIdentifier, labels).Return(nil).Times(1)
 
 				err := fakePhase.Start(ctx, *fakeCfg)
 				assert.Nil(GinkgoT(), err)

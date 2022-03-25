@@ -13,19 +13,19 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-type LabelTaintNodePhasev2 struct {
+type LabelTaintNodePhase struct {
 	HostPhase *sunpikev1alpha1.HostPhase
 	log       *zap.SugaredLogger
 	kubeUtils kubeutils.Utils
 }
 
-func NewLabelTaintNodePhaseV2() *LabelTaintNodePhasev2 {
+func NewLabelTaintNodePhase() *LabelTaintNodePhase {
 	log := zap.S()
 	kubeutils, err := kubeutils.NewClient()
 	if err != nil {
-		log.Errorf("failed to initiate Apply and validate node taints phase: %v", err)
+		log.Errorf("failed to initiate Apply and validate node taints phase: %w", err)
 	}
-	return &LabelTaintNodePhasev2{
+	return &LabelTaintNodePhase{
 		HostPhase: &sunpikev1alpha1.HostPhase{
 			Name:  "Apply and validate node taints",
 			Order: int32(constants.LabelTaintNodePhaseOrder),
@@ -35,32 +35,32 @@ func NewLabelTaintNodePhaseV2() *LabelTaintNodePhasev2 {
 	}
 }
 
-func (d *LabelTaintNodePhasev2) GetHostPhase() sunpikev1alpha1.HostPhase {
+func (d *LabelTaintNodePhase) GetHostPhase() sunpikev1alpha1.HostPhase {
 	return *d.HostPhase
 }
 
-func (d *LabelTaintNodePhasev2) GetPhaseName() string {
+func (d *LabelTaintNodePhase) GetPhaseName() string {
 	return d.HostPhase.Name
 }
 
-func (d *LabelTaintNodePhasev2) GetOrder() int {
+func (d *LabelTaintNodePhase) GetOrder() int {
 	return int(d.HostPhase.Order)
 }
 
-func (d *LabelTaintNodePhasev2) Status(context.Context, config.Config) error {
+func (d *LabelTaintNodePhase) Status(context.Context, config.Config) error {
 	return nil
 }
 
-func (d *LabelTaintNodePhasev2) Start(ctx context.Context, cfg config.Config) error {
+func (d *LabelTaintNodePhase) Start(ctx context.Context, cfg config.Config) error {
 
 	nodeIdentifier, err := d.kubeUtils.GetNodeIdentifier(cfg)
 	if err != nil {
 		d.log.Errorf(err.Error())
 		return err
 	}
-	d.log.Infof("Node name is %v\n", nodeIdentifier)
+	d.log.Infof("Node name is %v", nodeIdentifier)
 
-	if nodeIdentifier == "127.0.0.1" {
+	if nodeIdentifier == constants.LoopBackIpString {
 		d.log.Errorf("Fetched node endpoint as 127.0.0.1. Node interface might have lost IP address. Failing.")
 		return fmt.Errorf("node interface might have lost IP address. Failing")
 	}
@@ -71,11 +71,11 @@ func (d *LabelTaintNodePhasev2) Start(ctx context.Context, cfg config.Config) er
 
 	err = d.kubeUtils.AddLabelsToNode(ctx, nodeIdentifier, labelsToAdd)
 	if err != nil {
-		d.log.Errorf("failed to add labels: %v ,Error: %v", labelsToAdd, err)
+		d.log.Errorf(err.Error())
 		return err
 	}
 
-	if !cfg.MasterSchedulable && cfg.ClusterRole == "master" {
+	if !cfg.MasterSchedulable && cfg.ClusterRole == constants.RoleMaster {
 
 		taintsToAdd := []*v1.Taint{
 			{
@@ -86,13 +86,13 @@ func (d *LabelTaintNodePhasev2) Start(ctx context.Context, cfg config.Config) er
 		}
 		err = d.kubeUtils.AddTaintsToNode(ctx, nodeIdentifier, taintsToAdd)
 		if err != nil {
-			d.log.Errorf("failed to add taints: %v, Error: %v", taintsToAdd, err)
+			d.log.Errorf(err.Error())
 			return err
 		}
 	}
 	return nil
 }
 
-func (d *LabelTaintNodePhasev2) Stop(ctx context.Context, cfg config.Config) error {
+func (d *LabelTaintNodePhase) Stop(ctx context.Context, cfg config.Config) error {
 	return nil
 }
