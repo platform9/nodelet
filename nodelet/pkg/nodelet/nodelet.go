@@ -35,6 +35,7 @@ type Nodelet struct {
 }
 
 func (n *Nodelet) Run(ctx context.Context) error {
+
 	// Do an initial persist + config check here to ensure that the Host makes
 	// itself known to Sunpike, even if things go wrong in the reconciling itself.
 	err := n.persistStatusAndUpdateConfigIfChanged(ctx)
