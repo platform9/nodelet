@@ -215,10 +215,6 @@ We are actively working on documenting a more streamlined way of generating and 
    OR
    apt install <DEB>
    ```
-6. Run init (optional, the RPM, deb should take care of extracting scripts/configuration)
-   ```
-   /opt/pf9/nodelet/nodeletd init
-   ```
 
 6. Start the nodelet service on all the hosts
    ```
