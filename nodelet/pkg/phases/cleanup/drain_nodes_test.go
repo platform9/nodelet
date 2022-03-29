@@ -69,11 +69,11 @@ var _ = Describe("Test Drain nodes phase", func() {
 			assert.NotNil(GinkgoT(), reterr)
 			assert.Equal(GinkgoT(), reterr, err)
 		})
-		It("Fails when nodeIdentifier is null", func() {
+		It("Fails when nodeIdentifier is invalid (non-exist)", func() {
 			err := errors.New("fake error")
-
+			nodeName = "8.8.8.8"
 			fakeKubeUtils.EXPECT().K8sApiAvailable(*fakeCfg).Return(nil).Times(1)
-			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return("", err).Times(1)
+			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(nodeName, err).Times(1)
 
 			reterr := fakePhase.Stop(ctx, *fakeCfg)
 			assert.NotNil(GinkgoT(), reterr)

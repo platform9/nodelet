@@ -51,6 +51,7 @@ var _ = Describe("Test Kube Utils", func() {
 	})
 
 	AfterEach(func() {
+		_ = utilsImpl.Clientset.CoreV1().Nodes().Delete(context.TODO(), nodeName, metav1.DeleteOptions{})
 		ctx.Done()
 	})
 
@@ -60,8 +61,8 @@ var _ = Describe("Test Kube Utils", func() {
 			assert.Nil(GinkgoT(), err)
 			assert.Equal(GinkgoT(), node, fakeNode)
 		})
-		It("Fails to get node from k8s API if nodename is empty", func() {
-			nodeName = ""
+		It("Fails to get node from k8s API if invalid (non-exist) nodename", func() {
+			nodeName = "8.8.8.8"
 			_, err := utilsImpl.GetNodeFromK8sApi(ctx, nodeName)
 			assert.NotNil(GinkgoT(), err)
 		})
@@ -85,8 +86,8 @@ var _ = Describe("Test Kube Utils", func() {
 			assert.Nil(GinkgoT(), err)
 			assert.Equal(GinkgoT(), node, fakeNode)
 		})
-		It("Fails to add labels to node if nodename is empty", func() {
-			nodeName = ""
+		It("Fails to add labels to node invalid (non-exist) nodename", func() {
+			nodeName = "8.8.8.8"
 			err := utilsImpl.AddLabelsToNode(ctx, nodeName, labelsToAdd)
 			assert.NotNil(GinkgoT(), err)
 		})
@@ -130,8 +131,8 @@ var _ = Describe("Test Kube Utils", func() {
 			assert.Nil(GinkgoT(), err)
 			assert.Equal(GinkgoT(), taintedNode, fakeNode)
 		})
-		It("Fails to add taints to node if nodename is empty", func() {
-			nodeName = ""
+		It("Fails to add taints to node invalid (non-exist) nodename", func() {
+			nodeName = "8.8.8.8"
 			err := utilsImpl.AddTaintsToNode(ctx, nodeName, taintsToAdd)
 			assert.NotNil(GinkgoT(), err)
 		})
@@ -155,8 +156,9 @@ var _ = Describe("Test Kube Utils", func() {
 			assert.Nil(GinkgoT(), err)
 			assert.Equal(GinkgoT(), node, fakeNode)
 		})
-		It("Fails to add annots to node if nodename is empty", func() {
-			err := utilsImpl.AddAnnotationsToNode(ctx, "", annotsToAdd)
+		It("Fails to add annots to node invalid (non-exist) nodename", func() {
+			nodeName = "8.8.8.8"
+			err := utilsImpl.AddAnnotationsToNode(ctx, nodeName, annotsToAdd)
 			assert.NotNil(GinkgoT(), err)
 		})
 		It("Should remove annots from node", func() {
@@ -169,8 +171,8 @@ var _ = Describe("Test Kube Utils", func() {
 			assert.Nil(GinkgoT(), err)
 			assert.Equal(GinkgoT(), node, fakeNode)
 		})
-		It("Fails to remove annots from node if nodename is empty", func() {
-			nodeName = ""
+		It("Fails to remove annots from node invalid (non-exist) nodename", func() {
+			nodeName = "8.8.8.8"
 			err := utilsImpl.RemoveAnnotationsFromNode(ctx, nodeName, annotsToRemove)
 			assert.NotNil(GinkgoT(), err)
 		})
@@ -183,8 +185,9 @@ var _ = Describe("Test Kube Utils", func() {
 			assert.Nil(GinkgoT(), err)
 			assert.Equal(GinkgoT(), node.Spec.Unschedulable, true)
 		})
-		It("Fails to drain node if nodename is empty", func() {
-			err := utilsImpl.DrainNodeFromApiServer(ctx, "")
+		It("Fails to drain node invalid (non-exist) nodename", func() {
+			nodeName = "8.8.8.8"
+			err := utilsImpl.DrainNodeFromApiServer(ctx, nodeName)
 			assert.NotNil(GinkgoT(), err)
 		})
 	})
@@ -196,8 +199,9 @@ var _ = Describe("Test Kube Utils", func() {
 			assert.Nil(GinkgoT(), err)
 			assert.Equal(GinkgoT(), node.Spec.Unschedulable, false)
 		})
-		It("Fails to uncordon node if nodename is empty", func() {
-			err := utilsImpl.DrainNodeFromApiServer(ctx, "")
+		It("Fails to uncordon node invalid (non-exist) nodename", func() {
+			nodeName = "8.8.8.8"
+			err := utilsImpl.DrainNodeFromApiServer(ctx, nodeName)
 			assert.NotNil(GinkgoT(), err)
 		})
 	})

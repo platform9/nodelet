@@ -57,34 +57,34 @@ var _ = Describe("Test Uncordon node phase", func() {
 		ctx.Done()
 	})
 
-	Context("validates stop command", func() {
-		It("to succeed", func() {
+	Context("Validates stop command", func() {
+		It("To succeed", func() {
 			ret := fakePhase.Stop(ctx, *fakeCfg)
 			assert.Nil(GinkgoT(), ret)
 		})
 	})
 
-	Context("validates status command", func() {
+	Context("Validates status command", func() {
 		BeforeEach(func() {
 			constants.KubeStackStartFileMarker = "testdata/absent.txt"
 			fakeNode.ObjectMeta.Annotations["KubeStackShutDown"] = "false"
 		})
 
-		It("fails when can't get nodeIdentifier or its null", func() {
+		It("Fails when can't get nodeIdentifier or its null", func() {
 			err := errors.New("fake error")
 			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, err).Times(1)
 			reterr := fakePhase.Status(ctx, *fakeCfg)
 			assert.NotNil(GinkgoT(), reterr)
 			assert.Equal(GinkgoT(), reterr, err)
 		})
-		It("when Kube stack is still booting up it does nothing and returns nil", func() {
+		It("When Kube stack is still booting up it does nothing and returns nil", func() {
 			constants.KubeStackStartFileMarker = "testdata/dummy.txt"
 			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
 			err := fakePhase.Status(ctx, *fakeCfg)
 			assert.Nil(GinkgoT(), err)
 
 		})
-		It("fails when it can't get node from k8s api", func() {
+		It("Fails when it can't get node from k8s api", func() {
 			err := errors.New("fake error")
 			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
 			fakeKubeUtils.EXPECT().GetNodeFromK8sApi(ctx, fakeNodeIdentifier).Return(fakeNode, err).Times(1)
@@ -92,7 +92,7 @@ var _ = Describe("Test Uncordon node phase", func() {
 			assert.NotNil(GinkgoT(), reterr)
 			assert.Equal(GinkgoT(), reterr, err)
 		})
-		It("if KubeStackShutDown annotation is present it does nothing and returns nil as node was cordoned by PF9", func() {
+		It("If KubeStackShutDown annotation is present it does nothing and returns nil as node was cordoned by PF9", func() {
 			fakeNode.ObjectMeta.Annotations["KubeStackShutDown"] = "true"
 			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
 			fakeKubeUtils.EXPECT().GetNodeFromK8sApi(ctx, fakeNodeIdentifier).Return(fakeNode, nil).Times(1)
@@ -100,7 +100,7 @@ var _ = Describe("Test Uncordon node phase", func() {
 			assert.Nil(GinkgoT(), err)
 		})
 
-		Context("when node is unschedulable", func() {
+		Context("When node is unschedulable", func() {
 			var annotsToAdd map[string]string
 			BeforeEach(func() {
 				fakeNode.Spec.Unschedulable = true
@@ -108,14 +108,14 @@ var _ = Describe("Test Uncordon node phase", func() {
 					"UserNodeCordon": "true",
 				}
 			})
-			It("it adds userNodeCordon annotation", func() {
+			It("It adds userNodeCordon annotation", func() {
 				fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
 				fakeKubeUtils.EXPECT().GetNodeFromK8sApi(ctx, fakeNodeIdentifier).Return(fakeNode, nil).Times(1)
 				fakeKubeUtils.EXPECT().AddAnnotationsToNode(ctx, fakeNodeIdentifier, annotsToAdd).Return(nil).Times(1)
 				ret := fakePhase.Status(ctx, *fakeCfg)
 				assert.Nil(GinkgoT(), ret)
 			})
-			It("it fails to add userNodeCordon annotation when add annotation fails", func() {
+			It("It fails to add userNodeCordon annotation when add annotation fails", func() {
 				fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
 				fakeKubeUtils.EXPECT().GetNodeFromK8sApi(ctx, fakeNodeIdentifier).Return(fakeNode, nil).Times(1)
 				err := errors.New("fake error")
@@ -125,20 +125,20 @@ var _ = Describe("Test Uncordon node phase", func() {
 				assert.Equal(GinkgoT(), reterr, err)
 			})
 		})
-		Context("when node is schedulable", func() {
+		Context("When node is schedulable", func() {
 			var annotsToRemove []string
 			BeforeEach(func() {
 				fakeNode.Spec.Unschedulable = false
 				annotsToRemove = []string{"UserNodeCordon"}
 			})
-			It("it removes userNodeCordon annotation", func() {
+			It("It removes userNodeCordon annotation", func() {
 				fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
 				fakeKubeUtils.EXPECT().GetNodeFromK8sApi(ctx, fakeNodeIdentifier).Return(fakeNode, nil).Times(1)
 				fakeKubeUtils.EXPECT().RemoveAnnotationsFromNode(ctx, fakeNodeIdentifier, annotsToRemove).Return(nil).Times(1)
 				ret := fakePhase.Status(ctx, *fakeCfg)
 				assert.Nil(GinkgoT(), ret)
 			})
-			It("it fails to remove userNodeCordon annotation when remove annotation fails", func() {
+			It("It fails to remove userNodeCordon annotation when remove annotation fails", func() {
 				fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
 				fakeKubeUtils.EXPECT().GetNodeFromK8sApi(ctx, fakeNodeIdentifier).Return(fakeNode, nil).Times(1)
 				err := errors.New("fake error")
@@ -150,19 +150,19 @@ var _ = Describe("Test Uncordon node phase", func() {
 		})
 
 	})
-	Context("validates start command", func() {
+	Context("Validates start command", func() {
 		var annotsToRemove []string
 		BeforeEach(func() {
 			annotsToRemove = []string{"KubeStackShutDown"}
 		})
-		It("fails when can't get nodeIdentifier or its null", func() {
+		It("Fails when can't get nodeIdentifier or its null", func() {
 			err := errors.New("fake error")
 			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, err).Times(1)
 			reterr := fakePhase.Start(ctx, *fakeCfg)
 			assert.NotNil(GinkgoT(), reterr)
 			assert.Equal(GinkgoT(), reterr, err)
 		})
-		It("fails when nodeIdentifier is 127.0.0.1", func() {
+		It("Fails when nodeIdentifier is 127.0.0.1", func() {
 			err := fmt.Errorf("node interface might have lost IP address. Failing")
 			fakeNodeIdentifier = "127.0.0.1"
 			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
@@ -170,7 +170,7 @@ var _ = Describe("Test Uncordon node phase", func() {
 			assert.NotNil(GinkgoT(), reterr)
 			assert.Equal(GinkgoT(), reterr, err)
 		})
-		It("fails when can't remove KubeStackShutDown annotation (if present) as this is kube stack startup", func() {
+		It("Fails when can't remove KubeStackShutDown annotation (if present) as this is kube stack startup", func() {
 			err := errors.New("fake error")
 			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
 			fakeKubeUtils.EXPECT().RemoveAnnotationsFromNode(ctx, fakeNodeIdentifier, annotsToRemove).Return(err).Times(1)
@@ -178,7 +178,7 @@ var _ = Describe("Test Uncordon node phase", func() {
 			assert.NotNil(GinkgoT(), reterr)
 			assert.Equal(GinkgoT(), reterr, err)
 		})
-		It("fails when can't get node from k8s api", func() {
+		It("Fails when can't get node from k8s api", func() {
 
 			err := errors.New("fake error")
 			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
@@ -188,7 +188,7 @@ var _ = Describe("Test Uncordon node phase", func() {
 			assert.NotNil(GinkgoT(), reterr)
 			assert.Equal(GinkgoT(), reterr, err)
 		})
-		It("if node cordoned (By User) DO NOT uncordon, exit", func() {
+		It("If node cordoned (By User) DO NOT uncordon, exit", func() {
 			fakeNode.ObjectMeta.Annotations["UserNodeCordon"] = "true"
 			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
 			fakeKubeUtils.EXPECT().RemoveAnnotationsFromNode(ctx, fakeNodeIdentifier, annotsToRemove).Return(nil).Times(1)
@@ -196,7 +196,7 @@ var _ = Describe("Test Uncordon node phase", func() {
 			ret := fakePhase.Start(ctx, *fakeCfg)
 			assert.Nil(GinkgoT(), ret)
 		})
-		It("fails when can't uncordon node", func() {
+		It("Fails when can't uncordon node", func() {
 			err := errors.New("fake error")
 			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
 			fakeKubeUtils.EXPECT().RemoveAnnotationsFromNode(ctx, fakeNodeIdentifier, annotsToRemove).Return(nil).Times(1)
@@ -206,7 +206,7 @@ var _ = Describe("Test Uncordon node phase", func() {
 			assert.NotNil(GinkgoT(), reterr)
 			assert.Equal(GinkgoT(), reterr, err)
 		})
-		It("fails when can't prevent auto reattach (i.e. can't delete the qbert metadata file)", func() {
+		It("Fails when can't prevent auto reattach (i.e. can't delete the qbert metadata file)", func() {
 			err := errors.New("fake error")
 			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
 			fakeKubeUtils.EXPECT().RemoveAnnotationsFromNode(ctx, fakeNodeIdentifier, annotsToRemove).Return(nil).Times(1)
@@ -217,7 +217,7 @@ var _ = Describe("Test Uncordon node phase", func() {
 			assert.NotNil(GinkgoT(), reterr)
 			assert.Equal(GinkgoT(), reterr, err)
 		})
-		It("to succeed)", func() {
+		It("To succeed)", func() {
 			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
 			fakeKubeUtils.EXPECT().RemoveAnnotationsFromNode(ctx, fakeNodeIdentifier, annotsToRemove).Return(nil).Times(1)
 			fakeKubeUtils.EXPECT().GetNodeFromK8sApi(ctx, fakeNodeIdentifier).Return(fakeNode, nil).Times(1)
