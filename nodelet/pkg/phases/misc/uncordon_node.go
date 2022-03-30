@@ -8,6 +8,7 @@ import (
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/kubeutils"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/phaseutils"
 	"go.uber.org/zap"
 
 	sunpikev1alpha1 "github.com/platform9/pf9-qbert/sunpike/apiserver/pkg/apis/sunpike/v1alpha1"
@@ -52,17 +53,20 @@ func (d *UncordonNodePhase) Status(ctx context.Context, cfg config.Config) error
 	nodeIdentifier, err := d.kubeUtils.GetNodeIdentifier(cfg)
 	if err != nil {
 		d.log.Errorf(err.Error())
+		phaseutils.SetHostStatus(d.HostPhase, constants.FailedState, err.Error())
 		return err
 	}
 
 	if _, err := os.Stat(constants.KubeStackStartFileMarker); err == nil {
 		d.log.Infof("kube stack is still booting up, nodes not ready yet")
+		phaseutils.SetHostStatus(d.HostPhase, constants.RunningState, "")
 		return nil
 	}
 
 	node, err := d.kubeUtils.GetNodeFromK8sApi(ctx, nodeIdentifier)
 	if err != nil {
 		d.log.Errorf(err.Error())
+		phaseutils.SetHostStatus(d.HostPhase, constants.FailedState, err.Error())
 		return err
 	}
 	metadata := &node.ObjectMeta
@@ -71,6 +75,7 @@ func (d *UncordonNodePhase) Status(ctx context.Context, cfg config.Config) error
 	if metadata.Annotations != nil {
 		kubeStackShutDown := metadata.Annotations["KubeStackShutDown"]
 		if kubeStackShutDown == constants.TrueString {
+			phaseutils.SetHostStatus(d.HostPhase, constants.RunningState, "")
 			return nil
 		}
 	}
@@ -83,6 +88,7 @@ func (d *UncordonNodePhase) Status(ctx context.Context, cfg config.Config) error
 		err = d.kubeUtils.AddAnnotationsToNode(ctx, nodeIdentifier, annotsToAdd)
 		if err != nil {
 			d.log.Errorf(err.Error())
+			phaseutils.SetHostStatus(d.HostPhase, constants.FailedState, err.Error())
 			return err
 		}
 	} else if !nodeCordoned {
@@ -90,9 +96,11 @@ func (d *UncordonNodePhase) Status(ctx context.Context, cfg config.Config) error
 		err = d.kubeUtils.RemoveAnnotationsFromNode(ctx, nodeIdentifier, annotsToRemove)
 		if err != nil {
 			d.log.Errorf(err.Error())
+			phaseutils.SetHostStatus(d.HostPhase, constants.FailedState, err.Error())
 			return err
 		}
 	}
+	phaseutils.SetHostStatus(d.HostPhase, constants.RunningState, "")
 	return nil
 }
 
@@ -101,6 +109,7 @@ func (d *UncordonNodePhase) Start(ctx context.Context, cfg config.Config) error 
 	nodeIdentifier, err := d.kubeUtils.GetNodeIdentifier(cfg)
 	if err != nil {
 		d.log.Errorf(err.Error())
+		phaseutils.SetHostStatus(d.HostPhase, constants.FailedState, err.Error())
 		return err
 	}
 
@@ -108,6 +117,7 @@ func (d *UncordonNodePhase) Start(ctx context.Context, cfg config.Config) error 
 
 	if nodeIdentifier == constants.LoopBackIpString {
 		d.log.Errorf("Fetched node endpoint as 127.0.0.1. Node interface might have lost IP address. Failing.")
+		phaseutils.SetHostStatus(d.HostPhase, constants.FailedState, "Fetched node endpoint as 127.0.0.1. Node interface might have lost IP address. Failing.")
 		return fmt.Errorf("node interface might have lost IP address. Failing")
 	}
 
@@ -117,12 +127,14 @@ func (d *UncordonNodePhase) Start(ctx context.Context, cfg config.Config) error 
 	err = d.kubeUtils.RemoveAnnotationsFromNode(ctx, nodeIdentifier, annotsToRemove)
 	if err != nil {
 		d.log.Errorf(err.Error())
+		phaseutils.SetHostStatus(d.HostPhase, constants.FailedState, err.Error())
 		return err
 	}
 
 	node, err := d.kubeUtils.GetNodeFromK8sApi(ctx, nodeIdentifier)
 	if err != nil {
 		d.log.Errorf(err.Error())
+		phaseutils.SetHostStatus(d.HostPhase, constants.FailedState, err.Error())
 		return err
 	}
 	metadata := node.ObjectMeta
@@ -132,6 +144,7 @@ func (d *UncordonNodePhase) Start(ctx context.Context, cfg config.Config) error 
 		userNodeCordon := metadata.Annotations["UserNodeCordon"]
 		//If cordoned by user DO NOT uncordon, exit
 		if userNodeCordon == constants.TrueString {
+			phaseutils.SetHostStatus(d.HostPhase, constants.RunningState, "")
 			return nil
 		}
 	}
@@ -139,17 +152,21 @@ func (d *UncordonNodePhase) Start(ctx context.Context, cfg config.Config) error 
 	err = d.kubeUtils.UncordonNode(ctx, nodeIdentifier)
 	if err != nil {
 		d.log.Errorf(err.Error())
+		phaseutils.SetHostStatus(d.HostPhase, constants.FailedState, err.Error())
 		return err
 	}
 	err = d.kubeUtils.PreventAutoReattach()
 	if err != nil {
 		d.log.Errorf(err.Error())
+		phaseutils.SetHostStatus(d.HostPhase, constants.FailedState, err.Error())
 		return err
 	}
 	//post_upgrade_cleanup (not implemented ,not needed)
+	phaseutils.SetHostStatus(d.HostPhase, constants.RunningState, "")
 	return nil
 }
 
 func (d *UncordonNodePhase) Stop(ctx context.Context, cfg config.Config) error {
+	phaseutils.SetHostStatus(d.HostPhase, constants.StoppedState, "")
 	return nil
 }

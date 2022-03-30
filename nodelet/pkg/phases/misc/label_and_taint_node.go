@@ -7,6 +7,7 @@ import (
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/kubeutils"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/phaseutils"
 	"go.uber.org/zap"
 
 	sunpikev1alpha1 "github.com/platform9/pf9-qbert/sunpike/apiserver/pkg/apis/sunpike/v1alpha1"
@@ -48,6 +49,7 @@ func (d *LabelTaintNodePhase) GetOrder() int {
 }
 
 func (d *LabelTaintNodePhase) Status(context.Context, config.Config) error {
+	phaseutils.SetHostStatus(d.HostPhase, constants.RunningState, "")
 	return nil
 }
 
@@ -56,12 +58,14 @@ func (d *LabelTaintNodePhase) Start(ctx context.Context, cfg config.Config) erro
 	nodeIdentifier, err := d.kubeUtils.GetNodeIdentifier(cfg)
 	if err != nil {
 		d.log.Errorf(err.Error())
+		phaseutils.SetHostStatus(d.HostPhase, constants.FailedState, err.Error())
 		return err
 	}
 	d.log.Infof("Node name is %v", nodeIdentifier)
 
 	if nodeIdentifier == constants.LoopBackIpString {
 		d.log.Errorf("Fetched node endpoint as 127.0.0.1. Node interface might have lost IP address. Failing.")
+		phaseutils.SetHostStatus(d.HostPhase, constants.FailedState, "Fetched node endpoint as 127.0.0.1. Node interface might have lost IP address. Failing.")
 		return fmt.Errorf("node interface might have lost IP address. Failing")
 	}
 
@@ -72,6 +76,7 @@ func (d *LabelTaintNodePhase) Start(ctx context.Context, cfg config.Config) erro
 	err = d.kubeUtils.AddLabelsToNode(ctx, nodeIdentifier, labelsToAdd)
 	if err != nil {
 		d.log.Errorf(err.Error())
+		phaseutils.SetHostStatus(d.HostPhase, constants.FailedState, err.Error())
 		return err
 	}
 
@@ -87,12 +92,15 @@ func (d *LabelTaintNodePhase) Start(ctx context.Context, cfg config.Config) erro
 		err = d.kubeUtils.AddTaintsToNode(ctx, nodeIdentifier, taintsToAdd)
 		if err != nil {
 			d.log.Errorf(err.Error())
+			phaseutils.SetHostStatus(d.HostPhase, constants.FailedState, err.Error())
 			return err
 		}
 	}
+	phaseutils.SetHostStatus(d.HostPhase, constants.RunningState, "")
 	return nil
 }
 
 func (d *LabelTaintNodePhase) Stop(ctx context.Context, cfg config.Config) error {
+	phaseutils.SetHostStatus(d.HostPhase, constants.StoppedState, "")
 	return nil
 }

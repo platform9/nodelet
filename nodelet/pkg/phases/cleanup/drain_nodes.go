@@ -7,6 +7,7 @@ import (
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/kubeutils"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/phaseutils"
 	"go.uber.org/zap"
 
 	sunpikev1alpha1 "github.com/platform9/pf9-qbert/sunpike/apiserver/pkg/apis/sunpike/v1alpha1"
@@ -48,6 +49,7 @@ func (d *DrainNodePhase) GetOrder() int {
 }
 
 func (d *DrainNodePhase) Status(context.Context, config.Config) error {
+	phaseutils.SetHostStatus(d.HostPhase, constants.RunningState, "")
 	return nil
 }
 
@@ -55,11 +57,14 @@ func (d *DrainNodePhase) Start(context.Context, config.Config) error {
 	err := os.Remove(constants.KubeStackStartFileMarker)
 	if err != nil {
 		if os.IsNotExist(err) {
+			phaseutils.SetHostStatus(d.HostPhase, constants.RunningState, "")
 			return nil
 		}
 		d.log.Errorf("failed to remove KubeStackStartFileMarker file: %w", err)
+		phaseutils.SetHostStatus(d.HostPhase, constants.FailedState, err.Error())
 		return err
 	}
+	phaseutils.SetHostStatus(d.HostPhase, constants.RunningState, "")
 	return nil
 }
 
@@ -69,16 +74,19 @@ func (d *DrainNodePhase) Stop(ctx context.Context, cfg config.Config) error {
 	err := d.kubeUtils.K8sApiAvailable(cfg)
 	if err != nil {
 		d.log.Errorf("api not available :%w", err)
+		phaseutils.SetHostStatus(d.HostPhase, constants.StoppedState, err.Error())
 		return err
 	}
 	nodeIdentifier, err := d.kubeUtils.GetNodeIdentifier(cfg)
 	if err != nil {
 		d.log.Errorf(err.Error())
+		phaseutils.SetHostStatus(d.HostPhase, constants.StoppedState, err.Error())
 		return err
 	}
 	err = d.kubeUtils.DrainNodeFromApiServer(ctx, nodeIdentifier)
 	if err != nil {
 		d.log.Errorf(err.Error())
+		phaseutils.SetHostStatus(d.HostPhase, constants.StoppedState, err.Error())
 		return err
 	}
 	annotsToAdd := map[string]string{
@@ -87,7 +95,9 @@ func (d *DrainNodePhase) Stop(ctx context.Context, cfg config.Config) error {
 	err = d.kubeUtils.AddAnnotationsToNode(ctx, nodeIdentifier, annotsToAdd)
 	if err != nil {
 		d.log.Errorf(err.Error())
+		phaseutils.SetHostStatus(d.HostPhase, constants.StoppedState, err.Error())
 		return err
 	}
+	phaseutils.SetHostStatus(d.HostPhase, constants.StoppedState, "")
 	return nil
 }
