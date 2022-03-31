@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/pkg/errors"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/kubeutils"
@@ -22,17 +23,16 @@ type UncordonNodePhase struct {
 
 func NewUncordonNodePhase() *UncordonNodePhase {
 	log := zap.S()
-	kubeutils, err := kubeutils.NewClient()
-	if err != nil {
-		log.Errorf("failed to initiate Uncordon node phase: %w", err)
-	}
 	return &UncordonNodePhase{
 		HostPhase: &sunpikev1alpha1.HostPhase{
 			Name:  "Uncordon node",
 			Order: int32(constants.UncordonNodePhaseOrder),
 		},
-		log:       log,
-		kubeUtils: kubeutils,
+		log: log,
+		// When k8s node is being brought up for first time,
+		// admin.yaml is not present so its not possible to create k8s client.
+		// Lazily create k8s client when needed.
+		kubeUtils: nil,
 	}
 }
 
@@ -49,7 +49,13 @@ func (d *UncordonNodePhase) GetOrder() int {
 }
 
 func (d *UncordonNodePhase) Status(ctx context.Context, cfg config.Config) error {
-
+	var err error
+	if d.kubeUtils == nil {
+		d.kubeUtils, err = kubeutils.NewClient()
+		if err != nil {
+			return errors.Wrap(err, "could not refresh k8s client")
+		}
+	}
 	nodeIdentifier, err := d.kubeUtils.GetNodeIdentifier(cfg)
 	if err != nil {
 		d.log.Errorf(err.Error())
@@ -105,7 +111,13 @@ func (d *UncordonNodePhase) Status(ctx context.Context, cfg config.Config) error
 }
 
 func (d *UncordonNodePhase) Start(ctx context.Context, cfg config.Config) error {
-
+	var err error
+	if d.kubeUtils == nil {
+		d.kubeUtils, err = kubeutils.NewClient()
+		if err != nil {
+			return errors.Wrap(err, "could not refresh k8s client")
+		}
+	}
 	nodeIdentifier, err := d.kubeUtils.GetNodeIdentifier(cfg)
 	if err != nil {
 		d.log.Errorf(err.Error())

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/pkg/errors"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/kubeutils"
@@ -22,17 +23,16 @@ type LabelTaintNodePhase struct {
 
 func NewLabelTaintNodePhase() *LabelTaintNodePhase {
 	log := zap.S()
-	kubeutils, err := kubeutils.NewClient()
-	if err != nil {
-		log.Errorf("failed to initiate Apply and validate node taints phase: %w", err)
-	}
 	return &LabelTaintNodePhase{
 		HostPhase: &sunpikev1alpha1.HostPhase{
 			Name:  "Apply and validate node taints",
 			Order: int32(constants.LabelTaintNodePhaseOrder),
 		},
 		log:       log,
-		kubeUtils: kubeutils,
+		// When k8s node is being brought up for first time,
+		// admin.yaml is not present so its not possible to create k8s client.
+		// Lazily create k8s client when needed.
+		kubeUtils: nil,
 	}
 }
 
@@ -54,7 +54,13 @@ func (d *LabelTaintNodePhase) Status(context.Context, config.Config) error {
 }
 
 func (d *LabelTaintNodePhase) Start(ctx context.Context, cfg config.Config) error {
-
+	var err error
+	if d.kubeUtils == nil {
+		d.kubeUtils, err = kubeutils.NewClient()
+		if err != nil {
+			return errors.Wrap(err, "could not refresh k8s client")
+		}
+	}
 	nodeIdentifier, err := d.kubeUtils.GetNodeIdentifier(cfg)
 	if err != nil {
 		d.log.Errorf(err.Error())
