@@ -39,6 +39,7 @@ type Utils interface {
 	K8sApiAvailable(config.Config) error
 	PreventAutoReattach() error
 	IpForHttp(string) (string, error)
+	IsInterfaceNil() bool
 }
 
 type UtilsImpl struct {
@@ -70,6 +71,10 @@ func GetClientset() (kubernetes.Interface, error) {
 		return clientset, errors.Wrapf(err, "failed to create clientset")
 	}
 	return clientset, nil
+}
+
+func (u *UtilsImpl) IsInterfaceNil() bool {
+	return u == nil
 }
 
 func (u *UtilsImpl) AddLabelsToNode(ctx context.Context, nodeName string, labelsToAdd map[string]string) error {

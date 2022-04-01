@@ -70,7 +70,7 @@ func (d *DrainNodePhase) Start(context.Context, config.Config) error {
 
 func (d *DrainNodePhase) Stop(ctx context.Context, cfg config.Config) error {
 	var err error
-	if d.kubeUtils == nil {
+	if d.kubeUtils == nil || d.kubeUtils.IsInterfaceNil() {
 		d.kubeUtils, err = kubeutils.NewClient()
 		if err != nil {
 			return errors.Wrap(err, "could not refresh k8s client")
