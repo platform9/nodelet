@@ -39,7 +39,7 @@ all: agent-wrapper
 clean: nodelet-clean agent-clean \
        kubernetes-test-clean \
        easyrsa-clean \
-       node-clean bouncer-clean build-dir-clean
+       node-clean build-dir-clean
 
 $(BUILD_DIR):
 	mkdir -p $@
@@ -467,10 +467,8 @@ virtctl:
 	chmod u=rwx,og=rx virtctl
 
 # If this fails, the build still can continue, so we can build these RPMS outside Qbert.
--include $(ROOT_DIR)/bouncer/Makefile
 -include $(ROOT_DIR)/nodelet/Makefile
--include $(ROOT_DIR)/ip_type/Makefile
--include $(ROOT_DIR)/addr_conv/Makefile
+
 
 jq: 
 	echo "Downloading jq"
@@ -478,7 +476,7 @@ jq:
 	${WGET_CMD} -O jq -L https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 && \
 	chmod u=rwx,og=rx jq
 
-$(COMMON_SRC_ROOT): easyrsa $(AUTHBS_SRC_DIR) bouncer-docker-image kubernetes nodelet cni-plugins nerdctl crictl calicoctl etcdctl etcd_raft_checker pf9kube-addr-conv pf9kube-ip_type virtctl jq
+$(COMMON_SRC_ROOT): easyrsa $(AUTHBS_SRC_DIR) kubernetes nodelet cni-plugins nerdctl crictl calicoctl etcdctl virtctl jq
 	echo "make COMMON_SRC_ROOT $(COMMON_SRC_ROOT)"
 	echo "COMMON_SRC_ROOT is $(COMMON_SRC_ROOT)" # i.e. /vagrant/build/pf9-kube/pf9-kube-src/common
 	echo "AGENT_SRC_DIR is $(AGENT_SRC_DIR)" # cp -a /vagrant/agent/root/* /vagrant/build/pf9-kube/pf9-kube-src/common/
@@ -495,7 +493,6 @@ $(COMMON_SRC_ROOT): easyrsa $(AUTHBS_SRC_DIR) bouncer-docker-image kubernetes no
 	cp -a ${KUBERNETES_DIR}/virtctl $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/bin/
 	mkdir -p $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/kubernetes/cluster
 	mkdir -p $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/bin/reqsig
-	echo "-a 1"
 	cp -a $(AUTHBS_SRC_DIR)/reqsig/* $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/bin/reqsig
 	mkdir -p $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/bin/requester
 	echo "requester 1 -> $(AUTHBS_SRC_DIR)/requester/* -> $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/bin/requester "
@@ -504,7 +501,6 @@ $(COMMON_SRC_ROOT): easyrsa $(AUTHBS_SRC_DIR) bouncer-docker-image kubernetes no
 	if "$(EASYRSA_TARBALL)" == "" ; then echo "missing ! EASYRSA_TARBALL value" ; exit 1 ; fi
 	cp -a $(EASYRSA_TARBALL) $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/bin/requester
 	mkdir -p $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/images
-	cp -a $(BOUNCER_IMAGE_TARBALL) $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/images/
 	mkdir -p $(COMMON_SRC_ROOT)/opt/cni/bin
 	cp -a $(CNI_PLUGINS_DIR)/* $(COMMON_SRC_ROOT)/opt/cni/bin/
 	mkdir -p $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/conf/networkapps
@@ -518,9 +514,6 @@ $(COMMON_SRC_ROOT): easyrsa $(AUTHBS_SRC_DIR) bouncer-docker-image kubernetes no
 	cp -a ${KUBERNETES_DIR}/${CRICTL_DIR}/crictl $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}bin/
 	cp -a ${KUBERNETES_DIR}/calicoctl $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/bin/
 	cp -a ${ETCD_TMP_DIR}/etcdctl $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/bin/
-	cp -a ${AGENT_BUILD_DIR}/etcd_raft_checker $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/bin/
-	cp -a ${AGENT_BUILD_DIR}/addr_conv $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/bin/
-	cp -a ${AGENT_BUILD_DIR}/ip_type $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/
 	cp -a ${KUBERNETES_DIR}/jq $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}bin/
 
 $(RPM_SRC_ROOT): | $(COMMON_SRC_ROOT)
@@ -687,17 +680,6 @@ etcdctl:
 
 etcd-clean:
 	rm -rf ${ETCD_TMP_DIR}
-
-############################
-# Raft Index Checker
-.PHONY: etcd_raft_checker etcd_raft_checker_clean
-ETCD_RAFT_CHECKER_SRC_DIR := $(AGENT_SRC_DIR)/etcd_raft_checker
-etcd_raft_checker: $(ETCD_RAFT_CHECKER_SRC_DIR)/*.go
-	echo "building etcd_raft_checker"
-	cd $(ETCD_RAFT_CHECKER_SRC_DIR) && go build -o $(AGENT_BUILD_DIR)/etcd_raft_checker
-
-etcd_raft_checker_clean:
-	rm -f $(AGENT_BUILD_DIR)/etcd/etcd_raft_checker
 
 upload-host-packages:
 	component_version=`cat $(BUILD_DIR)/artifacts/component-version.txt` && \

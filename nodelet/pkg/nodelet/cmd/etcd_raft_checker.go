@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"encoding/json"
@@ -32,17 +32,6 @@ type ExecCommander struct{}
 // arguments.
 func (c ExecCommander) Run(command string, args ...string) ([]byte, error) {
 	return exec.Command(command, args...).CombinedOutput()
-}
-
-// etcd_raft_checker fetches raft indices from the etcd endpoints and performs a check
-// to see if the maximum difference between any two raft indices is not more than one (1)
-func main() {
-	var commander Commander = ExecCommander{}
-	err := checkEndpointStatus(commander)
-	if err != nil {
-		fmt.Printf("etcd raft index check with exitCode: %s\n", err)
-		os.Exit(1)
-	}
 }
 
 // EndPointStatus defines structure of response from etcd regarding endpoints
@@ -130,7 +119,7 @@ func checkEndpointStatus(commander Commander) error {
 	data := []byte(statusOutput)
 	error := json.Unmarshal(data, &EndPointStatusList)
 	if error != nil {
-		return fmt.Errorf("Failed to unmarshal JSON: %s, ERROR: %s", data, error)
+		return fmt.Errorf("failed to unmarshal JSON: %s, ERROR: %s", data, error)
 	}
 
 	if len(EndPointStatusList) == 0 {

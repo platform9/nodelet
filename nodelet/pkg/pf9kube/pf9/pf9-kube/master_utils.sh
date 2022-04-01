@@ -597,7 +597,7 @@ function prepare_certs()
 
 function master_ip_type()
 {
-    ./ip_type ${MASTER_IP}
+    /opt/pf9/nodelet/nodeletd advanced ip-type ${MASTER_IP}
 }
 
 #
@@ -981,21 +981,13 @@ function ensure_etcd_data_backup()
 function ensure_etcd_cluster_status()
 {
     local exitCode=0
-    local ETCD_RAFT_CHECKER=/opt/pf9/pf9-kube/bin/etcd_raft_checker
 
-    if [ -f "${ETCD_RAFT_CHECKER}" ]; then
-        ${ETCD_RAFT_CHECKER} && rc=$? || rc=$?
-        if [ $rc -ne 0 ]; then
-            echo "etcd cluster status not ok"
-            exitCode=1
-        else
-            echo "etcd cluster status ok"
-        fi
+    /opt/pf9/nodelet/nodeletd advanced etcd-raft-checker && rc=$? || rc=$?
+    if [ $rc -ne 0 ]; then
+        echo "etcd cluster status not ok"
+        exitCode=1
     else
-        # continue with the rest of the upgrade even if binary is missing.
-        # flag it as ERROR in log. Failing here will be premature with a benefit
-        # of doubt that etcd cluster still can be healthy
-        echo "ERROR: etcd-raft-checker binary missing; could not check raft indices"
+        echo "etcd cluster status ok"
     fi
     return ${exitCode}
 }
