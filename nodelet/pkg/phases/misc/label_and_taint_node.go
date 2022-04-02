@@ -28,7 +28,7 @@ func NewLabelTaintNodePhase() *LabelTaintNodePhase {
 			Name:  "Apply and validate node taints",
 			Order: int32(constants.LabelTaintNodePhaseOrder),
 		},
-		log:       log,
+		log: log,
 		// When k8s node is being brought up for first time,
 		// admin.yaml is not present so its not possible to create k8s client.
 		// Lazily create k8s client when needed.
@@ -55,7 +55,7 @@ func (d *LabelTaintNodePhase) Status(context.Context, config.Config) error {
 
 func (d *LabelTaintNodePhase) Start(ctx context.Context, cfg config.Config) error {
 	var err error
-	if d.kubeUtils == nil {
+	if d.kubeUtils == nil || d.kubeUtils.IsInterfaceNil() {
 		d.kubeUtils, err = kubeutils.NewClient()
 		if err != nil {
 			return errors.Wrap(err, "could not refresh k8s client")

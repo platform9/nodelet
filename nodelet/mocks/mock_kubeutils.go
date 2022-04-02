@@ -10,7 +10,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	config "github.com/platform9/nodelet/nodelet/pkg/utils/config"
-	v1 "k8s.io/api/core/v1"	
+	v1 "k8s.io/api/core/v1"
 )
 
 // MockUtils is a mock of Utils interface.
@@ -180,6 +180,20 @@ func (m *MockUtils) IpForHttp(arg0 string) (string, error) {
 func (mr *MockUtilsMockRecorder) IpForHttp(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IpForHttp", reflect.TypeOf((*MockUtils)(nil).IpForHttp), arg0)
+}
+
+// IsInterfaceNil mocks base method.
+func (m *MockUtils) IsInterfaceNil() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsInterfaceNil")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsInterfaceNil indicates an expected call of IsInterfaceNil.
+func (mr *MockUtilsMockRecorder) IsInterfaceNil() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsInterfaceNil", reflect.TypeOf((*MockUtils)(nil).IsInterfaceNil))
 }
 
 // K8sApiAvailable mocks base method.

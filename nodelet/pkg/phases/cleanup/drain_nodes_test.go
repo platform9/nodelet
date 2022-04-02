@@ -64,6 +64,7 @@ var _ = Describe("Test Drain nodes phase", func() {
 			err := errors.New("fake error")
 
 			fakeKubeUtils.EXPECT().K8sApiAvailable(*fakeCfg).Return(err).Times(1)
+			fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
 
 			reterr := fakePhase.Stop(ctx, *fakeCfg)
 			assert.NotNil(GinkgoT(), reterr)
@@ -74,6 +75,7 @@ var _ = Describe("Test Drain nodes phase", func() {
 			nodeName = "8.8.8.8"
 			fakeKubeUtils.EXPECT().K8sApiAvailable(*fakeCfg).Return(nil).Times(1)
 			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(nodeName, err).Times(1)
+			fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
 
 			reterr := fakePhase.Stop(ctx, *fakeCfg)
 			assert.NotNil(GinkgoT(), reterr)
@@ -85,6 +87,7 @@ var _ = Describe("Test Drain nodes phase", func() {
 			fakeKubeUtils.EXPECT().K8sApiAvailable(*fakeCfg).Return(nil).Times(1)
 			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(nodeName, nil).Times(1)
 			fakeKubeUtils.EXPECT().DrainNodeFromApiServer(ctx, nodeName).Return(err).Times(1)
+			fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
 
 			reterr := fakePhase.Stop(ctx, *fakeCfg)
 			assert.NotNil(GinkgoT(), reterr)
@@ -99,6 +102,8 @@ var _ = Describe("Test Drain nodes phase", func() {
 			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(nodeName, nil).Times(1)
 			fakeKubeUtils.EXPECT().DrainNodeFromApiServer(ctx, nodeName).Return(nil).Times(1)
 			fakeKubeUtils.EXPECT().AddAnnotationsToNode(ctx, nodeName, annotsToAdd).Return(err).Times(1)
+			fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
+
 			reterr := fakePhase.Stop(ctx, *fakeCfg)
 			assert.NotNil(GinkgoT(), reterr)
 			assert.Equal(GinkgoT(), reterr, err)
@@ -111,6 +116,8 @@ var _ = Describe("Test Drain nodes phase", func() {
 			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(nodeName, nil).Times(1)
 			fakeKubeUtils.EXPECT().DrainNodeFromApiServer(ctx, nodeName).Return(nil).Times(1)
 			fakeKubeUtils.EXPECT().AddAnnotationsToNode(ctx, nodeName, annotsToAdd).Return(nil).Times(1)
+			fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
+
 			ret := fakePhase.Stop(ctx, *fakeCfg)
 			assert.Nil(GinkgoT(), ret)
 		})

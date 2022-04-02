@@ -71,7 +71,7 @@ var _ = Describe("Test Apply and validate node taints phase", func() {
 			err := errors.New("fake error")
 
 			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return("", err).Times(1)
-
+			fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
 			reterr := fakePhase.Start(ctx, *fakeCfg)
 			assert.NotNil(GinkgoT(), reterr)
 			assert.Equal(GinkgoT(), reterr, err)
@@ -80,6 +80,7 @@ var _ = Describe("Test Apply and validate node taints phase", func() {
 			err := errors.New("node interface might have lost IP address. Failing")
 
 			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return("127.0.0.1", nil).Times(1)
+			fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
 
 			reterr := fakePhase.Start(ctx, *fakeCfg)
 			assert.NotNil(GinkgoT(), reterr)
@@ -93,6 +94,7 @@ var _ = Describe("Test Apply and validate node taints phase", func() {
 			fakeCfg.ClusterRole = constants.RoleMaster
 			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(nodeIdentifier, nil).Times(1)
 			fakeKubeUtils.EXPECT().AddLabelsToNode(ctx, nodeIdentifier, labels).Return(err).Times(1)
+			fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
 
 			reterr := fakePhase.Start(ctx, *fakeCfg)
 			assert.NotNil(GinkgoT(), reterr)
@@ -122,6 +124,7 @@ var _ = Describe("Test Apply and validate node taints phase", func() {
 
 				fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(nodeIdentifier, nil).Times(1)
 				fakeKubeUtils.EXPECT().AddLabelsToNode(ctx, nodeIdentifier, labels).Return(nil).Times(1)
+				fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
 
 				err := fakePhase.Start(ctx, *fakeCfg)
 				assert.Nil(GinkgoT(), err)
@@ -132,6 +135,7 @@ var _ = Describe("Test Apply and validate node taints phase", func() {
 				fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(nodeIdentifier, nil).Times(1)
 				fakeKubeUtils.EXPECT().AddLabelsToNode(ctx, nodeIdentifier, labels).Return(nil).Times(1)
 				fakeKubeUtils.EXPECT().AddTaintsToNode(ctx, nodeIdentifier, taints).Return(nil).Times(1)
+				fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
 				err := fakePhase.Start(ctx, *fakeCfg)
 				assert.Nil(GinkgoT(), err)
 			})
@@ -142,6 +146,7 @@ var _ = Describe("Test Apply and validate node taints phase", func() {
 				fakeKubeUtils.EXPECT().AddLabelsToNode(ctx, nodeIdentifier, labels).Return(nil).Times(1)
 				err := errors.New("fake error")
 				fakeKubeUtils.EXPECT().AddTaintsToNode(ctx, nodeIdentifier, taints).Return(err).Times(1)
+				fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
 				reterr := fakePhase.Start(ctx, *fakeCfg)
 				assert.NotNil(GinkgoT(), reterr)
 				assert.Equal(GinkgoT(), reterr, err)
@@ -161,6 +166,7 @@ var _ = Describe("Test Apply and validate node taints phase", func() {
 
 				fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(nodeIdentifier, nil).Times(1)
 				fakeKubeUtils.EXPECT().AddLabelsToNode(ctx, nodeIdentifier, labels).Return(nil).Times(1)
+				fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
 
 				err := fakePhase.Start(ctx, *fakeCfg)
 				assert.Nil(GinkgoT(), err)
