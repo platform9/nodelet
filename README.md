@@ -1,6 +1,7 @@
 # NODELET
 [![Makefile CI](https://github.com/platform9/nodelet/actions/workflows/unit-test.yml/badge.svg)](https://github.com/platform9/nodelet/actions/workflows/unit-test.yml)
 [![rpm-deb-build](https://github.com/platform9/nodelet/actions/workflows/rpm-deb-build.yml/badge.svg)](https://github.com/platform9/nodelet/actions/workflows/rpm-deb-build.yml)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Froopakparikh%2Fnodelet.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Froopakparikh%2Fnodelet?ref=badge_shield)
 
 Nodelet is a Kubernetes lifecycle manager which can be used stand-alone or as part of a larger system (e.g. Cluster API). Nodelet is capable of performing the following tasks:
 - Installing a Kubernetes stack on one or more nodes
