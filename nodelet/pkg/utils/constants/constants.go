@@ -102,6 +102,16 @@ var (
 	KubectlCmd               = fmt.Sprintf("bin/kubectl -v=8 --kubeconfig=%s --context=default-context", KubeConfig)
 	KubeStackStartFileMarker = "var/opt/pf9/is_node_booting_up"
 
+	UserImagesDir = "/home/ubuntu/images"
+
+	ChecksumDir = fmt.Sprintf("%s/checksum", UserImagesDir)
+
+	ChecksumFile = fmt.Sprintf("%s/sha256sums.txt", ChecksumDir)
+
+	ContainerdAddress = "/run/containerd/containerd.sock"
+
+	DefaultSnapShotter = "overlayfs"
+
 	// Phase orders of all the phases
 	NoRolePhaseOrder                   = 10
 	GenCertsPhaseOrder                 = 20
@@ -125,6 +135,7 @@ var (
 	PF9SentryPhaseOrder                = 205
 	PF9CoreDNSPhaseOrder               = 206
 	DrainPodsPhaseOrder                = 210
+	LoadImagePhaseOrder                = 220
 	// PhaseBaseDir is the base directory in which all bash-based phase scripts are located
 	PhaseBaseDir = "/opt/pf9/pf9-kube/phases"
 )

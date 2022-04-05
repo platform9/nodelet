@@ -43,7 +43,7 @@ func GetMasterPhases() ([]PhaseInterface, error) {
 		keepalived.NewConfigureStartKeepalivedPhase(constants.PhaseBaseDir),        // Order 180
 		addons.NewPF9CoreDNSPhase(constants.PhaseBaseDir),                          // Order 206
 		cleanup.NewDrainNodePhase(),                                                // Order 210
-
+		containerruntime.NewLoadImagePhase(),                                       // Order 220
 	}
 	if err := validatePhaseOrdering(masterPhaseList); err != nil {
 		return []PhaseInterface{}, err
@@ -67,6 +67,7 @@ func GetWorkerPhases() ([]PhaseInterface, error) {
 		kubelet.NewDynamicKubeletConfigPhase(constants.PhaseBaseDir),               // Order 120
 		misc.NewUncordonNodePhase(),                                                // Order 130
 		cleanup.NewDrainNodePhase(),                                                // Order 210
+		containerruntime.NewLoadImagePhase(),                                       // Order 220
 	}
 	if err := validatePhaseOrdering(workerPhaseList); err != nil {
 		return []PhaseInterface{}, err
