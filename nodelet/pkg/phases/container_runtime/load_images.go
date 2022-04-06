@@ -9,7 +9,7 @@ import (
 	sunpikev1alpha1 "github.com/platform9/pf9-qbert/sunpike/apiserver/pkg/apis/sunpike/v1alpha1"
 	"go.uber.org/zap"
 
-	"github.com/platform9/nodelet/nodelet/pkg/utils/phaseutils"
+	containerutils "github.com/platform9/nodelet/nodelet/pkg/utils/container_runtime_utils"
 )
 
 type LoadImagePhase struct {
@@ -42,12 +42,12 @@ func (d *LoadImagePhase) GetOrder() int {
 
 func (d *LoadImagePhase) Status(ctx context.Context, cfg config.Config) error {
 
-	check, err := phaseutils.VerifyChecksum(constants.UserImagesDir)
+	check, err := containerutils.VerifyChecksum(constants.UserImagesDir)
 	if err != nil {
 		return err
 	}
 	if !check {
-		err := phaseutils.LoadImagesFromDir(ctx, constants.UserImagesDir)
+		err := containerutils.LoadImagesFromDir(ctx, constants.UserImagesDir)
 		if err != nil {
 			return err
 		}
@@ -57,12 +57,12 @@ func (d *LoadImagePhase) Status(ctx context.Context, cfg config.Config) error {
 func (d *LoadImagePhase) Start(ctx context.Context, cfg config.Config) error {
 
 	if _, err := os.Stat(constants.ChecksumDir); os.IsNotExist(err) {
-		err := phaseutils.GenerateChecksum(constants.UserImagesDir)
+		err := containerutils.GenerateChecksum(constants.UserImagesDir)
 		if err != nil {
 			return err
 		}
 	}
-	err := phaseutils.LoadImagesFromDir(ctx, constants.UserImagesDir)
+	err := containerutils.LoadImagesFromDir(ctx, constants.UserImagesDir)
 	if err != nil {
 		return err
 	}
