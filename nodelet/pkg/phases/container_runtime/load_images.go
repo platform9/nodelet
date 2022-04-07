@@ -10,11 +10,13 @@ import (
 	"go.uber.org/zap"
 
 	containerutils "github.com/platform9/nodelet/nodelet/pkg/utils/container_runtime_utils"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/phaseutils"
 )
 
 type LoadImagePhase struct {
-	HostPhase *sunpikev1alpha1.HostPhase
-	log       *zap.SugaredLogger
+	HostPhase   *sunpikev1alpha1.HostPhase
+	log         *zap.SugaredLogger
+	runtimeUtil containerutils.Runtime
 }
 
 func NewLoadImagePhase() *LoadImagePhase {
@@ -24,7 +26,8 @@ func NewLoadImagePhase() *LoadImagePhase {
 			Name:  "Load user images to container runtime",
 			Order: int32(constants.LoadImagePhaseOrder),
 		},
-		log: log,
+		log:         log,
+		runtimeUtil: containerutils.New(),
 	}
 }
 
@@ -42,30 +45,40 @@ func (d *LoadImagePhase) GetOrder() int {
 
 func (d *LoadImagePhase) Status(ctx context.Context, cfg config.Config) error {
 
-	check, err := containerutils.VerifyChecksum(constants.UserImagesDir)
+	check, err := d.runtimeUtil.VerifyChecksum(constants.UserImagesDir)
 	if err != nil {
+		d.log.Error(err.Error())
+		phaseutils.SetHostStatus(d.HostPhase, constants.FailedState, err.Error())
 		return err
 	}
 	if !check {
-		err := containerutils.LoadImagesFromDir(ctx, constants.UserImagesDir)
+		err := d.runtimeUtil.LoadImagesFromDir(ctx, constants.UserImagesDir, "k8s.io")
 		if err != nil {
+			d.log.Error(err.Error())
+			phaseutils.SetHostStatus(d.HostPhase, constants.FailedState, err.Error())
 			return err
 		}
 	}
+	phaseutils.SetHostStatus(d.HostPhase, constants.RunningState, "")
 	return nil
 }
 func (d *LoadImagePhase) Start(ctx context.Context, cfg config.Config) error {
 
-	if _, err := os.Stat(constants.ChecksumDir); os.IsNotExist(err) {
-		err := containerutils.GenerateChecksum(constants.UserImagesDir)
+	if _, err := os.Stat(constants.ChecksumFile); os.IsNotExist(err) {
+		err := d.runtimeUtil.GenerateChecksum(constants.UserImagesDir)
 		if err != nil {
+			d.log.Error(err.Error())
+			phaseutils.SetHostStatus(d.HostPhase, constants.FailedState, err.Error())
 			return err
 		}
 	}
-	err := containerutils.LoadImagesFromDir(ctx, constants.UserImagesDir)
+	err := d.runtimeUtil.LoadImagesFromDir(ctx, constants.UserImagesDir, "k8s.io")
 	if err != nil {
+		d.log.Error(err.Error())
+		phaseutils.SetHostStatus(d.HostPhase, constants.FailedState, err.Error())
 		return err
 	}
+	phaseutils.SetHostStatus(d.HostPhase, constants.RunningState, "")
 	return nil
 }
 func (d *LoadImagePhase) Stop(ctx context.Context, cfg config.Config) error {
