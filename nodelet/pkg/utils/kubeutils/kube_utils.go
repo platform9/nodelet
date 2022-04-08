@@ -46,6 +46,7 @@ type UtilsImpl struct {
 	Clientset kubernetes.Interface
 }
 
+// NewCient initialize UtilsImpl with new creted clientset
 func NewClient() (*UtilsImpl, error) {
 	var client *UtilsImpl
 	clientset, err := GetClientset()
@@ -59,16 +60,17 @@ func NewClient() (*UtilsImpl, error) {
 	return client, nil
 }
 
+// GetClientset returns clientset created from config
 func GetClientset() (kubernetes.Interface, error) {
 	var clientset kubernetes.Interface
 	config, err := clientcmd.BuildConfigFromFlags("", constants.KubeConfig)
 	if err != nil {
-		return clientset, errors.Wrapf(err, "failed to build config from kubeconfig")
+		return clientset, errors.Wrap(err, "failed to build config from kubeconfig")
 	}
 
 	clientset, err = kubernetes.NewForConfig(config)
 	if err != nil {
-		return clientset, errors.Wrapf(err, "failed to create clientset")
+		return clientset, errors.Wrap(err, "failed to create clientset")
 	}
 	return clientset, nil
 }
@@ -77,6 +79,7 @@ func (u *UtilsImpl) IsInterfaceNil() bool {
 	return u == nil
 }
 
+// AddLabelsToNode adds labels to node
 func (u *UtilsImpl) AddLabelsToNode(ctx context.Context, nodeName string, labelsToAdd map[string]string) error {
 
 	node, err := u.GetNodeFromK8sApi(ctx, nodeName)
@@ -93,11 +96,12 @@ func (u *UtilsImpl) AddLabelsToNode(ctx context.Context, nodeName string, labels
 	node.ObjectMeta = metaData
 	_, err = u.Clientset.CoreV1().Nodes().Update(ctx, node, metav1.UpdateOptions{})
 	if err != nil {
-		return errors.Wrapf(err, "failed to update node with newly added labels")
+		return errors.Wrap(err, "failed to update node with newly added labels")
 	}
 	return nil
 }
 
+// AddAnnotationsToNode adds annotations to node
 func (u *UtilsImpl) AddAnnotationsToNode(ctx context.Context, nodeName string, annotsToAdd map[string]string) error {
 	node, err := u.GetNodeFromK8sApi(ctx, nodeName)
 	if err != nil {
@@ -113,11 +117,12 @@ func (u *UtilsImpl) AddAnnotationsToNode(ctx context.Context, nodeName string, a
 	node.ObjectMeta = metaData
 	_, err = u.Clientset.CoreV1().Nodes().Update(ctx, node, metav1.UpdateOptions{})
 	if err != nil {
-		return errors.Wrapf(err, "failed to update node with newly added annotations")
+		return errors.Wrap(err, "failed to update node with newly added annotations")
 	}
 	return nil
 }
 
+// RemoveAnnotationsFromNode removes annotations from node
 func (u *UtilsImpl) RemoveAnnotationsFromNode(ctx context.Context, nodeName string, annotsToRemove []string) error {
 	node, err := u.GetNodeFromK8sApi(ctx, nodeName)
 	if err != nil {
@@ -133,11 +138,12 @@ func (u *UtilsImpl) RemoveAnnotationsFromNode(ctx context.Context, nodeName stri
 	node.ObjectMeta = metaData
 	_, err = u.Clientset.CoreV1().Nodes().Update(ctx, node, metav1.UpdateOptions{})
 	if err != nil {
-		return errors.Wrapf(err, "failed to update node with removed annotations")
+		return errors.Wrap(err, "failed to update node with removed annotations")
 	}
 	return nil
 }
 
+// AddTaintsToNode adds taints to node
 func (u *UtilsImpl) AddTaintsToNode(ctx context.Context, nodeName string, taintsToAdd []*v1.Taint) error {
 	node, err := u.GetNodeFromK8sApi(ctx, nodeName)
 	if err != nil {
@@ -153,12 +159,13 @@ func (u *UtilsImpl) AddTaintsToNode(ctx context.Context, nodeName string, taints
 		}
 		_, err = u.Clientset.CoreV1().Nodes().Update(ctx, taintedNode, metav1.UpdateOptions{})
 		if err != nil {
-			return errors.Wrapf(err, "failed to update node with newly added taints")
+			return errors.Wrap(err, "failed to update node with newly added taints")
 		}
 	}
 	return nil
 }
 
+// DrainNodeFromApiServer drains node from K8s server
 func (u *UtilsImpl) DrainNodeFromApiServer(ctx context.Context, nodeName string) error {
 
 	helper := drain.Helper{
@@ -188,15 +195,17 @@ func (u *UtilsImpl) DrainNodeFromApiServer(ctx context.Context, nodeName string)
 	return nil
 }
 
+// GetNodeFromK8sApi returns node from K8s api with given nodename
 func (u *UtilsImpl) GetNodeFromK8sApi(ctx context.Context, nodeName string) (*v1.Node, error) {
 	var node *v1.Node
 	node, err := u.Clientset.CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
 	if err != nil {
-		return node, errors.Wrapf(err, "failed to get node")
+		return node, errors.Wrap(err, "failed to get node")
 	}
 	return node, nil
 }
 
+// UncordonNode uncordons node
 func (u *UtilsImpl) UncordonNode(ctx context.Context, nodeName string) error {
 
 	helper := drain.Helper{
@@ -226,6 +235,7 @@ func (u *UtilsImpl) UncordonNode(ctx context.Context, nodeName string) error {
 	return nil
 }
 
+// PreventAutoReattach removes qbert metaData file if present
 func (u *UtilsImpl) PreventAutoReattach() error {
 
 	// Unconditionally delete the qbert metaData file to prevent re-auth
@@ -239,6 +249,7 @@ func (u *UtilsImpl) PreventAutoReattach() error {
 	return nil
 }
 
+// GetRoutedNetworkInterFace returns roted network interface
 func (u *UtilsImpl) GetRoutedNetworkInterFace() (string, error) {
 	routedInterface, err := nettest.RoutedInterface("ip", net.FlagUp|net.FlagBroadcast)
 	if err != nil {
@@ -248,6 +259,7 @@ func (u *UtilsImpl) GetRoutedNetworkInterFace() (string, error) {
 	return routedInterfaceName, nil
 }
 
+// GetIPv4ForInterfaceName returns IPv4 for given interface name
 func (u *UtilsImpl) GetIPv4ForInterfaceName(interfaceName string) (string, error) {
 	interfaces, _ := net.Interfaces()
 	for _, inter := range interfaces {
@@ -269,6 +281,7 @@ func (u *UtilsImpl) GetIPv4ForInterfaceName(interfaceName string) (string, error
 	return "", fmt.Errorf("routedinterface not found so can't find ip")
 }
 
+// GetNodeIP returns routed network interface IP
 func (u *UtilsImpl) GetNodeIP() (string, error) {
 	var err error
 	routedInterfaceName, err := u.GetRoutedNetworkInterFace()
@@ -277,11 +290,13 @@ func (u *UtilsImpl) GetNodeIP() (string, error) {
 	}
 	routedIp, err := u.GetIPv4ForInterfaceName(routedInterfaceName)
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to get node IP")
+		return "", errors.Wrap(err, "failed to get node IP")
 	}
 	return routedIp, nil
 }
 
+// IpForHttp returns formatted Ip
+// If IP is IPv4 returns as it is, If IP is IPv6 returns IP with square bracks
 func (u *UtilsImpl) IpForHttp(masterIp string) (string, error) {
 
 	if net.ParseIP(masterIp).To4() != nil {
@@ -292,6 +307,7 @@ func (u *UtilsImpl) IpForHttp(masterIp string) (string, error) {
 	return "", fmt.Errorf("invalid IP")
 }
 
+// K8sApiAvailable checks if K8s api server is available
 func (u *UtilsImpl) K8sApiAvailable(cfg config.Config) error {
 
 	caCertificate := fmt.Sprintf("%s/ca.crt", constants.AdminCerts)
@@ -305,7 +321,7 @@ func (u *UtilsImpl) K8sApiAvailable(cfg config.Config) error {
 	} else {
 		apiEndpoint, err = u.IpForHttp(cfg.MasterIp)
 		if err != nil {
-			return errors.Wrapf(err, "failed to check K8s API available")
+			return errors.Wrap(err, "failed to check K8s API available")
 		}
 	}
 
@@ -315,21 +331,21 @@ func (u *UtilsImpl) K8sApiAvailable(cfg config.Config) error {
 	healthzUrl := fmt.Sprintf("https://%s:%s/healthz", apiEndpoint, cfg.K8sApiPort)
 	caCert, err := ioutil.ReadFile(caCertificate)
 	if err != nil {
-		return errors.Wrapf(err, "failed to read ca certificate")
+		return errors.Wrap(err, "failed to read ca certificate")
 	}
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM(caCert)
 
 	clientCert, err := ioutil.ReadFile(clientCertificate)
 	if err != nil {
-		return errors.Wrapf(err, "failed to read client certificate")
+		return errors.Wrap(err, "failed to read client certificate")
 	}
 	clientCertPool := x509.NewCertPool()
 	clientCertPool.AppendCertsFromPEM(clientCert)
 
 	cert, err := tls.LoadX509KeyPair(clientCertificate, keyFile)
 	if err != nil {
-		return errors.Wrapf(err, "could not load x509 key pair")
+		return errors.Wrap(err, "could not load x509 key pair")
 	}
 
 	client := &http.Client{
@@ -344,7 +360,7 @@ func (u *UtilsImpl) K8sApiAvailable(cfg config.Config) error {
 
 	res, err := client.Get(healthzUrl)
 	if err != nil {
-		return errors.Wrapf(err, "could not get to healthz")
+		return errors.Wrap(err, "could not get to healthz")
 	}
 
 	if res.StatusCode >= http.StatusInternalServerError {
@@ -353,9 +369,6 @@ func (u *UtilsImpl) K8sApiAvailable(cfg config.Config) error {
 	return nil
 }
 
-// Copied from https://github.com/kubernetes/kubernetes/blob/39c76ba2edeadb84a115cc3fbd9204a2177f1c28/pkg/util/taints/taints.go#L241
-// to avoid importing k8s.io/kubernetes as it leads to import errors and is not supported by upstream community.
-// This function is not an exact copy. The difference is in how the taint on node is compared against the taint argument.
 // AddOrUpdateTaint tries to add a taint to annotations list. Returns a new copy of updated Node and true if something was updated
 // false otherwise.
 func AddOrUpdateTaint(node *v1.Node, taint *v1.Taint) (*v1.Node, bool, error) {
@@ -385,6 +398,7 @@ func AddOrUpdateTaint(node *v1.Node, taint *v1.Taint) (*v1.Node, bool, error) {
 	return newNode, true, nil
 }
 
+// GetNodeIdentifier returns node identifier as Hostname / Node IP
 func (u *UtilsImpl) GetNodeIdentifier(cfg config.Config) (string, error) {
 
 	var err error
@@ -392,7 +406,7 @@ func (u *UtilsImpl) GetNodeIdentifier(cfg config.Config) (string, error) {
 	if cfg.CloudProviderType == constants.LocalCloudProvider && cfg.UseHostname == constants.TrueString {
 		nodeIdentifier, err = os.Hostname()
 		if err != nil {
-			return nodeIdentifier, errors.Wrapf(err, "failed to get hostName for node identification")
+			return nodeIdentifier, errors.Wrap(err, "failed to get hostName for node identification")
 		}
 		if nodeIdentifier == "" {
 			return nodeIdentifier, fmt.Errorf("nodeIdentifier is null")
@@ -400,7 +414,7 @@ func (u *UtilsImpl) GetNodeIdentifier(cfg config.Config) (string, error) {
 	} else {
 		nodeIdentifier, err = u.GetNodeIP()
 		if err != nil {
-			return nodeIdentifier, errors.Wrapf(err, "failed to get node IP address for node identification")
+			return nodeIdentifier, errors.Wrap(err, "failed to get node IP address for node identification")
 		}
 		if nodeIdentifier == "" {
 			return nodeIdentifier, fmt.Errorf("nodeIdentifier is null")

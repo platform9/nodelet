@@ -49,11 +49,17 @@ func (d *DrainNodePhase) GetOrder() int {
 }
 
 func (d *DrainNodePhase) Status(context.Context, config.Config) error {
+
+	d.log.Infof("Running Status of phase: %s", d.HostPhase.Name)
+
 	phaseutils.SetHostStatus(d.HostPhase, constants.RunningState, "")
 	return nil
 }
 
 func (d *DrainNodePhase) Start(context.Context, config.Config) error {
+
+	d.log.Infof("Running Start of phase: %s", d.HostPhase.Name)
+
 	err := os.Remove(constants.KubeStackStartFileMarker)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -69,6 +75,9 @@ func (d *DrainNodePhase) Start(context.Context, config.Config) error {
 }
 
 func (d *DrainNodePhase) Stop(ctx context.Context, cfg config.Config) error {
+
+	d.log.Infof("Running Stop of phase: %s", d.HostPhase.Name)
+
 	var err error
 	if d.kubeUtils == nil || d.kubeUtils.IsInterfaceNil() {
 		d.kubeUtils, err = kubeutils.NewClient()

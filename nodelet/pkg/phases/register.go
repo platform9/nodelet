@@ -27,6 +27,7 @@ func GetMasterPhases() ([]PhaseInterface, error) {
 		kubeconfig.NewPrepareKubeconfigsPhase(constants.PhaseBaseDir),              // Order 30
 		containerruntime.NewConfigureContainerRuntimePhase(constants.PhaseBaseDir), // Order 40
 		containerruntime.NewStartContainerRuntimePhase(constants.PhaseBaseDir),     // Order 45
+		containerruntime.NewLoadImagePhase(),                                       // Order 48
 		etcd.NewConfigureEtcdPhase(constants.PhaseBaseDir),                         // Order 50
 		etcd.NewStartEtcdPhase(constants.PhaseBaseDir),                             // Order 55
 		network.NewConfigureNetworkPhase(constants.PhaseBaseDir),                   // Order 60
@@ -43,7 +44,6 @@ func GetMasterPhases() ([]PhaseInterface, error) {
 		keepalived.NewConfigureStartKeepalivedPhase(constants.PhaseBaseDir),        // Order 180
 		addons.NewPF9CoreDNSPhase(constants.PhaseBaseDir),                          // Order 206
 		cleanup.NewDrainNodePhase(),                                                // Order 210
-		containerruntime.NewLoadImagePhase(),                                       // Order 220
 	}
 	if err := validatePhaseOrdering(masterPhaseList); err != nil {
 		return []PhaseInterface{}, err
@@ -57,6 +57,7 @@ func GetWorkerPhases() ([]PhaseInterface, error) {
 		kubeconfig.NewPrepareKubeconfigsPhase(constants.PhaseBaseDir),              // Order 30
 		containerruntime.NewConfigureContainerRuntimePhase(constants.PhaseBaseDir), // Order 40
 		containerruntime.NewStartContainerRuntimePhase(constants.PhaseBaseDir),     // Order 45
+		containerruntime.NewLoadImagePhase(),                                       // Order 48
 		network.NewConfigureNetworkPhase(constants.PhaseBaseDir),                   // Order 60
 		network.NewConfigureCNIPhase(constants.PhaseBaseDir),                       // Order 65
 		misc.NewMiscPhase(constants.PhaseBaseDir),                                  // Order 75
@@ -67,7 +68,6 @@ func GetWorkerPhases() ([]PhaseInterface, error) {
 		kubelet.NewDynamicKubeletConfigPhase(constants.PhaseBaseDir),               // Order 120
 		misc.NewUncordonNodePhase(),                                                // Order 130
 		cleanup.NewDrainNodePhase(),                                                // Order 210
-		containerruntime.NewLoadImagePhase(),                                       // Order 220
 	}
 	if err := validatePhaseOrdering(workerPhaseList); err != nil {
 		return []PhaseInterface{}, err

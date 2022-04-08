@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"strings"
 	"testing"
 
@@ -316,6 +317,28 @@ var _ = Describe("Fileio", func() {
 				_, stdout, err := cmdLine.RunCommandWithStdOut(ctx, nil, 0, "", "sh", "-c", "grep '"+content+"' "+filename+"| wc -l")
 				Expect(err).To(BeNil())
 				Expect(strings.TrimSpace(stdout[0])).To(Equal("2"))
+			})
+		})
+		Context("Sha256 Checksum", func() {
+			BeforeEach(func() {
+				fileInpOut = New()
+				cmdLine = command.New()
+				ctx = context.TODO()
+			})
+
+			AfterEach(func() {
+				ctx.Done()
+			})
+			It("Should generate hash for file", func() {
+				fileToCheck := "testData/dummy.txt"
+				ex, expectedHash, err := cmdLine.RunCommandWithStdOut(ctx, nil, 0, "sha256sum", fileToCheck)
+				if err != nil {
+					log.Print(err)
+				}
+				log.Printf("exitcode: %v", ex)
+				actualHash, err := fileInpOut.GenerateHashForFile(fileToCheck)
+				Expect(err).To(BeNil())
+				Expect(actualHash).To(Equal(expectedHash))
 			})
 		})
 	})
