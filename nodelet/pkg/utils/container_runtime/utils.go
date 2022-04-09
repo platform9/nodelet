@@ -1,4 +1,6 @@
-package containerruntimeutils
+package containerruntime
+
+//  Note:  There are only e2e tests for containerd… No unit tests
 
 import (
 	"context"

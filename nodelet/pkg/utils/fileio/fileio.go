@@ -279,8 +279,8 @@ func (f *Pf9FileIO) VerifyChecksum(imageDir string) (bool, error) {
 	if err != nil {
 		return false, errors.Wrapf(err, "could not generate hash for: %s", imageDir)
 	}
-	ChecksumFile := fmt.Sprintf("%s/checksum/sha256sums.txt", imageDir)
-	prevHash, err := f.ReadFileByLine(ChecksumFile)
+	checksumFile := fmt.Sprintf("%s/checksum/sha256sums.txt", imageDir)
+	prevHash, err := f.ReadFileByLine(checksumFile)
 	if err != nil {
 		return false, err
 	}
@@ -288,7 +288,7 @@ func (f *Pf9FileIO) VerifyChecksum(imageDir string) (bool, error) {
 	if res {
 		return true, nil
 	} else {
-		err = f.WriteToFile(ChecksumFile, currentHash, false)
+		err = f.WriteToFile(checksumFile, currentHash, false)
 		if err != nil {
 			return false, err
 		}
@@ -328,10 +328,11 @@ func (f *Pf9FileIO) GenerateHashForFile(fileName string) (string, error) {
 	}
 	data := h.Sum(nil)
 	fileData := hex.EncodeToString(data)
-	fileData = fmt.Sprintf("%s %s", fileData, fileName)
+	fileData = fmt.Sprintf("%s  %s", fileData, fileName)
 	return fileData, nil
 }
 
+// stringSlicesEqual states whether two string slices are equal or not
 func stringSlicesEqual(a, b []string) bool {
 	if len(a) != len(b) {
 		return false
