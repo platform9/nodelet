@@ -149,6 +149,7 @@ We are actively working on documenting a more streamlined way of generating and 
    TOPOLOGY_MANAGER_POLICY: none
    USE_HOSTNAME: "false"
    STANDALONE: "true"
+   USER_IMAGES_DIR: <PATH FOR TAR/ZIP FILES OF IMAGES>
    ```
 
 4. Create /etc/pf9/nodelet/config_sunpike.yaml on all worker nodes with following contents -
@@ -207,6 +208,7 @@ We are actively working on documenting a more streamlined way of generating and 
    TOPOLOGY_MANAGER_POLICY: none
    USE_HOSTNAME: "false"
    STANDALONE: "true"
+   USER_IMAGES_DIR: <PATH FOR TAR/ZIP FILES OF IMAGES>
    ```
    Replace the master node IP address in this config file. 
 

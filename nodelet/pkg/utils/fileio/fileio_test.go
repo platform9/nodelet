@@ -350,6 +350,8 @@ var _ = Describe("Fileio", func() {
 
 			AfterEach(func() {
 				_, _ = cmdLine.RunCommand(ctx, nil, 0, "", "rm", "-rf", "testData")
+				actualHash = nil
+				expectedHash = nil
 				ctx.Done()
 			})
 			It("Should generate hash for given file", func() {

@@ -72,8 +72,8 @@ func (l *LoadImagePhase) Start(ctx context.Context, cfg config.Config) error {
 
 	l.log.Infof("Running Start of phase: %s", l.HostPhase.Name)
 
-	ChecksumFile := fmt.Sprintf("%s/checksum/sha256sums.txt", cfg.UserImagesDir)
-	if _, err := os.Stat(ChecksumFile); os.IsNotExist(err) {
+	checksumFile := fmt.Sprintf("%s/checksum/sha256sums.txt", cfg.UserImagesDir)
+	if _, err := os.Stat(checksumFile); os.IsNotExist(err) {
 		err := l.fileUtility.GenerateChecksum(cfg.UserImagesDir)
 		if err != nil {
 			l.log.Error(err.Error())

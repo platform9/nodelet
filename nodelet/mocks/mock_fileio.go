@@ -62,6 +62,50 @@ func (mr *MockFileInterfaceMockRecorder) DeleteFile(arg0 interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFile", reflect.TypeOf((*MockFileInterface)(nil).DeleteFile), arg0)
 }
 
+// GenerateChecksum mocks base method.
+func (m *MockFileInterface) GenerateChecksum(arg0 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GenerateChecksum", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// GenerateChecksum indicates an expected call of GenerateChecksum.
+func (mr *MockFileInterfaceMockRecorder) GenerateChecksum(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateChecksum", reflect.TypeOf((*MockFileInterface)(nil).GenerateChecksum), arg0)
+}
+
+// GenerateHashForDir mocks base method.
+func (m *MockFileInterface) GenerateHashForDir(arg0 string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GenerateHashForDir", arg0)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GenerateHashForDir indicates an expected call of GenerateHashForDir.
+func (mr *MockFileInterfaceMockRecorder) GenerateHashForDir(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateHashForDir", reflect.TypeOf((*MockFileInterface)(nil).GenerateHashForDir), arg0)
+}
+
+// GenerateHashForFile mocks base method.
+func (m *MockFileInterface) GenerateHashForFile(arg0 string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GenerateHashForFile", arg0)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GenerateHashForFile indicates an expected call of GenerateHashForFile.
+func (mr *MockFileInterfaceMockRecorder) GenerateHashForFile(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateHashForFile", reflect.TypeOf((*MockFileInterface)(nil).GenerateHashForFile), arg0)
+}
+
 // GetFileInfo mocks base method.
 func (m *MockFileInterface) GetFileInfo(arg0 string) (os.FileInfo, error) {
 	m.ctrl.T.Helper()
@@ -162,6 +206,21 @@ func (m *MockFileInterface) TouchFile(arg0 string) error {
 func (mr *MockFileInterfaceMockRecorder) TouchFile(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TouchFile", reflect.TypeOf((*MockFileInterface)(nil).TouchFile), arg0)
+}
+
+// VerifyChecksum mocks base method.
+func (m *MockFileInterface) VerifyChecksum(arg0 string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "VerifyChecksum", arg0)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// VerifyChecksum indicates an expected call of VerifyChecksum.
+func (mr *MockFileInterfaceMockRecorder) VerifyChecksum(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VerifyChecksum", reflect.TypeOf((*MockFileInterface)(nil).VerifyChecksum), arg0)
 }
 
 // WriteToFile mocks base method.
