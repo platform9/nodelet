@@ -160,4 +160,5 @@ function prepare_docker_daemon_json()
         -e "s|__DOCKER_DEBUG_FLAG__|${DEBUG}|g" \
         -e "s|__DOCKER_LIVE_RESTORE_ENABLED__|${DOCKER_LIVE_RESTORE_ENABLED}|g" \
         -e "s|__DOCKER_REGISTRY_MIRRORS__|${DOCKER_REGISTRY_MIRRORS}|g"
+    echo "blah"
 }
