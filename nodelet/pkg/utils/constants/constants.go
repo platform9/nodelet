@@ -82,6 +82,12 @@ const (
 	LocalCloudProvider = "local"
 	// RuntimeContainerd represents containerd service
 	RuntimeContainerd = "containerd"
+
+	CgroupSystemd = "SystemdCgroup"
+
+	IsActiveOp = "is-active"
+
+	ActiveState = "active"
 )
 
 var (
@@ -117,6 +123,8 @@ var (
 	DefaultSnapShotter = "overlayfs"
 	// K8sNamespace is namespace for kubernetes
 	K8sNamespace = "k8s.io"
+	// MobyNamespace is namespace for docker
+	MobyNamespace = "moby"
 	// K8sRegistry represents registry for official images for kubernetes
 	K8sRegistry = "k8s.gcr.io"
 
@@ -128,6 +136,12 @@ var (
 	CoreDNSHostsFile = "/etc/hosts"
 
 	CloudConfigFile = "/etc/pf9/kube.d/cloud-config"
+
+	EtcContainerdDir = "/etc/containerd"
+
+	ContainerdConfigFile = fmt.Sprintf("%s/config.toml", EtcContainerdDir)
+
+	ContainerdCgroup = "systemd"
 
 	// Phase orders of all the phases
 	NoRolePhaseOrder                   = 10

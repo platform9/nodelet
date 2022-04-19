@@ -8,7 +8,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/platform9/nodelet/nodelet/pkg/embedutil"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/embedutil"
 )
 
 //go:embed pf9/*
@@ -42,7 +42,7 @@ func checkDirs(t *testing.T, first string, second string) {
 		t.Fatalf("Failed to read dir %s: %v", first, err)
 	}
 	if len(secondFiles) != len(firstFiles) {
-		t.Fatalf("Expected %d files in %s, got %d", len(firstFiles), second, len(secondFiles))	
+		t.Fatalf("Expected %d files in %s, got %d", len(firstFiles), second, len(secondFiles))
 	}
 
 	sort.Slice(firstFiles, func(i, j int) bool {
