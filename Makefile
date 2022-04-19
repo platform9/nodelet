@@ -281,7 +281,7 @@ DEB_SRC_ROOT := $(PF9_KUBE_SRCDIR)/debsrc
 .PHONY: cni-plugins
 ARCH := linux-amd64
 
-# To pull new cni plugin binaries, update the CNI_PLUGINS_VERSION tag to the reqired version
+#To pull new cni plugin binaries, update the CNI_PLUGINS_VERSION tag to the reqired version
 CNI_PLUGINS_BASE_DIR := $(BUILD_DIR)/cni-plugins
 CNI_PLUGINS_DIR := $(CNI_PLUGINS_BASE_DIR)/$(CNI_PLUGINS_VERSION)
 CNI_PLUGINS_FILE := cni-plugins-${ARCH}-${CNI_PLUGINS_VERSION}.tgz
@@ -298,6 +298,52 @@ $(CNI_PLUGINS_DIR): | $(CNI_PLUGINS_BASE_DIR)
 	${WGET_CMD} ${CNI_PLUGINS_URL}  -qO- | tar -zx
 
 cni-plugins: $(CNI_PLUGINS_DIR)
+
+
+#################################
+# Containerd Binaries and runc
+
+.PHONY: containerd
+# Download containerd
+CONTAINERD_BASE_DIR := $(BUILD_DIR)/runtime/containerd
+CONTAINERD_DIR := $(CONTAINERD_BASE_DIR)/$(CONTAINERD_VERSION)
+CONTAINERD_FILE := containerd-${CONTAINERD_VERSION}-linux-amd64.tar.gz
+CONTAINERD_URL := https://github.com/containerd/containerd/releases/download/v${CONTAINERD_VERSION}/${CONTAINERD_FILE}
+
+$(CONTAINERD_BASE_DIR):
+	echo "make CONTAINERD_BASE_DIR: $(CONTAINERD_BASE_DIR)"
+	mkdir -p $@
+
+$(CONTAINERD_DIR): | $(CONTAINERD_BASE_DIR)
+	echo "make CONTAINERD_DIR: $(CONTAINERD_DIR)"
+	mkdir -p $@
+	cd $@ && \
+	${WGET_CMD} ${CONTAINERD_URL}  -qO- | tar -zx
+
+containerd: $(CONTAINERD_DIR)
+
+
+.PHONY: runc
+# Download runc
+RUNC_BASE_DIR := $(BUILD_DIR)/runtime/runc
+RUNC_DIR := $(RUNC_BASE_DIR)/$(RUNC_VERSION)
+RUNC_FILE_NAME := runc.amd64
+RUNC_FILE := $(RUNC_DIR)/runc
+RUNC_URL := https://github.com/opencontainers/runc/releases/download/v${RUNC_VERSION}/${RUNC_FILE_NAME}
+
+$(RUNC_BASE_DIR):
+	echo "make RUNC_BASE_DIR: $(RUNC_BASE_DIR)"
+	mkdir -p $@
+
+$(RUNC_DIR): | $(RUNC_BASE_DIR)
+	echo "make RUNC_DIR: $(RUNC_DIR)"
+	mkdir -p $@
+	cd $@ && \
+	${WGET_CMD} ${RUNC_URL}  -O ${RUNC_FILE}
+	chmod +x ${RUNC_FILE}
+
+runc: $(RUNC_DIR)
+
 
 # CONTAINERD CLI
 
@@ -494,7 +540,7 @@ jq:
 	${WGET_CMD} -O jq -L https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 && \
 	chmod u=rwx,og=rx jq
 
-$(COMMON_SRC_ROOT): easyrsa $(AUTHBS_SRC_DIR) bouncer-docker-image kubernetes nodelet cni-plugins nerdctl crictl calicoctl etcdctl etcd_raft_checker pf9kube-addr-conv pf9kube-ip_type virtctl jq keepalived
+$(COMMON_SRC_ROOT): easyrsa $(AUTHBS_SRC_DIR) bouncer-docker-image kubernetes nodelet cni-plugins containerd runc nerdctl crictl calicoctl etcdctl etcd_raft_checker pf9kube-addr-conv pf9kube-ip_type virtctl jq keepalived
 	echo "make COMMON_SRC_ROOT $(COMMON_SRC_ROOT)"
 	echo "COMMON_SRC_ROOT is $(COMMON_SRC_ROOT)" # i.e. /vagrant/build/pf9-kube/pf9-kube-src/common
 	echo "AGENT_SRC_DIR is $(AGENT_SRC_DIR)" # cp -a /vagrant/agent/root/* /vagrant/build/pf9-kube/pf9-kube-src/common/
@@ -523,6 +569,10 @@ $(COMMON_SRC_ROOT): easyrsa $(AUTHBS_SRC_DIR) bouncer-docker-image kubernetes no
 	cp -a $(BOUNCER_IMAGE_TARBALL) $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/images/
 	mkdir -p $(COMMON_SRC_ROOT)/opt/cni/bin
 	cp -a $(CNI_PLUGINS_DIR)/* $(COMMON_SRC_ROOT)/opt/cni/bin/
+	mkdir -p $(COMMON_SRC_ROOT)/usr/local
+	cp -ar $(CONTAINERD_DIR)/* $(COMMON_SRC_ROOT)/usr/local
+	mkdir -p $(COMMON_SRC_ROOT)/usr/local/sbin
+	cp -a $(RUNC_DIR)/* $(COMMON_SRC_ROOT)/usr/local/sbin
 	mkdir -p $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/conf/networkapps
 	mv -f $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/conf/networkapps/calico.yaml $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/conf/networkapps/calico-${KUBERNETES_VERSION}.yaml
 	mv -f $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/conf/networkapps/canal.yaml $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/conf/networkapps/canal-${KUBERNETES_VERSION}.yaml

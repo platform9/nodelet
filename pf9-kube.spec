@@ -45,10 +45,20 @@ rm -rf $RPM_BUILD_ROOT
 /opt/cni/bin/
 /opt/pf9/nodelet/nodeletd
 /lib/systemd/system/pf9-nodeletd.service
+/usr/local/lib/systemd/system/containerd.service
+/etc/containerd/config.toml
+/usr/local/sbin/runc
+/usr/local/bin/containerd
+/usr/local/bin/containerd-shim
+/usr/local/bin/containerd-shim-runc-v1
+/usr/local/bin/containerd-shim-runc-v2
+/usr/local/bin/containerd-stress
+/usr/local/bin/ctr
 
 %attr(0440, root, root) /etc/logrotate.d/pf9-kube
 %attr(0440, root, root) /etc/logrotate.d/pf9-kubelet
 %attr(0440, root, root) /etc/logrotate.d/pf9-nodeletd
+%attr(0660, pf9, pf9group) /etc/containerd/config.toml
 # Make the extension read-write-executable by pf9group
 %dir /var/log/pf9/
 %dir /var/log/pf9/kube/
@@ -133,6 +143,30 @@ if [ "$1" == 1 ]; then
         fi
         rm -f /var/opt/pf9/kube_interface || true
     fi
+
+    # set containerd sysctl params
+    mkdir -p /etc/sysctl.d/
+    cat <<EOF | sudo tee /etc/sysctl.d/pf9-kubernetes-cri.conf
+net.bridge.bridge-nf-call-iptables  = 1
+net.ipv4.ip_forward                 = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+EOF
+    sysctl --system
+
+    # load containerd kernel modules
+    mkdir -p /etc/modules-load.d/
+    modprobe overlay
+    modprobe br_netfilter
+    cat <<EOF | sudo tee /etc/modules-load.d/containerd.conf
+overlay
+br_netfilter
+EOF
+
+    chmod 0660 /etc/containerd/config.toml
+
+    # Enable containerd 
+    systemctl daemon-reload
+    systemctl enable --now containerd
 
     # Make all pf9-kube files non-writable by pf9 user
     # To prevent files from being written using vim + :wq! make the root user owner of all files
