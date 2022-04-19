@@ -82,6 +82,8 @@ const (
 	LocalCloudProvider = "local"
 	// RuntimeContainerd represents containerd service
 	RuntimeContainerd = "containerd"
+
+	ContainerdCgroup = "systemd"
 )
 
 var (
@@ -155,4 +157,6 @@ var (
 
 	// PhaseBaseDir is the base directory in which all bash-based phase scripts are located
 	PhaseBaseDir = "/opt/pf9/pf9-kube/phases"
+	// LocalDir is the local directory used here for containerd binaries.
+	UsrLocalDir = "/usr/local"
 )
