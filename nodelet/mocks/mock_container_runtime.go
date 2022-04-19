@@ -8,6 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	containerd "github.com/containerd/containerd"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -32,6 +33,49 @@ func NewMockContainerUtils(ctrl *gomock.Controller) *MockContainerUtils {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockContainerUtils) EXPECT() *MockContainerUtilsMockRecorder {
 	return m.recorder
+}
+
+// CreateContainer mocks base method.
+func (m *MockContainerUtils) CreateContainer(ctx context.Context, containerName, containerImage string) (containerd.Container, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateContainer", ctx, containerName, containerImage)
+	ret0, _ := ret[0].(containerd.Container)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateContainer indicates an expected call of CreateContainer.
+func (mr *MockContainerUtilsMockRecorder) CreateContainer(ctx, containerName, containerImage interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateContainer", reflect.TypeOf((*MockContainerUtils)(nil).CreateContainer), ctx, containerName, containerImage)
+}
+
+// DestroyContainersInNamespace mocks base method.
+func (m *MockContainerUtils) DestroyContainersInNamespace(ctx context.Context, namespace string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DestroyContainersInNamespace", ctx, namespace)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DestroyContainersInNamespace indicates an expected call of DestroyContainersInNamespace.
+func (mr *MockContainerUtilsMockRecorder) DestroyContainersInNamespace(ctx, namespace interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DestroyContainersInNamespace", reflect.TypeOf((*MockContainerUtils)(nil).DestroyContainersInNamespace), ctx, namespace)
+}
+
+// DestroyContainersInNamespacesList mocks base method.
+func (m *MockContainerUtils) DestroyContainersInNamespacesList(ctx context.Context, namespaces []string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DestroyContainersInNamespacesList", ctx, namespaces)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DestroyContainersInNamespacesList indicates an expected call of DestroyContainersInNamespacesList.
+func (mr *MockContainerUtilsMockRecorder) DestroyContainersInNamespacesList(ctx, namespaces interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DestroyContainersInNamespacesList", reflect.TypeOf((*MockContainerUtils)(nil).DestroyContainersInNamespacesList), ctx, namespaces)
 }
 
 // EnsureContainerDestroyed mocks base method.
@@ -62,6 +106,20 @@ func (mr *MockContainerUtilsMockRecorder) EnsureContainerStoppedOrNonExistent(ar
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnsureContainerStoppedOrNonExistent", reflect.TypeOf((*MockContainerUtils)(nil).EnsureContainerStoppedOrNonExistent), arg0, arg1)
 }
 
+// EnsureContainersDestroyed mocks base method.
+func (m *MockContainerUtils) EnsureContainersDestroyed(ctx context.Context, containers []containerd.Container, timeoutStr string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EnsureContainersDestroyed", ctx, containers, timeoutStr)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// EnsureContainersDestroyed indicates an expected call of EnsureContainersDestroyed.
+func (mr *MockContainerUtilsMockRecorder) EnsureContainersDestroyed(ctx, containers, timeoutStr interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnsureContainersDestroyed", reflect.TypeOf((*MockContainerUtils)(nil).EnsureContainersDestroyed), ctx, containers, timeoutStr)
+}
+
 // EnsureFreshContainerRunning mocks base method.
 func (m *MockContainerUtils) EnsureFreshContainerRunning(arg0 context.Context, arg1, arg2 string) error {
 	m.ctrl.T.Helper()
@@ -74,6 +132,64 @@ func (m *MockContainerUtils) EnsureFreshContainerRunning(arg0 context.Context, a
 func (mr *MockContainerUtilsMockRecorder) EnsureFreshContainerRunning(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnsureFreshContainerRunning", reflect.TypeOf((*MockContainerUtils)(nil).EnsureFreshContainerRunning), arg0, arg1, arg2)
+}
+
+// GetContainerWithGivenName mocks base method.
+func (m *MockContainerUtils) GetContainerWithGivenName(ctx context.Context, containerName string) (containerd.Container, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetContainerWithGivenName", ctx, containerName)
+	ret0, _ := ret[0].(containerd.Container)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetContainerWithGivenName indicates an expected call of GetContainerWithGivenName.
+func (mr *MockContainerUtilsMockRecorder) GetContainerWithGivenName(ctx, containerName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContainerWithGivenName", reflect.TypeOf((*MockContainerUtils)(nil).GetContainerWithGivenName), ctx, containerName)
+}
+
+// GetContainersInNamespace mocks base method.
+func (m *MockContainerUtils) GetContainersInNamespace(ctx context.Context, namespace string) ([]containerd.Container, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetContainersInNamespace", ctx, namespace)
+	ret0, _ := ret[0].([]containerd.Container)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetContainersInNamespace indicates an expected call of GetContainersInNamespace.
+func (mr *MockContainerUtilsMockRecorder) GetContainersInNamespace(ctx, namespace interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContainersInNamespace", reflect.TypeOf((*MockContainerUtils)(nil).GetContainersInNamespace), ctx, namespace)
+}
+
+// RemoveContainer mocks base method.
+func (m *MockContainerUtils) RemoveContainer(ctx context.Context, container containerd.Container, force bool) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveContainer", ctx, container, force)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveContainer indicates an expected call of RemoveContainer.
+func (mr *MockContainerUtilsMockRecorder) RemoveContainer(ctx, container, force interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveContainer", reflect.TypeOf((*MockContainerUtils)(nil).RemoveContainer), ctx, container, force)
+}
+
+// StopContainer mocks base method.
+func (m *MockContainerUtils) StopContainer(ctx context.Context, container containerd.Container, timeoutStr string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "StopContainer", ctx, container, timeoutStr)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// StopContainer indicates an expected call of StopContainer.
+func (mr *MockContainerUtilsMockRecorder) StopContainer(ctx, container, timeoutStr interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StopContainer", reflect.TypeOf((*MockContainerUtils)(nil).StopContainer), ctx, container, timeoutStr)
 }
 
 // MockImageUtils is a mock of ImageUtils interface.

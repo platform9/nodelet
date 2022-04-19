@@ -9,13 +9,14 @@ import (
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/errdefs"
+	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	"github.com/pkg/errors"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 	"go.uber.org/zap"
 )
 
-type Containerd struct {
+type ContainerUtility struct {
 	Service string
 	Socket  string
 	Client  *containerd.Client
@@ -24,13 +25,13 @@ type Containerd struct {
 
 const timeOut = "10s"
 
-func NewContainerd() (ContainerUtils, error) {
+func NewContainerUtil() (ContainerUtils, error) {
 
 	containerdclient, err := NewContainerdClient()
 	if err != nil {
 		return nil, err
 	}
-	return &Containerd{
+	return &ContainerUtility{
 		Service: constants.RuntimeContainerd,
 		Socket:  constants.ContainerdSocket,
 		Client:  containerdclient,
@@ -48,7 +49,7 @@ func NewContainerdClient() (*containerd.Client, error) {
 	return containerdclient, nil
 }
 
-func (c *Containerd) EnsureFreshContainerRunning(ctx context.Context, containerName string, containerImage string) error {
+func (c *ContainerUtility) EnsureFreshContainerRunning(ctx context.Context, containerName string, containerImage string) error {
 
 	err := c.EnsureContainerDestroyed(ctx, containerName, timeOut)
 	if err != nil {
@@ -85,7 +86,7 @@ func (c *Containerd) EnsureFreshContainerRunning(ctx context.Context, containerN
 	return nil
 }
 
-func (c *Containerd) EnsureContainerDestroyed(ctx context.Context, containerName string, timeoutStr string) error {
+func (c *ContainerUtility) EnsureContainerDestroyed(ctx context.Context, containerName string, timeoutStr string) error {
 
 	container, err := c.GetContainerWithGivenName(ctx, containerName)
 	if err != nil {
@@ -103,11 +104,33 @@ func (c *Containerd) EnsureContainerDestroyed(ctx context.Context, containerName
 	if err != nil {
 		return errors.Wrapf(err, "couldn't remove the container: %s", container.ID())
 	}
-
 	return nil
 }
 
-func (c *Containerd) EnsureContainerStoppedOrNonExistent(ctx context.Context, containerName string) error {
+func (c *ContainerUtility) EnsureContainersDestroyed(ctx context.Context, containers []containerd.Container, timeoutStr string) error {
+	var err error
+	for _, container := range containers {
+		zap.S().Infof("stopping container:%s", container.ID())
+		err = c.StopContainer(ctx, container, timeoutStr)
+		if err != nil {
+			zap.S().Errorf("couldn't stop the container: %s :%s", container.ID(), err)
+			zap.S().Warnf("skipping container: %s", container.ID())
+			continue
+		}
+		zap.S().Infof("container:%s stopped", container.ID())
+		zap.S().Infof("removing container:%s ", container.ID())
+		err = c.RemoveContainer(ctx, container, true)
+		if err != nil {
+			zap.S().Infof("couldn't remove the container: %s :%s", container.ID(), err)
+			zap.S().Warnf("skipping container: %s", container.ID())
+			continue
+		}
+		zap.S().Infof("container :%s destroyed", container.ID())
+	}
+	return nil
+}
+
+func (c *ContainerUtility) EnsureContainerStoppedOrNonExistent(ctx context.Context, containerName string) error {
 
 	c.log.Infof("Ensuring container %s is stopped or non-existent\n", containerName)
 
@@ -124,11 +147,45 @@ func (c *Containerd) EnsureContainerStoppedOrNonExistent(ctx context.Context, co
 	if err != nil {
 		return errors.Wrapf(err, "couldn't stop the container: %s", container.ID())
 	}
-
 	return nil
 }
 
-func (c *Containerd) CreateContainer(ctx context.Context, containerName string, containerImage string) (containerd.Container, error) {
+func (c *ContainerUtility) GetContainersInNamespace(ctx context.Context, namespace string) ([]containerd.Container, error) {
+	ctx = namespaces.WithNamespace(ctx, namespace)
+	containers, err := c.Client.Containers(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return containers, nil
+}
+
+func (c *ContainerUtility) DestroyContainersInNamespace(ctx context.Context, namespace string) error {
+
+	containers, err := c.GetContainersInNamespace(ctx, namespace)
+	if err != nil {
+		return errors.Wrapf(err, "error getting containers in namespace: %s ", namespace)
+	}
+
+	ctx = namespaces.WithNamespace(ctx, namespace)
+
+	err = c.EnsureContainersDestroyed(ctx, containers, timeOut)
+	if err != nil {
+		return errors.Wrapf(err, "could not destroy containers in namespace: %s", namespace)
+	}
+	return nil
+}
+
+func (c *ContainerUtility) DestroyContainersInNamespacesList(ctx context.Context, namespaces []string) error {
+
+	for _, namespace := range namespaces {
+		zap.S().Infof("Destroying containers in namespace: %s", namespace)
+		err := c.DestroyContainersInNamespace(ctx, namespace)
+		return err
+	}
+	return nil
+}
+
+func (c *ContainerUtility) CreateContainer(ctx context.Context, containerName string, containerImage string) (containerd.Container, error) {
 	image, err := c.Client.GetImage(ctx, containerImage)
 	if err != nil {
 		c.log.Infof("couldn't get %s image from client, so pulling the image\n", containerImage)
@@ -151,15 +208,25 @@ func (c *Containerd) CreateContainer(ctx context.Context, containerName string, 
 	}
 	return container, nil
 }
-func (c *Containerd) RemoveContainer(ctx context.Context, container containerd.Container, force bool) error {
+func (c *ContainerUtility) RemoveContainer(ctx context.Context, container containerd.Container, force bool) error {
 
 	id := container.ID()
 	task, err := container.Task(ctx, cio.Load)
 	if err != nil {
+
 		if errdefs.IsNotFound(err) {
+			zap.S().Infof("task not found so deleting directly with snapshot cleanup")
 			if container.Delete(ctx, containerd.WithSnapshotCleanup) != nil {
-				return container.Delete(ctx)
+				zap.S().Infof("failed to delete with snapshot")
+				if err = container.Delete(ctx); errdefs.IsNotFound(err) {
+					zap.S().Infof("container not found on store so skipping delete")
+					return nil
+				}
+				zap.S().Infof("container delete failed:%v", err)
+				return err
 			}
+			zap.S().Infof("container deleted with snapshot successfully: %v", id)
+			return nil
 		}
 		return err
 	}
@@ -215,7 +282,7 @@ func (c *Containerd) RemoveContainer(ctx context.Context, container containerd.C
 	return nil
 }
 
-func (c *Containerd) StopContainer(ctx context.Context, container containerd.Container, timeoutStr string) error {
+func (c *ContainerUtility) StopContainer(ctx context.Context, container containerd.Container, timeoutStr string) error {
 
 	timeout, err := time.ParseDuration(timeoutStr)
 	if err != nil {
@@ -223,6 +290,10 @@ func (c *Containerd) StopContainer(ctx context.Context, container containerd.Con
 	}
 	task, err := container.Task(ctx, cio.Load)
 	if err != nil {
+		if errdefs.IsNotFound(err) {
+			zap.S().Infof("task not found in container:%s", container.ID())
+			return nil
+		}
 		return err
 	}
 
@@ -277,6 +348,7 @@ func (c *Containerd) StopContainer(ctx context.Context, container containerd.Con
 
 	if err := task.Kill(ctx, syscall.SIGKILL); err != nil {
 		return err
+
 	}
 
 	// signal will be sent once resume is finished
@@ -300,7 +372,7 @@ func waitContainerStop(ctx context.Context, exitCh <-chan containerd.ExitStatus,
 	}
 }
 
-func (c *Containerd) GetContainerWithGivenName(ctx context.Context, containerName string) (containerd.Container, error) {
+func (c *ContainerUtility) GetContainerWithGivenName(ctx context.Context, containerName string) (containerd.Container, error) {
 	// TODO: investigate use of filters to below function from containerd
 	containers, err := c.Client.Containers(ctx)
 	if err != nil {

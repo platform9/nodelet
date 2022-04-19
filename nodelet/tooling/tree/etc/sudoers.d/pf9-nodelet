@@ -10,6 +10,10 @@ pf9     ALL = NOPASSWD: /opt/pf9/pf9-kube/setup_env_and_run_script.sh /opt/pf9/p
           NOPASSWD: /opt/pf9/pf9-kube/setup_env_and_run_script.sh /opt/pf9/pf9-kube/phases/* stop --debug, \
           NOPASSWD: /usr/bin/cgcreate -a pf9\:pf9group -t pf9\:pf9group -g cpu\:pf9-kube-status, \
           NOPASSWD: /usr/bin/cgset -r * pf9-kube-status, \
-          NOPASSWD: /usr/bin/cgget -g cpu\:pf9-kube-status
+          NOPASSWD: /usr/bin/cgget -g cpu\:pf9-kube-status, \
+          NOPASSWD: /usr/bin/systemctl start containerd, \
+          NOPASSWD: /usr/bin/systemctl stop containerd, \
+          NOPASSWD: /usr/bin/systemctl is-active containerd
+
 
 Defaults:pf9 !requiretty
