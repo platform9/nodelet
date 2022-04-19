@@ -7,6 +7,7 @@ require (
 	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/choria-io/go-validator v1.1.1
 	github.com/containerd/containerd v1.6.2
+	github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e
 	github.com/erwinvaneyk/goversion v0.1.3
 	github.com/ghodss/yaml v1.0.0
 	github.com/golang/mock v1.6.0
@@ -60,6 +61,7 @@ require (
 	github.com/go-openapi/jsonreference v0.19.5 // indirect
 	github.com/go-openapi/swag v0.19.14 // indirect
 	github.com/gogo/googleapis v1.4.0 // indirect
+	github.com/godbus/dbus v0.0.0-20190422162347-ade71ed3457e // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
