@@ -14,6 +14,8 @@ DOCKER_BUILD_CMD=${DOCKER} build
 DOCKER_RMI_CMD=${DOCKER} rmi
 RM=rm
 REPEAT_TESTS ?= "1"
+WGET_CMD ?= "wget"
+
 
 # Using PWD is not guaranteed to be the directory of the Makefile. Use these instead:
 MAKE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
@@ -43,8 +45,26 @@ GOLANG_DOCKER_MARKER := ${NODELET_BUILD_DIR}/${COMPILE_IMAGE}.marker
 .PHONY: nodelet-setup nodelet nodelet-test nodelet-clean
 .DEFAULT_GOAL:= nodelet
 
+# Download containerd
+CONTAINERD_VERSION := 1.6.1
+CONTAINERD_BASE_DIR := $(NODELET_SRC_DIR)/pkg/phases/container_runtime/containerd
+CONTAINERD_FILE_NAME := containerd-${CONTAINERD_VERSION}-linux-amd64.tar.gz
+CONTAINERD_FILE := $(CONTAINERD_BASE_DIR)/$(CONTAINERD_FILE_NAME)
+CONTAINERD_URL := https://github.com/containerd/containerd/releases/download/v${CONTAINERD_VERSION}/${CONTAINERD_FILE_NAME}
+
+$(CONTAINERD_BASE_DIR):
+	echo "make CONTAINERD_BASE_DIR: $(CONTAINERD_BASE_DIR)"
+	mkdir -p $@
+
+$(CONTAINERD_FILE): | $(CONTAINERD_BASE_DIR)
+	echo "make CONTAINERD_FILE: $(CONTAINERD_FILE)"
+	mkdir -p $@
+	cd $@ && \
+	${WGET_CMD} ${CONTAINERD_URL}  -qO- 
+
+
 # Download/create build envs
-nodelet-setup: ${NODELET_BIN_DIR} ${GOLANG_DOCKER_MARKER}
+nodelet-setup: ${NODELET_BIN_DIR} ${GOLANG_DOCKER_MARKER} $(CONTAINERD_FILE)
 	echo "setting up env for nodeletd"
 	cd ${NODELET_SRC_DIR} && go mod vendor || true
 
