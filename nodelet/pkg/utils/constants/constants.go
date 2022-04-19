@@ -1,6 +1,8 @@
 package constants
 
-import "fmt"
+import (
+	"fmt"
+)
 
 const (
 	// ConfigDir : Directory for nodelet config files
@@ -114,6 +116,9 @@ var (
 	//K8sNamespace is namespace for kubernetes
 	K8sNamespace = "k8s.io"
 
+	ConfigSrcDir = "/opt/pf9/pf9-kube/conf"
+
+	//DnsIP= phaseutils.AddrConv()
 	// Phase orders of all the phases
 	NoRolePhaseOrder                   = 10
 	GenCertsPhaseOrder                 = 20
