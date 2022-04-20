@@ -49,7 +49,7 @@ GOLANG_DOCKER_MARKER := ${NODELET_BUILD_DIR}/${COMPILE_IMAGE}.marker
 CONTAINERD_VERSION := 1.6.1
 CONTAINERD_BASE_DIR := $(NODELET_SRC_DIR)/pkg/phases/container_runtime/containerd
 CONTAINERD_FILE_NAME := containerd-${CONTAINERD_VERSION}-linux-amd64.tar.gz
-CONTAINERD_FILE := $(CONTAINERD_BASE_DIR)/$(CONTAINERD_FILE_NAME)
+CONTAINERD_FILE := $(CONTAINERD_BASE_DIR)/containerd.tar.gz
 CONTAINERD_URL := https://github.com/containerd/containerd/releases/download/v${CONTAINERD_VERSION}/${CONTAINERD_FILE_NAME}
 
 $(CONTAINERD_BASE_DIR):
@@ -58,9 +58,7 @@ $(CONTAINERD_BASE_DIR):
 
 $(CONTAINERD_FILE): | $(CONTAINERD_BASE_DIR)
 	echo "make CONTAINERD_FILE: $(CONTAINERD_FILE)"
-	mkdir -p $@
-	cd $@ && \
-	${WGET_CMD} ${CONTAINERD_URL}  -qO- 
+	${WGET_CMD} ${CONTAINERD_URL}  -O ${CONTAINERD_FILE}
 
 
 # Download/create build envs
