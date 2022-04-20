@@ -318,5 +318,94 @@ var _ = Describe("Fileio", func() {
 				Expect(strings.TrimSpace(stdout[0])).To(Equal("2"))
 			})
 		})
+		Context("Validating Sha256 Checksum", func() {
+			var (
+				dummy1       string
+				dummy2       string
+				content1     string
+				content2     string
+				checksumFile string
+				expectedHash []string
+				actualHash   []string
+				hash2        []string
+			)
+			BeforeEach(func() {
+				fileInpOut = New()
+				cmdLine = command.New()
+				ctx = context.TODO()
+				_, _ = cmdLine.RunCommand(ctx, nil, 0, "", "mkdir", "testData")
+				dummy1 = "testData/dummy1.txt"
+				dummy2 = "testData/dummy2.txt"
+				content1 = "this is dummy1 file"
+				content2 = "this is dummy2 file"
+				err = fileInpOut.WriteToFile(dummy1, content1, false)
+				Expect(err).To(BeNil())
+				err = fileInpOut.WriteToFile(dummy2, content2, false)
+				Expect(err).To(BeNil())
+				checksumFile = "testData/checksum/sha256sums.txt"
+				_, expectedHash, _ = cmdLine.RunCommandWithStdOut(ctx, nil, 0, "", "/usr/bin/sha256sum", dummy1)
+				_, hash2, _ = cmdLine.RunCommandWithStdOut(ctx, nil, 0, "", "/usr/bin/sha256sum", dummy2)
+				expectedHash = append(expectedHash, hash2...)
+			})
+
+			AfterEach(func() {
+				_, _ = cmdLine.RunCommand(ctx, nil, 0, "", "rm", "-rf", "testData")
+				actualHash = nil
+				expectedHash = nil
+				ctx.Done()
+			})
+			It("Should generate hash for given file", func() {
+				_, expectedHash, _ = cmdLine.RunCommandWithStdOut(ctx, nil, 0, "", "/usr/bin/sha256sum", dummy1)
+				hash, err := fileInpOut.GenerateHashForFile(dummy1)
+				actualHash = append(actualHash, hash)
+				Expect(err).To(BeNil())
+				Expect(actualHash).To(Equal(expectedHash))
+			})
+			It("Should fail if file absent", func() {
+				fileToCheck := "testData/absent.txt"
+				_, err := fileInpOut.GenerateHashForFile(fileToCheck)
+				Expect(err).NotTo(BeNil())
+			})
+			It("Should generate hash for given directory", func() {
+				dirToCheck := "testData"
+				actualHash, err = fileInpOut.GenerateHashForDir(dirToCheck)
+				Expect(err).To(BeNil())
+				Expect(actualHash).To(Equal(expectedHash))
+			})
+			It("Should create checksum dir and checksum file for given directory ", func() {
+				dirToCheck := "testData"
+				err := fileInpOut.GenerateChecksum(dirToCheck)
+				Expect(err).To(BeNil())
+				actualHash, _ = fileInpOut.ReadFileByLine(checksumFile)
+				Expect(actualHash).To(Equal(expectedHash))
+			})
+			It("Should create checksum file if checksum dir already present", func() {
+				_, _ = cmdLine.RunCommand(ctx, nil, 0, "", "mkdir", "-p", "testData/checksum")
+				dirToCheck := "testData"
+				err := fileInpOut.GenerateChecksum(dirToCheck)
+				Expect(err).To(BeNil())
+				actualHash, _ = fileInpOut.ReadFileByLine(checksumFile)
+				Expect(actualHash).To(Equal(expectedHash))
+			})
+			It("Should verify as true if files not changed", func() {
+				dirToCheck := "testData"
+				err := fileInpOut.GenerateChecksum(dirToCheck)
+				Expect(err).To(BeNil())
+				check, err := fileInpOut.VerifyChecksum(dirToCheck)
+				Expect(err).To(BeNil())
+				Expect(check).To(Equal(true))
+			})
+			It("Should verify as false if files are changed", func() {
+				dirToCheck := "testData"
+				err := fileInpOut.GenerateChecksum(dirToCheck)
+				Expect(err).To(BeNil())
+				content = "new data"
+				err = fileInpOut.WriteToFile(dummy1, content, true)
+				Expect(err).To(BeNil())
+				check, err := fileInpOut.VerifyChecksum(dirToCheck)
+				Expect(err).To(BeNil())
+				Expect(check).To(Equal(false))
+			})
+		})
 	})
 })

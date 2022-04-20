@@ -43,6 +43,7 @@ var DefaultConfig = Config{
 	GRPCRetryMax:            3,
 	GRPCRetryTimeoutSeconds: 5,
 	NumCmdOutputLinesToLog:  10, // 0 indicates no command lines to be logged
+	UserImagesDir:           constants.UserImagesDir,
 }
 
 // Config a struct to load the values from viper for future use.
@@ -80,6 +81,7 @@ type Config struct {
 	MasterIp                  string  `mapstructure:"MASTER_IP"`
 	K8sApiPort                string  `mapstructure:"K8S_API_PORT"`
 	MasterSchedulable         bool    `mapstructure:"ALLOW_WORKLOADS_ON_MASTER"`
+	UserImagesDir             string  `mapstructure:"USER_IMAGES_DIR"`
 }
 
 // ToStringMap converts the Config struct to a map of strings

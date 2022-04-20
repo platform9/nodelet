@@ -2,12 +2,15 @@ package fileio
 
 import (
 	"bufio"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
@@ -35,6 +38,10 @@ type FileInterface interface {
 	WriteToFile(string, interface{}, bool) error
 	ReadJSONFile(string, interface{}) error
 	ListFiles(string) ([]string, error)
+	GenerateChecksum(string) error
+	VerifyChecksum(string) (bool, error)
+	GenerateHashForDir(string) ([]string, error)
+	GenerateHashForFile(string) (string, error)
 }
 
 // TouchFile creates an empty file
@@ -242,4 +249,98 @@ func (f *Pf9FileIO) ListFiles(dirname string) ([]string, error) {
 		filenames[i] = file.Name()
 	}
 	return filenames, nil
+}
+
+// GenerateChecksum generates sha256 checksum for files and writes the checksum file in checksum sub-dir in given directory
+func (f *Pf9FileIO) GenerateChecksum(imageDir string) error {
+
+	hash, err := f.GenerateHashForDir(imageDir)
+	if err != nil {
+		return errors.Wrapf(err, "could not generate hash for: %s", imageDir)
+	}
+	ChecksumDir := fmt.Sprintf("%s/checksum", imageDir)
+	if _, err := os.Stat(ChecksumDir); os.IsNotExist(err) {
+		if err := os.Mkdir(ChecksumDir, os.ModePerm); err != nil {
+			return errors.Wrapf(err, "failed to create directory: %s", ChecksumDir)
+		}
+	}
+	ChecksumFile := fmt.Sprintf("%s/sha256sums.txt", ChecksumDir)
+	err = f.WriteToFile(ChecksumFile, hash, false)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// VerifyChecksum verifies the current sha256 checksum of all files with checksum file
+func (f *Pf9FileIO) VerifyChecksum(imageDir string) (bool, error) {
+
+	currentHash, err := f.GenerateHashForDir(imageDir)
+	if err != nil {
+		return false, errors.Wrapf(err, "could not generate hash for: %s", imageDir)
+	}
+	checksumFile := fmt.Sprintf("%s/checksum/sha256sums.txt", imageDir)
+	prevHash, err := f.ReadFileByLine(checksumFile)
+	if err != nil {
+		return false, err
+	}
+	res := stringSlicesEqual(currentHash, prevHash)
+	if res {
+		return true, nil
+	} else {
+		err = f.WriteToFile(checksumFile, currentHash, false)
+		if err != nil {
+			return false, err
+		}
+		return false, nil
+	}
+}
+
+// GenerateHashForDir generates sha256 hash for files in directory and returns string slice of hashes of files
+func (f *Pf9FileIO) GenerateHashForDir(imageDir string) ([]string, error) {
+	data := []string{}
+	items, _ := ioutil.ReadDir(imageDir)
+	for _, item := range items {
+		if item.IsDir() {
+			continue
+		} else {
+			imageFile := fmt.Sprintf("%s/%s", imageDir, item.Name())
+			fileData, err := f.GenerateHashForFile(imageFile)
+			if err != nil {
+				return nil, err
+			}
+			data = append(data, fileData)
+		}
+	}
+	return data, nil
+}
+
+// GenerateHashForFile generates sha256 hash for given file and returns string of hash of file
+func (f *Pf9FileIO) GenerateHashForFile(fileName string) (string, error) {
+	file, err := os.Open(fileName)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+	h := sha256.New()
+	if _, err := io.Copy(h, file); err != nil {
+		return "", err
+	}
+	data := h.Sum(nil)
+	fileData := hex.EncodeToString(data)
+	fileData = fmt.Sprintf("%s  %s", fileData, fileName)
+	return fileData, nil
+}
+
+// stringSlicesEqual states whether two string slices are equal or not
+func stringSlicesEqual(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i, v := range a {
+		if v != b[i] {
+			return false
+		}
+	}
+	return true
 }

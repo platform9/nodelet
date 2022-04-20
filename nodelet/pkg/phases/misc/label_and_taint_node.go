@@ -36,42 +36,48 @@ func NewLabelTaintNodePhase() *LabelTaintNodePhase {
 	}
 }
 
-func (d *LabelTaintNodePhase) GetHostPhase() sunpikev1alpha1.HostPhase {
-	return *d.HostPhase
+func (l *LabelTaintNodePhase) GetHostPhase() sunpikev1alpha1.HostPhase {
+	return *l.HostPhase
 }
 
-func (d *LabelTaintNodePhase) GetPhaseName() string {
-	return d.HostPhase.Name
+func (l *LabelTaintNodePhase) GetPhaseName() string {
+	return l.HostPhase.Name
 }
 
-func (d *LabelTaintNodePhase) GetOrder() int {
-	return int(d.HostPhase.Order)
+func (l *LabelTaintNodePhase) GetOrder() int {
+	return int(l.HostPhase.Order)
 }
 
-func (d *LabelTaintNodePhase) Status(context.Context, config.Config) error {
-	phaseutils.SetHostStatus(d.HostPhase, constants.RunningState, "")
+func (l *LabelTaintNodePhase) Status(context.Context, config.Config) error {
+
+	l.log.Infof("Running Status of phase: %s", l.HostPhase.Name)
+
+	phaseutils.SetHostStatus(l.HostPhase, constants.RunningState, "")
 	return nil
 }
 
-func (d *LabelTaintNodePhase) Start(ctx context.Context, cfg config.Config) error {
+func (l *LabelTaintNodePhase) Start(ctx context.Context, cfg config.Config) error {
+
+	l.log.Infof("Running Start of phase: %s", l.HostPhase.Name)
+
 	var err error
-	if d.kubeUtils == nil || d.kubeUtils.IsInterfaceNil() {
-		d.kubeUtils, err = kubeutils.NewClient()
+	if l.kubeUtils == nil || l.kubeUtils.IsInterfaceNil() {
+		l.kubeUtils, err = kubeutils.NewClient()
 		if err != nil {
 			return errors.Wrap(err, "could not refresh k8s client")
 		}
 	}
-	nodeIdentifier, err := d.kubeUtils.GetNodeIdentifier(cfg)
+	nodeIdentifier, err := l.kubeUtils.GetNodeIdentifier(cfg)
 	if err != nil {
-		d.log.Errorf(err.Error())
-		phaseutils.SetHostStatus(d.HostPhase, constants.FailedState, err.Error())
+		l.log.Errorf(err.Error())
+		phaseutils.SetHostStatus(l.HostPhase, constants.FailedState, err.Error())
 		return err
 	}
-	d.log.Infof("Node name is %v", nodeIdentifier)
+	l.log.Infof("Node name is %v", nodeIdentifier)
 
 	if nodeIdentifier == constants.LoopBackIpString {
-		d.log.Errorf("Fetched node endpoint as 127.0.0.1. Node interface might have lost IP address. Failing.")
-		phaseutils.SetHostStatus(d.HostPhase, constants.FailedState, "Fetched node endpoint as 127.0.0.1. Node interface might have lost IP address. Failing.")
+		l.log.Errorf("Fetched node endpoint as 127.0.0.1. Node interface might have lost IP address. Failing.")
+		phaseutils.SetHostStatus(l.HostPhase, constants.FailedState, "Fetched node endpoint as 127.0.0.1. Node interface might have lost IP address. Failing.")
 		return fmt.Errorf("node interface might have lost IP address. Failing")
 	}
 
@@ -79,10 +85,10 @@ func (d *LabelTaintNodePhase) Start(ctx context.Context, cfg config.Config) erro
 		"node-role.kubernetes.io/" + cfg.ClusterRole: "",
 	}
 
-	err = d.kubeUtils.AddLabelsToNode(ctx, nodeIdentifier, labelsToAdd)
+	err = l.kubeUtils.AddLabelsToNode(ctx, nodeIdentifier, labelsToAdd)
 	if err != nil {
-		d.log.Errorf(err.Error())
-		phaseutils.SetHostStatus(d.HostPhase, constants.FailedState, err.Error())
+		l.log.Errorf(err.Error())
+		phaseutils.SetHostStatus(l.HostPhase, constants.FailedState, err.Error())
 		return err
 	}
 
@@ -95,18 +101,21 @@ func (d *LabelTaintNodePhase) Start(ctx context.Context, cfg config.Config) erro
 				Effect: "NoSchedule",
 			},
 		}
-		err = d.kubeUtils.AddTaintsToNode(ctx, nodeIdentifier, taintsToAdd)
+		err = l.kubeUtils.AddTaintsToNode(ctx, nodeIdentifier, taintsToAdd)
 		if err != nil {
-			d.log.Errorf(err.Error())
-			phaseutils.SetHostStatus(d.HostPhase, constants.FailedState, err.Error())
+			l.log.Errorf(err.Error())
+			phaseutils.SetHostStatus(l.HostPhase, constants.FailedState, err.Error())
 			return err
 		}
 	}
-	phaseutils.SetHostStatus(d.HostPhase, constants.RunningState, "")
+	phaseutils.SetHostStatus(l.HostPhase, constants.RunningState, "")
 	return nil
 }
 
-func (d *LabelTaintNodePhase) Stop(ctx context.Context, cfg config.Config) error {
-	phaseutils.SetHostStatus(d.HostPhase, constants.StoppedState, "")
+func (l *LabelTaintNodePhase) Stop(ctx context.Context, cfg config.Config) error {
+
+	l.log.Infof("Running Stop of phase: %s", l.HostPhase.Name)
+
+	phaseutils.SetHostStatus(l.HostPhase, constants.StoppedState, "")
 	return nil
 }

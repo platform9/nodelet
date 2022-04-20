@@ -36,43 +36,46 @@ func NewUncordonNodePhase() *UncordonNodePhase {
 	}
 }
 
-func (d *UncordonNodePhase) GetHostPhase() sunpikev1alpha1.HostPhase {
-	return *d.HostPhase
+func (u *UncordonNodePhase) GetHostPhase() sunpikev1alpha1.HostPhase {
+	return *u.HostPhase
 }
 
-func (d *UncordonNodePhase) GetPhaseName() string {
-	return d.HostPhase.Name
+func (u *UncordonNodePhase) GetPhaseName() string {
+	return u.HostPhase.Name
 }
 
-func (d *UncordonNodePhase) GetOrder() int {
-	return int(d.HostPhase.Order)
+func (u *UncordonNodePhase) GetOrder() int {
+	return int(u.HostPhase.Order)
 }
 
-func (d *UncordonNodePhase) Status(ctx context.Context, cfg config.Config) error {
+func (u *UncordonNodePhase) Status(ctx context.Context, cfg config.Config) error {
+
+	u.log.Infof("Running Status of phase: %s", u.HostPhase.Name)
+
 	var err error
-	if d.kubeUtils == nil || d.kubeUtils.IsInterfaceNil() {
-		d.kubeUtils, err = kubeutils.NewClient()
+	if u.kubeUtils == nil || u.kubeUtils.IsInterfaceNil() {
+		u.kubeUtils, err = kubeutils.NewClient()
 		if err != nil {
 			return errors.Wrap(err, "could not refresh k8s client")
 		}
 	}
-	nodeIdentifier, err := d.kubeUtils.GetNodeIdentifier(cfg)
+	nodeIdentifier, err := u.kubeUtils.GetNodeIdentifier(cfg)
 	if err != nil {
-		d.log.Errorf(err.Error())
-		phaseutils.SetHostStatus(d.HostPhase, constants.FailedState, err.Error())
+		u.log.Errorf(err.Error())
+		phaseutils.SetHostStatus(u.HostPhase, constants.FailedState, err.Error())
 		return err
 	}
 
 	if _, err := os.Stat(constants.KubeStackStartFileMarker); err == nil {
-		d.log.Infof("kube stack is still booting up, nodes not ready yet")
-		phaseutils.SetHostStatus(d.HostPhase, constants.RunningState, "")
+		u.log.Infof("kube stack is still booting up, nodes not ready yet")
+		phaseutils.SetHostStatus(u.HostPhase, constants.RunningState, "")
 		return nil
 	}
 
-	node, err := d.kubeUtils.GetNodeFromK8sApi(ctx, nodeIdentifier)
+	node, err := u.kubeUtils.GetNodeFromK8sApi(ctx, nodeIdentifier)
 	if err != nil {
-		d.log.Errorf(err.Error())
-		phaseutils.SetHostStatus(d.HostPhase, constants.FailedState, err.Error())
+		u.log.Errorf(err.Error())
+		phaseutils.SetHostStatus(u.HostPhase, constants.FailedState, err.Error())
 		return err
 	}
 	metadata := &node.ObjectMeta
@@ -81,7 +84,7 @@ func (d *UncordonNodePhase) Status(ctx context.Context, cfg config.Config) error
 	if metadata.Annotations != nil {
 		kubeStackShutDown := metadata.Annotations["KubeStackShutDown"]
 		if kubeStackShutDown == constants.TrueString {
-			phaseutils.SetHostStatus(d.HostPhase, constants.RunningState, "")
+			phaseutils.SetHostStatus(u.HostPhase, constants.RunningState, "")
 			return nil
 		}
 	}
@@ -91,62 +94,65 @@ func (d *UncordonNodePhase) Status(ctx context.Context, cfg config.Config) error
 		annotsToAdd := map[string]string{
 			"UserNodeCordon": "true",
 		}
-		err = d.kubeUtils.AddAnnotationsToNode(ctx, nodeIdentifier, annotsToAdd)
+		err = u.kubeUtils.AddAnnotationsToNode(ctx, nodeIdentifier, annotsToAdd)
 		if err != nil {
-			d.log.Errorf(err.Error())
-			phaseutils.SetHostStatus(d.HostPhase, constants.FailedState, err.Error())
+			u.log.Errorf(err.Error())
+			phaseutils.SetHostStatus(u.HostPhase, constants.FailedState, err.Error())
 			return err
 		}
 	} else if !nodeCordoned {
 		annotsToRemove := []string{"UserNodeCordon"}
-		err = d.kubeUtils.RemoveAnnotationsFromNode(ctx, nodeIdentifier, annotsToRemove)
+		err = u.kubeUtils.RemoveAnnotationsFromNode(ctx, nodeIdentifier, annotsToRemove)
 		if err != nil {
-			d.log.Errorf(err.Error())
-			phaseutils.SetHostStatus(d.HostPhase, constants.FailedState, err.Error())
+			u.log.Errorf(err.Error())
+			phaseutils.SetHostStatus(u.HostPhase, constants.FailedState, err.Error())
 			return err
 		}
 	}
-	phaseutils.SetHostStatus(d.HostPhase, constants.RunningState, "")
+	phaseutils.SetHostStatus(u.HostPhase, constants.RunningState, "")
 	return nil
 }
 
-func (d *UncordonNodePhase) Start(ctx context.Context, cfg config.Config) error {
+func (u *UncordonNodePhase) Start(ctx context.Context, cfg config.Config) error {
+
+	u.log.Infof("Running Start of phase: %s", u.HostPhase.Name)
+
 	var err error
-	if d.kubeUtils == nil {
-		d.kubeUtils, err = kubeutils.NewClient()
+	if u.kubeUtils == nil {
+		u.kubeUtils, err = kubeutils.NewClient()
 		if err != nil {
 			return errors.Wrap(err, "could not refresh k8s client")
 		}
 	}
-	nodeIdentifier, err := d.kubeUtils.GetNodeIdentifier(cfg)
+	nodeIdentifier, err := u.kubeUtils.GetNodeIdentifier(cfg)
 	if err != nil {
-		d.log.Errorf(err.Error())
-		phaseutils.SetHostStatus(d.HostPhase, constants.FailedState, err.Error())
+		u.log.Errorf(err.Error())
+		phaseutils.SetHostStatus(u.HostPhase, constants.FailedState, err.Error())
 		return err
 	}
 
-	d.log.Infof("Node name is %v", nodeIdentifier)
+	u.log.Infof("Node name is %v", nodeIdentifier)
 
 	if nodeIdentifier == constants.LoopBackIpString {
-		d.log.Errorf("Fetched node endpoint as 127.0.0.1. Node interface might have lost IP address. Failing.")
-		phaseutils.SetHostStatus(d.HostPhase, constants.FailedState, "Fetched node endpoint as 127.0.0.1. Node interface might have lost IP address. Failing.")
+		u.log.Errorf("Fetched node endpoint as 127.0.0.1. Node interface might have lost IP address. Failing.")
+		phaseutils.SetHostStatus(u.HostPhase, constants.FailedState, "Fetched node endpoint as 127.0.0.1. Node interface might have lost IP address. Failing.")
 		return fmt.Errorf("node interface might have lost IP address. Failing")
 	}
 
 	//remove KubeStackShutDown annotation (if present) as this is kube stack startup
 	annotsToRemove := []string{"KubeStackShutDown"}
 
-	err = d.kubeUtils.RemoveAnnotationsFromNode(ctx, nodeIdentifier, annotsToRemove)
+	err = u.kubeUtils.RemoveAnnotationsFromNode(ctx, nodeIdentifier, annotsToRemove)
 	if err != nil {
-		d.log.Errorf(err.Error())
-		phaseutils.SetHostStatus(d.HostPhase, constants.FailedState, err.Error())
+		u.log.Errorf(err.Error())
+		phaseutils.SetHostStatus(u.HostPhase, constants.FailedState, err.Error())
 		return err
 	}
 
-	node, err := d.kubeUtils.GetNodeFromK8sApi(ctx, nodeIdentifier)
+	node, err := u.kubeUtils.GetNodeFromK8sApi(ctx, nodeIdentifier)
 	if err != nil {
-		d.log.Errorf(err.Error())
-		phaseutils.SetHostStatus(d.HostPhase, constants.FailedState, err.Error())
+		u.log.Errorf(err.Error())
+		phaseutils.SetHostStatus(u.HostPhase, constants.FailedState, err.Error())
 		return err
 	}
 	metadata := node.ObjectMeta
@@ -156,29 +162,32 @@ func (d *UncordonNodePhase) Start(ctx context.Context, cfg config.Config) error 
 		userNodeCordon := metadata.Annotations["UserNodeCordon"]
 		//If cordoned by user DO NOT uncordon, exit
 		if userNodeCordon == constants.TrueString {
-			phaseutils.SetHostStatus(d.HostPhase, constants.RunningState, "")
+			phaseutils.SetHostStatus(u.HostPhase, constants.RunningState, "")
 			return nil
 		}
 	}
 
-	err = d.kubeUtils.UncordonNode(ctx, nodeIdentifier)
+	err = u.kubeUtils.UncordonNode(ctx, nodeIdentifier)
 	if err != nil {
-		d.log.Errorf(err.Error())
-		phaseutils.SetHostStatus(d.HostPhase, constants.FailedState, err.Error())
+		u.log.Errorf(err.Error())
+		phaseutils.SetHostStatus(u.HostPhase, constants.FailedState, err.Error())
 		return err
 	}
-	err = d.kubeUtils.PreventAutoReattach()
+	err = u.kubeUtils.PreventAutoReattach()
 	if err != nil {
-		d.log.Errorf(err.Error())
-		phaseutils.SetHostStatus(d.HostPhase, constants.FailedState, err.Error())
+		u.log.Errorf(err.Error())
+		phaseutils.SetHostStatus(u.HostPhase, constants.FailedState, err.Error())
 		return err
 	}
 	//post_upgrade_cleanup (not implemented ,not needed)
-	phaseutils.SetHostStatus(d.HostPhase, constants.RunningState, "")
+	phaseutils.SetHostStatus(u.HostPhase, constants.RunningState, "")
 	return nil
 }
 
-func (d *UncordonNodePhase) Stop(ctx context.Context, cfg config.Config) error {
-	phaseutils.SetHostStatus(d.HostPhase, constants.StoppedState, "")
+func (u *UncordonNodePhase) Stop(ctx context.Context, cfg config.Config) error {
+
+	u.log.Infof("Running Stop of phase: %s", u.HostPhase.Name)
+
+	phaseutils.SetHostStatus(u.HostPhase, constants.StoppedState, "")
 	return nil
 }
