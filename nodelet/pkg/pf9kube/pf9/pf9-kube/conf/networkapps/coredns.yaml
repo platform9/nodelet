@@ -130,7 +130,7 @@ spec:
         kubernetes.io/os: linux
       containers:
       - name: coredns
-        image: "__K8S_REGISTRY__/coredns/coredns:v1.8.0"
+        image: "{{.K8sRegistry}}/coredns/coredns:v1.8.0"
         imagePullPolicy: IfNotPresent
         resources:
           limits:
@@ -201,7 +201,7 @@ metadata:
 spec:
   selector:
     k8s-app: kube-dns
-  clusterIP: "__DNS_IP__"
+  clusterIP: {{.DnsIP}}
   ports:
   - name: dns
     port: 53
@@ -303,7 +303,7 @@ spec:
         kubernetes.io/os: linux
       containers:
       - name: autoscaler
-        image: "__K8S_REGISTRY__/cluster-proportional-autoscaler-amd64:1.8.1"
+        image: "{{.K8sRegistry}}/cluster-proportional-autoscaler-amd64:1.8.1"
         resources:
             requests:
                 cpu: "20m"

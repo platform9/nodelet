@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io"
 	"io/ioutil"
 	"os"
@@ -42,6 +43,7 @@ type FileInterface interface {
 	VerifyChecksum(string) (bool, error)
 	GenerateHashForDir(string) ([]string, error)
 	GenerateHashForFile(string) (string, error)
+	NewYamlFromTemplateYaml(string, string, interface{}) error
 }
 
 // TouchFile creates an empty file
@@ -330,6 +332,24 @@ func (f *Pf9FileIO) GenerateHashForFile(fileName string) (string, error) {
 	fileData := hex.EncodeToString(data)
 	fileData = fmt.Sprintf("%s  %s", fileData, fileName)
 	return fileData, nil
+}
+
+func (f *Pf9FileIO) NewYamlFromTemplateYaml(templFile string, outFile string, data interface{}) error {
+
+	fw, err := os.Create(outFile)
+	if err != nil {
+		return err
+	}
+	defer fw.Close()
+	t, err := template.ParseFiles(templFile)
+	if err != nil {
+		return err
+	}
+	err = t.Execute(fw, data)
+	if err != nil {
+		return fmt.Errorf("error executing template: %s", err)
+	}
+	return nil
 }
 
 // stringSlicesEqual states whether two string slices are equal or not

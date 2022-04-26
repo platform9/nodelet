@@ -18,14 +18,12 @@ import (
 func TestCommand(t *testing.T) {
 	RegisterFailHandler(Fail)
 	junitReporter := reporters.NewJUnitReporter("junit.xml")
-	//RunSpecs(t, "Fileio Suite")
 	RunSpecsWithDefaultAndCustomReporters(t, "Fileio Suite", []Reporter{junitReporter})
 }
 
 var _ = Describe("Fileio", func() {
 	var (
-		origFilename string
-		//dupFilename string
+		origFilename   string
 		filename       string
 		err            error
 		content        string
@@ -405,6 +403,44 @@ var _ = Describe("Fileio", func() {
 				check, err := fileInpOut.VerifyChecksum(dirToCheck)
 				Expect(err).To(BeNil())
 				Expect(check).To(Equal(false))
+			})
+		})
+
+		Context("Writing Yaml", func() {
+			type data struct {
+				DnsIP string
+			}
+			var (
+				templateYaml string
+				newYaml      string
+				newData      data
+				content      string
+			)
+			BeforeEach(func() {
+				fileInpOut = New()
+				cmdLine = command.New()
+				ctx = context.TODO()
+				_, _ = cmdLine.RunCommand(ctx, nil, 0, "", "mkdir", "testData")
+				templateYaml = "testData/tmplate.yaml"
+				newYaml = "testData/new.yaml"
+				newData = data{
+					DnsIP: "10.20.30.40",
+				}
+			})
+			AfterEach(func() {
+				_, _ = cmdLine.RunCommand(ctx, nil, 0, "", "rm", "-rf", "testData")
+				ctx.Done()
+			})
+			It("Should write replaced data to new yaml ", func() {
+				content = "clusterIP: {{.DnsIP}}"
+				err = fileInpOut.WriteToFile(templateYaml, content, false)
+				Expect(err).To(BeNil())
+				err = fileInpOut.NewYamlFromTemplateYaml(templateYaml, newYaml, newData)
+				Expect(err).To(BeNil())
+				actualData, err := fileInpOut.ReadFileByLine(newYaml)
+				Expect(err).To(BeNil())
+				expectedData := []string{"clusterIP: 10.20.30.40"}
+				Expect(expectedData).To(Equal(actualData))
 			})
 		})
 	})

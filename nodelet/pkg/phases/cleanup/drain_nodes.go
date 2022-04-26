@@ -8,6 +8,7 @@ import (
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/kubeutils"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/netutils"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/phaseutils"
 	"go.uber.org/zap"
 
@@ -18,6 +19,7 @@ type DrainNodePhase struct {
 	HostPhase *sunpikev1alpha1.HostPhase
 	log       *zap.SugaredLogger
 	kubeUtils kubeutils.Utils
+	netUtils  netutils.NetInterface
 }
 
 func NewDrainNodePhase() *DrainNodePhase {
@@ -32,6 +34,7 @@ func NewDrainNodePhase() *DrainNodePhase {
 		// admin.yaml is not present so its not possible to create k8s client.
 		// Lazily create k8s client when needed.
 		kubeUtils: nil,
+		netUtils:  netutils.New(),
 	}
 
 }
@@ -82,7 +85,9 @@ func (d *DrainNodePhase) Stop(ctx context.Context, cfg config.Config) error {
 	if d.kubeUtils == nil || d.kubeUtils.IsInterfaceNil() {
 		d.kubeUtils, err = kubeutils.NewClient()
 		if err != nil {
-			return errors.Wrap(err, "could not refresh k8s client")
+			d.log.Error(errors.Wrap(err, "could not refresh k8s client"))
+			phaseutils.SetHostStatus(d.HostPhase, constants.StoppedState, "")
+			return err
 		}
 	}
 	//TODO : ensure_http_proxy_configured
@@ -92,7 +97,7 @@ func (d *DrainNodePhase) Stop(ctx context.Context, cfg config.Config) error {
 		phaseutils.SetHostStatus(d.HostPhase, constants.StoppedState, err.Error())
 		return err
 	}
-	nodeIdentifier, err := d.kubeUtils.GetNodeIdentifier(cfg)
+	nodeIdentifier, err := d.netUtils.GetNodeIdentifier(cfg)
 	if err != nil {
 		d.log.Errorf(err.Error())
 		phaseutils.SetHostStatus(d.HostPhase, constants.StoppedState, err.Error())

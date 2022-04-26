@@ -60,7 +60,7 @@ func (r *RuntimeUtil) LoadImagesFromFile(ctx context.Context, fileName string) e
 
 	platform := platforms.DefaultStrict()
 
-	client, err := containerd.New(constants.ContainerdAddress, containerd.WithDefaultPlatform(platform))
+	client, err := containerd.New(constants.ContainerdSocket, containerd.WithDefaultPlatform(platform))
 	if err != nil {
 		return errors.Wrap(err, "failed to create container runtime client")
 	}

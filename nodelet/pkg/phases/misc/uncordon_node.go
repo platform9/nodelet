@@ -9,6 +9,7 @@ import (
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/kubeutils"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/netutils"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/phaseutils"
 	"go.uber.org/zap"
 
@@ -19,6 +20,7 @@ type UncordonNodePhase struct {
 	HostPhase *sunpikev1alpha1.HostPhase
 	log       *zap.SugaredLogger
 	kubeUtils kubeutils.Utils
+	netUtils  netutils.NetInterface
 }
 
 func NewUncordonNodePhase() *UncordonNodePhase {
@@ -33,6 +35,7 @@ func NewUncordonNodePhase() *UncordonNodePhase {
 		// admin.yaml is not present so its not possible to create k8s client.
 		// Lazily create k8s client when needed.
 		kubeUtils: nil,
+		netUtils:  netutils.New(),
 	}
 }
 
@@ -56,10 +59,12 @@ func (u *UncordonNodePhase) Status(ctx context.Context, cfg config.Config) error
 	if u.kubeUtils == nil || u.kubeUtils.IsInterfaceNil() {
 		u.kubeUtils, err = kubeutils.NewClient()
 		if err != nil {
-			return errors.Wrap(err, "could not refresh k8s client")
+			u.log.Error(errors.Wrap(err, "could not refresh k8s client"))
+			phaseutils.SetHostStatus(u.HostPhase, constants.FailedState, err.Error())
+			return err
 		}
 	}
-	nodeIdentifier, err := u.kubeUtils.GetNodeIdentifier(cfg)
+	nodeIdentifier, err := u.netUtils.GetNodeIdentifier(cfg)
 	if err != nil {
 		u.log.Errorf(err.Error())
 		phaseutils.SetHostStatus(u.HostPhase, constants.FailedState, err.Error())
@@ -121,10 +126,12 @@ func (u *UncordonNodePhase) Start(ctx context.Context, cfg config.Config) error 
 	if u.kubeUtils == nil {
 		u.kubeUtils, err = kubeutils.NewClient()
 		if err != nil {
-			return errors.Wrap(err, "could not refresh k8s client")
+			u.log.Error(errors.Wrap(err, "could not refresh k8s client"))
+			phaseutils.SetHostStatus(u.HostPhase, constants.FailedState, err.Error())
+			return err
 		}
 	}
-	nodeIdentifier, err := u.kubeUtils.GetNodeIdentifier(cfg)
+	nodeIdentifier, err := u.netUtils.GetNodeIdentifier(cfg)
 	if err != nil {
 		u.log.Errorf(err.Error())
 		phaseutils.SetHostStatus(u.HostPhase, constants.FailedState, err.Error())

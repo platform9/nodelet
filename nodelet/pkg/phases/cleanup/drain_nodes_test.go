@@ -31,13 +31,16 @@ var _ = Describe("Test Drain nodes phase", func() {
 		ctx           context.Context
 		fakeCfg       *config.Config
 		fakeKubeUtils *mocks.MockUtils
+		fakeNetUtils  *mocks.MockNetInterface
 		nodeName      string
 	)
 	BeforeEach(func() {
 		mockCtrl = gomock.NewController(GinkgoT())
 		fakePhase = NewDrainNodePhase()
 		fakeKubeUtils = mocks.NewMockUtils(mockCtrl)
+		fakeNetUtils = mocks.NewMockNetInterface(mockCtrl)
 		fakePhase.kubeUtils = fakeKubeUtils
+		fakePhase.netUtils = fakeNetUtils
 		ctx = context.TODO()
 		// Setup config
 		var err error
@@ -74,7 +77,7 @@ var _ = Describe("Test Drain nodes phase", func() {
 			err := errors.New("fake error")
 			nodeName = "8.8.8.8"
 			fakeKubeUtils.EXPECT().K8sApiAvailable(*fakeCfg).Return(nil).Times(1)
-			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(nodeName, err).Times(1)
+			fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(nodeName, err).Times(1)
 			fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
 
 			reterr := fakePhase.Stop(ctx, *fakeCfg)
@@ -85,7 +88,7 @@ var _ = Describe("Test Drain nodes phase", func() {
 		It("Fails if can't drain node", func() {
 			err := errors.New("fake error")
 			fakeKubeUtils.EXPECT().K8sApiAvailable(*fakeCfg).Return(nil).Times(1)
-			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(nodeName, nil).Times(1)
+			fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(nodeName, nil).Times(1)
 			fakeKubeUtils.EXPECT().DrainNodeFromApiServer(ctx, nodeName).Return(err).Times(1)
 			fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
 
@@ -99,7 +102,7 @@ var _ = Describe("Test Drain nodes phase", func() {
 				"KubeStackShutDown": "true",
 			}
 			fakeKubeUtils.EXPECT().K8sApiAvailable(*fakeCfg).Return(nil).Times(1)
-			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(nodeName, nil).Times(1)
+			fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(nodeName, nil).Times(1)
 			fakeKubeUtils.EXPECT().DrainNodeFromApiServer(ctx, nodeName).Return(nil).Times(1)
 			fakeKubeUtils.EXPECT().AddAnnotationsToNode(ctx, nodeName, annotsToAdd).Return(err).Times(1)
 			fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
@@ -113,7 +116,7 @@ var _ = Describe("Test Drain nodes phase", func() {
 				"KubeStackShutDown": "true",
 			}
 			fakeKubeUtils.EXPECT().K8sApiAvailable(*fakeCfg).Return(nil).Times(1)
-			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(nodeName, nil).Times(1)
+			fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(nodeName, nil).Times(1)
 			fakeKubeUtils.EXPECT().DrainNodeFromApiServer(ctx, nodeName).Return(nil).Times(1)
 			fakeKubeUtils.EXPECT().AddAnnotationsToNode(ctx, nodeName, annotsToAdd).Return(nil).Times(1)
 			fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()

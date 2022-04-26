@@ -2,31 +2,32 @@ package addons
 
 import (
 	"context"
-	"fmt"
-	"net"
-	"os"
 
-	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/kubeutils"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/phaseutils"
 	sunpikev1alpha1 "github.com/platform9/pf9-qbert/sunpike/apiserver/pkg/apis/sunpike/v1alpha1"
+
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
 type PF9CoreDNSPhase struct {
 	HostPhase *sunpikev1alpha1.HostPhase
 	log       *zap.SugaredLogger
+	kubeUtils kubeutils.Utils
 }
 
 func NewPF9CoreDNSPhase() *PF9CoreDNSPhase {
 	log := zap.S()
 	return &PF9CoreDNSPhase{
 		HostPhase: &sunpikev1alpha1.HostPhase{
-			Name:  "Apply and validate node taints",
+			Name:  "Configure and start coredns",
 			Order: int32(constants.PF9CoreDNSPhaseOrder),
 		},
-		log: log,
+		log:       log,
+		kubeUtils: nil,
 	}
 }
 
@@ -54,7 +55,21 @@ func (l *PF9CoreDNSPhase) Start(ctx context.Context, cfg config.Config) error {
 
 	l.log.Infof("Running Start of phase: %s", l.HostPhase.Name)
 
-	err := ensureDns(cfg)
+	var err error
+	if l.kubeUtils == nil || l.kubeUtils.IsInterfaceNil() {
+		l.kubeUtils, err = kubeutils.NewClient()
+		if err != nil {
+			l.log.Error(errors.Wrap(err, "could not refresh k8s client"))
+			phaseutils.SetHostStatus(l.HostPhase, constants.StoppedState, "")
+			return err
+		}
+	}
+
+	err = l.kubeUtils.EnsureDns(cfg)
+	if err != nil {
+		l.log.Error(err)
+		return err
+	}
 
 	phaseutils.SetHostStatus(l.HostPhase, constants.RunningState, "")
 	return nil
@@ -66,32 +81,4 @@ func (l *PF9CoreDNSPhase) Stop(ctx context.Context, cfg config.Config) error {
 
 	phaseutils.SetHostStatus(l.HostPhase, constants.StoppedState, "")
 	return nil
-}
-
-func ensureDns(cfg config.Config) error {
-	coreDNSTemplate := fmt.Sprintf("%s/networkapps/coredns.yaml", constants.ConfigSrcDir)
-	coreDNSFile := fmt.Sprintf("%s/networkapps/coredns-applied.yaml", constants.ConfigSrcDir)
-	var k8sRegistry string
-	if cfg.K8sPrivateRegistry == "" {
-		k8sRegistry = "k8s.gcr.io"
-	} else {
-		k8sRegistry = cfg.K8sPrivateRegistry
-	}
-	//SERVICES_CIDR: 10.21.0.0/22
-	//DNS_IP=`bin/addr_conv -cidr "$SERVICES_CIDR" -pos 10`
-	DnsIP, _ := phaseutils.AddrConv(cfg.ServicesCIDR)
-
-}
-
-func addrConv(string hostCIDR, int pos) string {
-	_, ipnet, errCidr := net.ParseCIDR(hostCIDR)
-	if errCidr != nil {
-		fmt.Println("None")
-		os.Exit(0)
-	}
-	ip, errPos := cidr.Host(ipnet, pos)
-	if errPos != nil {
-		fmt.Println("None")
-		os.Exit(0)
-	}
 }

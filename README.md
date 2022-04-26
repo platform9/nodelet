@@ -66,7 +66,7 @@ We are actively working on documenting a more streamlined way of generating and 
       ```
    c. Copy `/etc/pf9/kube.d/rootCA.key` and `/etc/pf9/kube.d/rootCA.crt` to all the nodes. The location of these files must be same on all hosts i.e. `/etc/pf9/kube.d/rootCA.*`
 
-3. Create the necessary config files. Replace the IP address of the node. Create /etc/pf9/nodelet/config_sunpike.yaml on master node with following contents -
+3. Create the necessary config files. Replace the IP address of the node. Also add path for "tar/zip files of images" under USER_IMAGES_DIR  (optional). Create /etc/pf9/nodelet/config_sunpike.yaml on master node with following contents -
    ```
    # Contents of /etc/pf9/nodelet/config_sunpike.yaml
    ALLOW_WORKLOADS_ON_MASTER: "true" # whether to allow workloads on master. Valid values are - "true" & "false"
@@ -149,7 +149,7 @@ We are actively working on documenting a more streamlined way of generating and 
    TOPOLOGY_MANAGER_POLICY: none
    USE_HOSTNAME: "false"
    STANDALONE: "true"
-   USER_IMAGES_DIR: <PATH FOR TAR/ZIP FILES OF IMAGES>
+   USER_IMAGES_DIR: ""
    ```
 
 4. Create /etc/pf9/nodelet/config_sunpike.yaml on all worker nodes with following contents -
@@ -208,9 +208,10 @@ We are actively working on documenting a more streamlined way of generating and 
    TOPOLOGY_MANAGER_POLICY: none
    USE_HOSTNAME: "false"
    STANDALONE: "true"
-   USER_IMAGES_DIR: <PATH FOR TAR/ZIP FILES OF IMAGES>
+   USER_IMAGES_DIR: ""
    ```
    Replace the master node IP address in this config file. 
+   Also add path for "tar/zip files of images" under USER_IMAGES_DIR (optional).
 
 5. Install the rpm or deb according to your OS on all the hosts. Currently nodelet only supports CentOS 7.8, CentOS 7.9, Ubuntu 18 and Ubuntu 20. Support for other OS and creating a OS independent nodelet binary is in-progress.
    ```

@@ -31,6 +31,7 @@ var _ = Describe("Test Apply and validate node taints phase", func() {
 		ctx            context.Context
 		fakeCfg        *config.Config
 		fakeKubeUtils  *mocks.MockUtils
+		fakeNetUtils   *mocks.MockNetInterface
 		nodeIdentifier string
 	)
 	BeforeEach(func() {
@@ -43,7 +44,9 @@ var _ = Describe("Test Apply and validate node taints phase", func() {
 		assert.Nil(GinkgoT(), err)
 		fakeCfg.UseCgroups = false
 		fakeKubeUtils = mocks.NewMockUtils(mockCtrl)
+		fakeNetUtils = mocks.NewMockNetInterface(mockCtrl)
 		fakePhase.kubeUtils = fakeKubeUtils
+		fakePhase.netUtils = fakeNetUtils
 		nodeIdentifier = "10.128.240.67"
 	})
 
@@ -70,7 +73,7 @@ var _ = Describe("Test Apply and validate node taints phase", func() {
 		It("Fails when can't get nodeIdentifier or it's null", func() {
 			err := errors.New("fake error")
 
-			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return("", err).Times(1)
+			fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return("", err).Times(1)
 			fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
 			reterr := fakePhase.Start(ctx, *fakeCfg)
 			assert.NotNil(GinkgoT(), reterr)
@@ -79,7 +82,7 @@ var _ = Describe("Test Apply and validate node taints phase", func() {
 		It("Fails when nodeIdentifier is 127.0.0.1", func() {
 			err := errors.New("node interface might have lost IP address. Failing")
 
-			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return("127.0.0.1", nil).Times(1)
+			fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return("127.0.0.1", nil).Times(1)
 			fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
 
 			reterr := fakePhase.Start(ctx, *fakeCfg)
@@ -92,7 +95,7 @@ var _ = Describe("Test Apply and validate node taints phase", func() {
 				"node-role.kubernetes.io/master": "",
 			}
 			fakeCfg.ClusterRole = constants.RoleMaster
-			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(nodeIdentifier, nil).Times(1)
+			fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(nodeIdentifier, nil).Times(1)
 			fakeKubeUtils.EXPECT().AddLabelsToNode(ctx, nodeIdentifier, labels).Return(err).Times(1)
 			fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
 
@@ -122,7 +125,7 @@ var _ = Describe("Test Apply and validate node taints phase", func() {
 			It("Should not add taints when it is schedulable", func() {
 				fakeCfg.MasterSchedulable = true
 
-				fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(nodeIdentifier, nil).Times(1)
+				fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(nodeIdentifier, nil).Times(1)
 				fakeKubeUtils.EXPECT().AddLabelsToNode(ctx, nodeIdentifier, labels).Return(nil).Times(1)
 				fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
 
@@ -132,7 +135,7 @@ var _ = Describe("Test Apply and validate node taints phase", func() {
 			It("Should add taints when it is not schedulable", func() {
 				fakeCfg.MasterSchedulable = false
 
-				fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(nodeIdentifier, nil).Times(1)
+				fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(nodeIdentifier, nil).Times(1)
 				fakeKubeUtils.EXPECT().AddLabelsToNode(ctx, nodeIdentifier, labels).Return(nil).Times(1)
 				fakeKubeUtils.EXPECT().AddTaintsToNode(ctx, nodeIdentifier, taints).Return(nil).Times(1)
 				fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
@@ -142,7 +145,7 @@ var _ = Describe("Test Apply and validate node taints phase", func() {
 			It("Fails when can't add taint", func() {
 				fakeCfg.MasterSchedulable = false
 
-				fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(nodeIdentifier, nil).Times(1)
+				fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(nodeIdentifier, nil).Times(1)
 				fakeKubeUtils.EXPECT().AddLabelsToNode(ctx, nodeIdentifier, labels).Return(nil).Times(1)
 				err := errors.New("fake error")
 				fakeKubeUtils.EXPECT().AddTaintsToNode(ctx, nodeIdentifier, taints).Return(err).Times(1)
@@ -164,7 +167,7 @@ var _ = Describe("Test Apply and validate node taints phase", func() {
 			It("Should not add taints", func() {
 				fakeCfg.MasterSchedulable = true
 
-				fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(nodeIdentifier, nil).Times(1)
+				fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(nodeIdentifier, nil).Times(1)
 				fakeKubeUtils.EXPECT().AddLabelsToNode(ctx, nodeIdentifier, labels).Return(nil).Times(1)
 				fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
 
