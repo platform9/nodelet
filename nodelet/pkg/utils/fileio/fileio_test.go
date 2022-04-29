@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -441,6 +442,60 @@ var _ = Describe("Fileio", func() {
 				Expect(err).To(BeNil())
 				expectedData := []string{"clusterIP: 10.20.30.40"}
 				Expect(expectedData).To(Equal(actualData))
+			})
+		})
+		Context("Listing files with pattern", func() {
+			var (
+				yaml1 string
+				yaml2 string
+				yml   string
+				txt   string
+			)
+			BeforeEach(func() {
+				fileInpOut = New()
+				cmdLine = command.New()
+				ctx = context.TODO()
+				_, _ = cmdLine.RunCommand(ctx, nil, 0, "", "mkdir", "testData")
+				yaml1 = "testData/a1.yaml"
+				yaml2 = "testData/a2.yaml"
+				yml = "testData/b.yml"
+				txt = "testData/c.txt"
+				content = "clusterIP: 123"
+				err = fileInpOut.WriteToFile(yaml1, content, false)
+				err = fileInpOut.WriteToFile(yaml2, content, false)
+				err = fileInpOut.WriteToFile(yml, content, false)
+				err = fileInpOut.WriteToFile(txt, content, false)
+			})
+			AfterEach(func() {
+				_, _ = cmdLine.RunCommand(ctx, nil, 0, "", "rm", "-rf", "testData")
+				ctx.Done()
+			})
+			It("Should list files with yaml extension ", func() {
+				files, err := fileInpOut.ListFilesWithPatterns("testData", []string{"*.yaml"})
+				Expect(err).To(BeNil())
+				for _, f := range files {
+					matched, err := filepath.Match("*.yaml", filepath.Base(f))
+					Expect(err).To(BeNil())
+					Expect(matched).To(Equal(true))
+				}
+			})
+			It("Should list files with yml extension ", func() {
+				files, err := fileInpOut.ListFilesWithPatterns("testData", []string{"*.yml"})
+				Expect(err).To(BeNil())
+				for _, f := range files {
+					matched, err := filepath.Match("*.yml", filepath.Base(f))
+					Expect(err).To(BeNil())
+					Expect(matched).To(Equal(true))
+				}
+			})
+			It("Should not list files with extension other than yml ", func() {
+				files, err := fileInpOut.ListFilesWithPatterns("testData", []string{"*.yml"})
+				Expect(err).To(BeNil())
+				for _, f := range files {
+					matched, err := filepath.Match("*.txt", filepath.Base(f))
+					Expect(err).To(BeNil())
+					Expect(matched).To(Equal(false))
+				}
 			})
 		})
 	})

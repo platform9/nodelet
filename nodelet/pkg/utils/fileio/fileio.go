@@ -10,6 +10,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -44,6 +45,7 @@ type FileInterface interface {
 	GenerateHashForDir(string) ([]string, error)
 	GenerateHashForFile(string) (string, error)
 	NewYamlFromTemplateYaml(string, string, interface{}) error
+	ListFilesWithPatterns(string, []string) ([]string, error)
 }
 
 // TouchFile creates an empty file
@@ -334,6 +336,7 @@ func (f *Pf9FileIO) GenerateHashForFile(fileName string) (string, error) {
 	return fileData, nil
 }
 
+// NewYamlFromTemplateYaml creates new yaml from template yaml file by replacing the value in provided data
 func (f *Pf9FileIO) NewYamlFromTemplateYaml(templFile string, outFile string, data interface{}) error {
 
 	fw, err := os.Create(outFile)
@@ -350,6 +353,32 @@ func (f *Pf9FileIO) NewYamlFromTemplateYaml(templFile string, outFile string, da
 		return fmt.Errorf("error executing template: %s", err)
 	}
 	return nil
+}
+
+// ListfilesWithPattern returns list of filenames with given patterns from given directory *recursively*
+func (f *Pf9FileIO) ListFilesWithPatterns(root string, patterns []string) ([]string, error) {
+	var matches []string
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		for _, p := range patterns {
+
+			if matched, err := filepath.Match(p, filepath.Base(path)); err != nil {
+				return err
+			} else if matched {
+				matches = append(matches, path)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return matches, nil
 }
 
 // stringSlicesEqual states whether two string slices are equal or not

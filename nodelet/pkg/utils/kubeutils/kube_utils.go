@@ -38,7 +38,8 @@ type Utils interface {
 	PreventAutoReattach() error
 	IsInterfaceNil() bool
 	EnsureDns(config.Config) error
-	ApplyYamlConfigFile(string) error
+	EnsureAppCatalog() error
+	ApplyYamlConfigFiles([]string) error
 }
 
 type UtilsImpl struct {
@@ -342,6 +343,7 @@ func AddOrUpdateTaint(node *v1.Node, taint *v1.Taint) (*v1.Node, bool, error) {
 	return newNode, true, nil
 }
 
+// EnsureDns applies coredns yaml file
 func (u *UtilsImpl) EnsureDns(cfg config.Config) error {
 	var k8sRegistry string
 	if cfg.K8sPrivateRegistry == "" {
@@ -362,14 +364,32 @@ func (u *UtilsImpl) EnsureDns(cfg config.Config) error {
 	if err != nil {
 		return errors.Wrap(err, "could not create Coredns yaml")
 	}
-	err = u.ApplyYamlConfigFile(constants.CoreDNSFile)
+	err = u.ApplyYamlConfigFiles([]string{constants.CoreDNSFile})
 	if err != nil {
 		return errors.Wrap(err, "could not apply Coredns yaml")
 	}
 	return nil
 }
 
-func (u *UtilsImpl) ApplyYamlConfigFile(file string) error {
+// EnsureAppCatalog applies app catalog yaml files
+func (u *UtilsImpl) EnsureAppCatalog() error {
+
+	appCatalog := fmt.Sprintf("%s/appcatalog", constants.ConfigDstDir)
+
+	files, err := file.ListFilesWithPatterns(appCatalog, []string{"*.yaml", "*.yml"})
+	if err != nil {
+		return errors.Wrapf(err, "could not get files from:%s", appCatalog)
+	}
+
+	err = u.ApplyYamlConfigFiles(files)
+	if err != nil {
+		return errors.Wrap(err, "could not apply app catalog yamls")
+	}
+	return nil
+}
+
+// ApplyYamlConfigFiles applies the yaml files
+func (u *UtilsImpl) ApplyYamlConfigFiles(files []string) error {
 
 	flags := genericclioptions.NewConfigFlags(false)
 	flags.KubeConfig = &constants.KubeConfig
@@ -379,7 +399,7 @@ func (u *UtilsImpl) ApplyYamlConfigFile(file string) error {
 	if err != nil {
 		return err
 	}
-	err = cli.Apply([]string{file})
+	err = cli.Apply(files)
 	if err != nil {
 		return err
 	}

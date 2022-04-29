@@ -60,7 +60,7 @@ func (l *PF9CoreDNSPhase) Start(ctx context.Context, cfg config.Config) error {
 		l.kubeUtils, err = kubeutils.NewClient()
 		if err != nil {
 			l.log.Error(errors.Wrap(err, "could not refresh k8s client"))
-			phaseutils.SetHostStatus(l.HostPhase, constants.StoppedState, "")
+			phaseutils.SetHostStatus(l.HostPhase, constants.FailedState, err.Error())
 			return err
 		}
 	}
@@ -68,6 +68,7 @@ func (l *PF9CoreDNSPhase) Start(ctx context.Context, cfg config.Config) error {
 	err = l.kubeUtils.EnsureDns(cfg)
 	if err != nil {
 		l.log.Error(err)
+		phaseutils.SetHostStatus(l.HostPhase, constants.FailedState, err.Error())
 		return err
 	}
 

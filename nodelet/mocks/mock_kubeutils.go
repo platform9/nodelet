@@ -78,18 +78,18 @@ func (mr *MockUtilsMockRecorder) AddTaintsToNode(arg0, arg1, arg2 interface{}) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddTaintsToNode", reflect.TypeOf((*MockUtils)(nil).AddTaintsToNode), arg0, arg1, arg2)
 }
 
-// ApplyYamlConfigFile mocks base method.
-func (m *MockUtils) ApplyYamlConfigFile(arg0 string) error {
+// ApplyYamlConfigFiles mocks base method.
+func (m *MockUtils) ApplyYamlConfigFiles(arg0 []string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ApplyYamlConfigFile", arg0)
+	ret := m.ctrl.Call(m, "ApplyYamlConfigFiles", arg0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// ApplyYamlConfigFile indicates an expected call of ApplyYamlConfigFile.
-func (mr *MockUtilsMockRecorder) ApplyYamlConfigFile(arg0 interface{}) *gomock.Call {
+// ApplyYamlConfigFiles indicates an expected call of ApplyYamlConfigFiles.
+func (mr *MockUtilsMockRecorder) ApplyYamlConfigFiles(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyYamlConfigFile", reflect.TypeOf((*MockUtils)(nil).ApplyYamlConfigFile), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyYamlConfigFiles", reflect.TypeOf((*MockUtils)(nil).ApplyYamlConfigFiles), arg0)
 }
 
 // DrainNodeFromApiServer mocks base method.
@@ -104,6 +104,20 @@ func (m *MockUtils) DrainNodeFromApiServer(arg0 context.Context, arg1 string) er
 func (mr *MockUtilsMockRecorder) DrainNodeFromApiServer(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DrainNodeFromApiServer", reflect.TypeOf((*MockUtils)(nil).DrainNodeFromApiServer), arg0, arg1)
+}
+
+// EnsureAppCatalog mocks base method.
+func (m *MockUtils) EnsureAppCatalog() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EnsureAppCatalog")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// EnsureAppCatalog indicates an expected call of EnsureAppCatalog.
+func (mr *MockUtilsMockRecorder) EnsureAppCatalog() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnsureAppCatalog", reflect.TypeOf((*MockUtils)(nil).EnsureAppCatalog))
 }
 
 // EnsureDns mocks base method.

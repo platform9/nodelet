@@ -40,7 +40,7 @@ func GetMasterPhases() ([]PhaseInterface, error) {
 		misc.NewLabelTaintNodePhase(),                                              // Order 110
 		kubelet.NewDynamicKubeletConfigPhase(constants.PhaseBaseDir),               // Order 120
 		misc.NewUncordonNodePhase(),                                                // Order 130
-		addons.NewDeployAppCatalogPhase(constants.PhaseBaseDir),                    // Order 160
+		addons.NewDeployAppCatalogPhase(),                                          // Order 160
 		keepalived.NewConfigureStartKeepalivedPhase(constants.PhaseBaseDir),        // Order 180
 		addons.NewPF9CoreDNSPhase(),                                                // Order 206
 		cleanup.NewDrainNodePhase(),                                                // Order 210

@@ -204,16 +204,4 @@ var _ = Describe("Test Kube Utils", func() {
 			assert.NotNil(GinkgoT(), err)
 		})
 	})
-	// Context("Validates Yaml configuration", func() {
-	// 	It("Checks if yaml is applied", func() {
-	// 		constants.KubeConfig = "testdata/configs/kubeconfig.yaml"
-	// 		yamlToApply := "testdata/configs/applied.yaml"
-	// 		k8s, err := utilsImpl.ApplyYamlConfigFile(yamlToApply)
-	// 		assert.Nil(GinkgoT(), err)
-	// 		list, err := k8s.AppsV1().Deployments("kube-system").List(ctx, metav1.ListOptions{})
-	// 		fmt.Println(list)
-	// 		assert.Nil(GinkgoT(), err)
-	// 		//assert.Equal(GinkgoT(), node.Spec.Unschedulable, false)
-	// 	})
-	// })
 })
