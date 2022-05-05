@@ -25,7 +25,7 @@ func InitEtcdClient(clusterCfg *BootstrapConfig, activeMasters *[]HostConfig) (*
 		etcdEndpoints = append(etcdEndpoints, endpoint)
 	}
 
-	etcdCert := filepath.Join("/etc/nodelet", clusterCfg.ClusterId, "certs/adminCert.Pem")
+	etcdCert := filepath.Join("/etc/nodelet", clusterCfg.ClusterId, "certs/adminCert.pem")
 	etcdCertKey := filepath.Join("/etc/nodelet", clusterCfg.ClusterId, "certs/adminKey.pem")
 	etcdCa := filepath.Join("/etc/nodelet", clusterCfg.ClusterId, "certs/rootCA.crt")
 
