@@ -8,11 +8,11 @@ import (
 
 var scaleClusterCmd = &cobra.Command{
 	Use:   "scale",
-	Short: "Scale up/down a nodelet based management cluster",
-	Long:  "Scale up/down a DU-less nodelet based management cluster on which DDU is deployed",
+	Short: "Scale up/down a nodelet based cluster",
+	Long:  "Scale up/down a nodelete based cluster",
 
 	RunE: func(command *cobra.Command, args []string) error {
-		err := nodeletctl.ScaleCluster(clusterBootstrapFile)
+		err := nodeletctl.ScaleCluster(ClusterCfgFile)
 		if err != nil {
 			fmt.Printf("\nFailed to update nodelet cluster: %s\n", err)
 		}
@@ -22,5 +22,4 @@ var scaleClusterCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(scaleClusterCmd)
-	scaleClusterCmd.Flags().StringVar(&clusterBootstrapFile, "config", "/root/nodeletCluster.yaml", "Path to nodelet bootstrap config")
 }

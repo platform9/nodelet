@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io/ioutil"
+	"path/filepath"
 	"time"
 
 	clientv3 "go.etcd.io/etcd/client/v3"
@@ -24,9 +25,9 @@ func InitEtcdClient(clusterCfg *BootstrapConfig, activeMasters *[]HostConfig) (*
 		etcdEndpoints = append(etcdEndpoints, endpoint)
 	}
 
-	var etcdCert = "/etc/nodelet/airctl-mgmt/certs/adminCert.pem"
-	var etcdCertKey = "/etc/nodelet/airctl-mgmt/certs/adminKey.pem"
-	var etcdCa = "/etc/nodelet/airctl-mgmt/certs/rootCA.crt"
+	etcdCert := filepath.Join("/etc/nodelet", clusterCfg.ClusterId, "certs/adminCert.Pem")
+	etcdCertKey := filepath.Join("/etc/nodelet", clusterCfg.ClusterId, "certs/adminKey.pem")
+	etcdCa := filepath.Join("/etc/nodelet", clusterCfg.ClusterId, "certs/rootCA.crt")
 
 	cert, err := tls.LoadX509KeyPair(etcdCert, etcdCertKey)
 	if err != nil {

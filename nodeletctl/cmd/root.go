@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+    "path/filepath"
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
@@ -13,16 +14,12 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-var cfgFile string
+var ClusterCfgFile string
 var logDir string
 var debugToConsole bool
 
 // hmm how can I avoid global variable
 var JSONOuput bool
-
-var (
-	clusterBootstrapFile = "/opt/pf9/airctl/conf/nodeletCluster.yaml"
-)
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -48,7 +45,13 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/airctl-config.yaml)")
+	home, err := homedir.Dir()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	RootCmd.PersistentFlags().StringVar(&ClusterCfgFile, "config", filepath.Join(home, "nodeletCluster.yaml"), "config file (default is $HOME/nodeletCluster.yaml)")
 	RootCmd.PersistentFlags().BoolVar(&debugToConsole, "verbose", false, "print verbose logs to the console")
 	RootCmd.PersistentFlags().BoolVar(&JSONOuput, "json", false, "json output for commands (configure-hosts only currently)")
 
@@ -61,9 +64,9 @@ func initConfig() {
 		fmt.Printf("log initialization failed: %s", err.Error())
 		os.Exit(1)
 	}
-	if cfgFile != "" {
+	if ClusterCfgFile != "" {
 		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
+		viper.SetConfigFile(ClusterCfgFile)
 	} else {
 		// Find home directory.
 		home, err := homedir.Dir()
@@ -72,9 +75,8 @@ func initConfig() {
 			os.Exit(1)
 		}
 
-		// Search config in home directory with name ".airctl" (without extension).
 		viper.AddConfigPath(home)
-		viper.SetConfigName("airctl-config")
+		viper.SetConfigName("nodeletCluster")
 	}
 
 	// If a config file is found, read it in.

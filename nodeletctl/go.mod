@@ -1,7 +1,6 @@
 module nodeletctl
 
 replace (
-	github.com/platform9/nodelet/nodeletctl => /home/xagent/nodelet/nodeletctl
 	github.com/platform9/pf9-qbert/sunpike/apiserver v0.0.0 => github.com/platform9/pf9-qbert/sunpike/apiserver v0.0.0-20210928133414-c4e8ce211671
 )
 
