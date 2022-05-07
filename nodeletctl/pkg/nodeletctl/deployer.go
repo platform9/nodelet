@@ -133,6 +133,7 @@ func (nd *NodeletDeployer) SpawnWorker(wg *sync.WaitGroup) {
 }
 
 func (nd *NodeletDeployer) DeployNodelet() error {
+	zap.S().Infof("Deploying nodelet: %s", nd.nodeletCfg.HostId)
 	if err := nd.CreatePf9User(); err != nil {
 		return err
 	}
@@ -156,6 +157,7 @@ func (nd *NodeletDeployer) DeployNodelet() error {
 }
 
 func (nd *NodeletDeployer) ReconfigureNodelet() error {
+	zap.S().Infof("Reconfiguring nodelet: %s", nd.nodeletCfg.HostId)
 	if err := nd.CopyNodeletConfig(); err != nil {
 		return err
 	}
@@ -166,6 +168,7 @@ func (nd *NodeletDeployer) ReconfigureNodelet() error {
 }
 
 func (nd *NodeletDeployer) UploadCerts() error {
+	zap.S().Infof("Uploading certs to nodelet: %s", nd.nodeletCfg.HostId)
 	srcCertPath := filepath.Join(ClusterStateDir, nd.nodeletCfg.ClusterId, "certs", RootCACRT)
 	err := UploadFileWrapper(srcCertPath, RootCACRT, RemoteCertsDir, nd.client)
 	if err != nil {
@@ -181,6 +184,7 @@ func (nd *NodeletDeployer) UploadCerts() error {
 }
 
 func (nd *NodeletDeployer) CopyNodeletConfig() error {
+	zap.S().Infof("Copying nodelet config to node: %s", nd.nodeletCfg.HostId)
 	err := UploadFileWrapper(nd.nodeletSrcFile, NodeletConfigFile, NodeletConfigDir, nd.client)
 	if err != nil {
 		return err
@@ -195,7 +199,7 @@ func (nd *NodeletDeployer) SetOsType() {
 
 func (nd *NodeletDeployer) CreatePf9User() error {
 	var cmdList []string
-
+	zap.S().Infof("Creating pf9 user")
 	cmdList = append(cmdList, "mkdir -p /opt/pf9/home")
 	cmdList = append(cmdList, "groupadd -f pf9group")
 	cmdList = append(cmdList, "id -u pf9 &>/dev/null || useradd -d /opt/pf9/home -G pf9group pf9")
@@ -209,6 +213,7 @@ func (nd *NodeletDeployer) CreatePf9User() error {
 }
 
 func (nd *NodeletDeployer) InstallNodelet() error {
+	zap.S().Infof("Installing nodelet")
 	if err := nd.client.UploadFile(nd.pf9KubeTarSrc, NodeletTarDst, 0644, nil); err != nil {
 		return fmt.Errorf("Failed to copy pf9-kube(nodelet) RPM: %s", err)
 	}
@@ -238,6 +243,7 @@ func (nd *NodeletDeployer) InstallNodelet() error {
    TODO: Add to the nodelet after-install.sh script
 */
 func (nd *NodeletDeployer) SetPf9Ownerships() error {
+	zap.S().Infof("Setting pf9 ownership")
 	chownCmd := fmt.Sprintf("chown %s:pf9group %s ", NodeletUser, "/var/log/pf9")
 	if _, _, err := nd.client.RunCommand(chownCmd); err != nil {
 		return fmt.Errorf("Failed: %s: %s", chownCmd, err)
@@ -261,6 +267,7 @@ func (nd *NodeletDeployer) SetPf9Ownerships() error {
 }
 
 func (nd *NodeletDeployer) StartNodelet() error {
+	zap.S().Infof("Starting nodelet")
 	startCmd := "systemctl start pf9-nodeletd"
 	if _, _, err := nd.client.RunCommand(startCmd); err != nil {
 		return fmt.Errorf("Failed: %s: %s", startCmd, err)
@@ -269,6 +276,7 @@ func (nd *NodeletDeployer) StartNodelet() error {
 }
 
 func (nd *NodeletDeployer) RestartNodelet() error {
+	zap.S().Infof("Restarting nodelet")
 	startCmd := "systemctl restart pf9-nodeletd"
 	if _, _, err := nd.client.RunCommand(startCmd); err != nil {
 		return fmt.Errorf("Failed: %s: %s", startCmd, err)
@@ -277,6 +285,7 @@ func (nd *NodeletDeployer) RestartNodelet() error {
 }
 
 func (nd *NodeletDeployer) RefreshNodeletStatus() (string, error) {
+	zap.S().Infof("Refreshing nodelet status")
 	cpCmd := fmt.Sprintf("cp %s /tmp/", KubeStatusFile)
 	if _, _, err := nd.client.RunCommand(cpCmd); err != nil {
 		return "", fmt.Errorf("RefreshNodeletStatus failed: %s", err)
@@ -313,6 +322,7 @@ func (nd *NodeletDeployer) RefreshNodeletStatus() (string, error) {
    4. Finally, move to target directory
 */
 func UploadFileWrapper(srcFilePath, fileName, dstDir string, client ssh.Client) error {
+	zap.S().Infof("Uploading %s to %s", srcFilePath, dstDir)
 	mkdirCmd := "mkdir -p " + dstDir
 	if _, _, err := client.RunCommand(mkdirCmd); err != nil {
 		return fmt.Errorf("Failed: %s: %s", mkdirCmd, err)
@@ -338,6 +348,7 @@ func UploadFileWrapper(srcFilePath, fileName, dstDir string, client ssh.Client) 
 }
 
 func (nd *NodeletDeployer) DeleteNodelet() error {
+	zap.S().Infof("Deleting nodelet")
 	eraseCmd := "yum erase -y pf9-kube"
 	zap.S().Infof("Removing nodelet with cmd: %s", eraseCmd)
 	if _, _, err := nd.client.RunCommand(eraseCmd); err != nil {

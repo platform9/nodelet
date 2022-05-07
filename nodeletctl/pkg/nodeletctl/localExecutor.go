@@ -8,6 +8,7 @@ import (
 	"os/exec"
 
 	"github.com/platform9/pf9ctl/pkg/ssh"
+	"go.uber.org/zap"
 
 	"github.com/kballard/go-shellquote"
 )
@@ -22,6 +23,7 @@ func getLocalClient() ssh.Client {
 
 // RunCommand executes the remote command returning the stdout, stderr and any error associated with it
 func (client *LocalClient) RunCommand(command string) ([]byte, []byte, error) {
+	zap.S().Debugf("Running command: %s", command)
 	var stdoutBuf bytes.Buffer
 	var stderrBuf bytes.Buffer
 	words, err := shellquote.Split(command)
@@ -37,11 +39,13 @@ func (client *LocalClient) RunCommand(command string) ([]byte, []byte, error) {
 
 // Uploadfile uploads the srcFile to remoteDestFilePath and changes the mode to the filemode
 func (client *LocalClient) UploadFile(srcFilePath, remoteDstFilePath string, mode os.FileMode, cb func(read int64, total int64)) error {
+	zap.S().Debugf("Uploading file %s to %s", srcFilePath, remoteDstFilePath)
 	return copy(srcFilePath, remoteDstFilePath, mode)
 }
 
 // Downloadfile downloads the remoteFile to localFile and changes the mode to the filemode
 func (client *LocalClient) DownloadFile(remoteFile, localPath string, mode os.FileMode, cb func(read int64, total int64)) error {
+	zap.S().Debugf("Downloading file %s to %s", remoteFile, localPath)
 	return copy(remoteFile, localPath, mode)
 }
 
