@@ -102,8 +102,10 @@ func isLocal(nodeName string) (bool, error) {
 }
 
 func (nd *NodeletDeployer) SpawnMaster(numMaster int) (string, error) {
+	zap.S().Infof("Spawning master: %s", nd.nodeletCfg.HostId)
 	// Add any master-specific tasks here before and after
 	if err := nd.DeployNodelet(); err != nil {
+		zap.S().Errorf("failed to deploy nodelet: %s", err)
 		SetClusterNodeStatus(nd.clusterStatus, nd.nodeletCfg.HostId, "failed", err)
 		return "failed", err
 	}
@@ -121,7 +123,9 @@ func (nd *NodeletDeployer) SpawnMaster(numMaster int) (string, error) {
 
 func (nd *NodeletDeployer) SpawnWorker(wg *sync.WaitGroup) {
 	defer wg.Done()
+	zap.S().Infof("Spawning worker: %s", nd.nodeletCfg.HostId)
 	if err := nd.DeployNodelet(); err != nil {
+		zap.S().Errorf("failed to deploy worker nodelet: %s", err)
 		SetClusterNodeStatus(nd.clusterStatus, nd.nodeletCfg.HostId, "failed", err)
 		return
 	}
@@ -135,23 +139,23 @@ func (nd *NodeletDeployer) SpawnWorker(wg *sync.WaitGroup) {
 func (nd *NodeletDeployer) DeployNodelet() error {
 	zap.S().Infof("Deploying nodelet: %s", nd.nodeletCfg.HostId)
 	if err := nd.CreatePf9User(); err != nil {
-		return err
+		return fmt.Errorf("failed to create user: %s", err)
 	}
 	if err := nd.UploadCerts(); err != nil {
-		return err
+		return fmt.Errorf("failed to upload certs: %s", err)
 	}
 	if err := nd.CopyNodeletConfig(); err != nil {
-		return err
+		return fmt.Errorf("failed to copy nodelet config: %s", err)
 	}
 	if err := nd.InstallNodelet(); err != nil {
-		return err
+		return fmt.Errorf("failed to install nodelet: %s", err)
 	}
 	// TODO: Remove this, move to nodelet afterinstall.sh
 	if err := nd.SetPf9Ownerships(); err != nil {
-		return err
+		return fmt.Errorf("failed to set pf9 ownerships: %s", err)
 	}
 	if err := nd.StartNodelet(); err != nil {
-		return err
+		return fmt.Errorf("failed to start nodelet: %s", err)
 	}
 	return nil
 }
@@ -159,10 +163,10 @@ func (nd *NodeletDeployer) DeployNodelet() error {
 func (nd *NodeletDeployer) ReconfigureNodelet() error {
 	zap.S().Infof("Reconfiguring nodelet: %s", nd.nodeletCfg.HostId)
 	if err := nd.CopyNodeletConfig(); err != nil {
-		return err
+		return fmt.Errorf("failed to copy nodelet config: %s", err)
 	}
 	if err := nd.RestartNodelet(); err != nil {
-		return err
+		return fmt.Errorf("failed to restart nodelet: %s", err)
 	}
 	return nil
 }
@@ -172,13 +176,13 @@ func (nd *NodeletDeployer) UploadCerts() error {
 	srcCertPath := filepath.Join(ClusterStateDir, nd.nodeletCfg.ClusterId, "certs", RootCACRT)
 	err := UploadFileWrapper(srcCertPath, RootCACRT, RemoteCertsDir, nd.client)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to upload certs: %s", err)
 	}
 
 	srcKeyPath := filepath.Join(ClusterStateDir, nd.nodeletCfg.ClusterId, "certs", RootCAKey)
 	err = UploadFileWrapper(srcKeyPath, RootCAKey, RemoteCertsDir, nd.client)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to upload CA certs: %s", err)
 	}
 	return nil
 }
@@ -187,7 +191,7 @@ func (nd *NodeletDeployer) CopyNodeletConfig() error {
 	zap.S().Infof("Copying nodelet config to node: %s", nd.nodeletCfg.HostId)
 	err := UploadFileWrapper(nd.nodeletSrcFile, NodeletConfigFile, NodeletConfigDir, nd.client)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to copy nodelet config: %s", err)
 	}
 	return nil
 }
@@ -198,6 +202,14 @@ func (nd *NodeletDeployer) SetOsType() {
 }
 
 func (nd *NodeletDeployer) CreatePf9User() error {
+	zap.S().Infof("Checking pf9 user on node: %s", nd.nodeletCfg.HostId)
+	 _,_, err := nd.client.RunCommand("id -u pf9")
+	if err != nil {
+		zap.S().Infof("User name doesn't exist, proceeding to create")
+	} else {
+		zap.S().Infof("User name already exist")
+		return nil
+	}
 	var cmdList []string
 	zap.S().Infof("Creating pf9 user")
 	cmdList = append(cmdList, "mkdir -p /opt/pf9/home")
@@ -206,7 +218,7 @@ func (nd *NodeletDeployer) CreatePf9User() error {
 
 	for _, cmd := range cmdList {
 		if _, _, err := nd.client.RunCommand(cmd); err != nil {
-			return fmt.Errorf("CreatePf9User: %s: %s", cmd, err)
+			return fmt.Errorf("createPf9User: %s: %s", cmd, err)
 		}
 	}
 	return nil
