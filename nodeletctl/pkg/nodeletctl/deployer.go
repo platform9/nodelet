@@ -199,6 +199,21 @@ func (nd *NodeletDeployer) CopyNodeletConfig() error {
 func (nd *NodeletDeployer) SetOsType() {
 	// TODO: Find actual OS type of remote node once we add Ubuntu support
 	nd.OsType = OsTypeCentos
+
+	stdout, stderr, err := nd.client.RunCommand("cat", "/etc/os-release")
+	if err != nil {
+		zap.S().Infof("failed reading data from file: %s", err)
+		return
+	}
+	osString := strings.ToLower(string(stdout))
+	if strings.Contains(osString, "ubuntu") {
+		nd.OsType = OsTypeUbuntu
+		zap.S().Infof("OS type is Ubuntu")
+	} else {
+		zap.S().Infof("assuming OS type is CentOS, the os string is %s", osString) 	
+	}
+	
+	
 }
 
 func (nd *NodeletDeployer) CreatePf9User() error {
