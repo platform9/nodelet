@@ -376,7 +376,15 @@ func UploadFileWrapper(srcFilePath, fileName, dstDir string, client ssh.Client) 
 
 func (nd *NodeletDeployer) DeleteNodelet() error {
 	zap.S().Infof("Deleting nodelet")
-	eraseCmd := "yum erase -y pf9-kube"
+	var eraseCmd string
+	if nd.OsType == OsTypeCentos {
+		eraseCmd = "yum erase -y pf9-kube"
+	} else if nd.OsType == OsTypeUbuntu {
+		eraseCmd = "apt remove -y pf9-kube"
+	} else {
+		return fmt.Errorf("OS type not supported")
+	}
+	
 	zap.S().Infof("Removing nodelet with cmd: %s", eraseCmd)
 	if _, _, err := nd.client.RunCommand(eraseCmd); err != nil {
 		return fmt.Errorf("Failed: %s: %s", eraseCmd, err)

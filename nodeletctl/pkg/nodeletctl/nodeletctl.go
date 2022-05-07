@@ -138,7 +138,7 @@ func ParseBootstrapConfig(cfgPath string) (*BootstrapConfig, error) {
 }
 
 func DeployCluster(clusterCfg *BootstrapConfig) error {
-
+	zap.S().Infof("Deploying cluster %s", clusterCfg.ClusterId)
 	if clusterCfg.CertsDir == "" {
 		certsDir, err := GenCALocal(clusterCfg.ClusterId)
 		if err != nil {
@@ -164,6 +164,7 @@ func DeployCluster(clusterCfg *BootstrapConfig) error {
 	}
 
 	for numMaster, host := range clusterCfg.MasterNodes {
+		zap.S().Infof("Deploying master node %s", host.NodeName)
 		nodeletCfg := new(NodeletConfig)
 		setNodeletClusterCfg(clusterCfg, nodeletCfg)
 		nodeletCfg.HostId = host.NodeName
@@ -181,7 +182,7 @@ func DeployCluster(clusterCfg *BootstrapConfig) error {
 			zap.S().Infof("Failed to generate config: %s", err)
 			return fmt.Errorf("Failed to generate config: %s", err)
 		}
-
+		zap.S().Debugf("master nodeletsrc file %s", nodeletSrcFile)
 		deployer, err := GetNodeletDeployer(clusterCfg, globalClusterStatus, nodeletCfg, nodeletCfg.HostIp, nodeletSrcFile, clusterCfg.SSHPrivateKeyFile)
 		if err != nil {
 			zap.S().Errorf("failed to get nodelet deployer: %v", err)
@@ -450,6 +451,7 @@ func getDiffNodes(desired []HostConfig, active []string) ([]HostConfig, []HostCo
 }
 
 func AddMasters(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus, currMasters, newMasters *[]HostConfig, sshKeyFile string) error {
+	zap.S().Infof("Adding %d masters", len(*newMasters))
 	var masterList = make(map[string]string)
 	for _, host := range *currMasters {
 		if host.NodeIP != nil {
@@ -460,6 +462,7 @@ func AddMasters(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus, currM
 	}
 
 	for numMaster, host := range *newMasters {
+		zap.S().Infof("Adding master %s", host.NodeName)
 		nodeletCfg := new(NodeletConfig)
 		setNodeletClusterCfg(clusterCfg, nodeletCfg)
 		nodeletCfg.HostId = host.NodeName
@@ -472,12 +475,12 @@ func AddMasters(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus, currM
 		nodeletCfg.EtcdClusterState = "existing"
 		masterList[host.NodeName] = nodeletCfg.HostIp
 		nodeletCfg.MasterList = &masterList
-
 		nodeletSrcFile, err := GenNodeletConfigLocal(nodeletCfg, masterNodeletConfigTmpl)
 		if err != nil {
 			zap.S().Infof("Failed to generate config: %s", err)
 			return fmt.Errorf("Failed to generate config: %s", err)
 		}
+		zap.S().Debugf("nodelet src file %s", nodeletSrcFile)
 
 		deployer, err := GetNodeletDeployer(clusterCfg, clusterStatus, nodeletCfg, nodeletCfg.HostIp, nodeletSrcFile, sshKeyFile)
 		if err != nil {
@@ -487,11 +490,11 @@ func AddMasters(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus, currM
 		clusterStatus.statusMap[host.NodeName] = &NodeStatus{
 			deployer: deployer,
 		}
-
+		zap.S().Infof("Added master %s to etcd ", host.NodeName)
 		if err := AddNodeToEtcd(clusterCfg, currMasters, nodeletCfg.HostIp); err != nil {
 			return fmt.Errorf("Failed to add nodes %+v as etcd members: %s", newMasters, err)
 		}
-
+		zap.S().Infof("Spawning master %s", host.NodeName)
 		_, _ = deployer.SpawnMaster(numMaster)
 		if err := SyncNodes(clusterCfg, &[]HostConfig{host}); err != nil {
 			return fmt.Errorf("Failed to sync new master: %+v", host)
@@ -623,10 +626,6 @@ func SyncNodes(clusterCfg *BootstrapConfig, nodes *[]HostConfig) error {
 }
 
 func isClusterCfgValid(clusterCfg *BootstrapConfig) bool {
-	if len(clusterCfg.WorkerNodes) == 0 {
-		zap.S().Errorf("Number of worker nodes cannot be zero")
-		return false
-	}
 	if len(clusterCfg.MasterNodes) == 0 {
 		zap.S().Errorf("Number of master nodes cannot be zero")
 		return false
