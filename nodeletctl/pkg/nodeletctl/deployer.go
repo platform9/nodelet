@@ -5,14 +5,15 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
+	"os"
 	"path/filepath"
 	"sync"
 	"time"
 
+	nodeletext "github.com/platform9/nodelet/nodelet/pkg/utils/extensionfile"
 	"github.com/platform9/pf9ctl/pkg/ssh"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/util/yaml"
-    nodeletext "github.com/platform9/nodelet/nodelet/pkg/utils/extensionfile"
 )
 
 type NodeletDeployer struct {
@@ -39,15 +40,65 @@ func NewNodeletDeployer(cfg *BootstrapConfig, sshClient ssh.Client,
 	return deployer
 }
 
-func GetNodeletDeployer(cfg *BootstrapConfig, clusterStatus *ClusterStatus, nodeletCfg *NodeletConfig, nodeName, nodeletSrcFile string, sshKey []byte) (*NodeletDeployer, error) {
-	sshClient, err := CreateSSHClient(nodeName, cfg.SSHUser, sshKey, 22)
+func GetNodeletDeployer(cfg *BootstrapConfig, clusterStatus *ClusterStatus, nodeletCfg *NodeletConfig, nodeName, nodeletSrcFile string, sshKeyFile string) (*NodeletDeployer, error) {
+	local, err := isLocal(nodeName)
 	if err != nil {
-		return nil, fmt.Errorf("can't create ssh client to host %s, %s", nodeName, err)
+		return nil, err
+	}
+	var sshClient ssh.Client
+	if local {
+		sshClient = getLocalClient()
+	} else {
+		sshKey, err := ioutil.ReadFile(sshKeyFile)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to read private key: %s", sshKeyFile)
+		}
+			sshClient, err = CreateSSHClient(nodeName, cfg.SSHUser, sshKey, 22)
+		if err != nil {
+			return nil, fmt.Errorf("can't create ssh client to host %s, %s", nodeName, err)
+		}
 	}
 
 	deployer := NewNodeletDeployer(cfg, sshClient, nodeletSrcFile, nodeletCfg, clusterStatus)
 
 	return deployer, nil
+}
+
+func isLocal(nodeName string) (bool, error) {
+	name, err := os.Hostname()
+	if err != nil {
+		return false, fmt.Errorf("failed to get hostname: %s", err)
+	}
+	if name == nodeName {
+		return true, nil
+	}
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return false, fmt.Errorf("Can't check local interfaces %v", err)
+	}
+	for _, iface := range ifaces {
+		addrs, err := iface.Addrs()
+		if err != nil {
+			return false, fmt.Errorf("Can't get addresses for interface %s: %v", iface.Name, err)
+		}
+		for _, addr := range addrs {
+			var ip net.IP
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+			if ip == nil {
+				continue
+			}
+			if nodeName == ip.String() {
+				return true, nil
+			}
+		}
+	}
+
+	return false, nil
 }
 
 func (nd *NodeletDeployer) SpawnMaster(numMaster int) (string, error) {
