@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -53,7 +54,7 @@ func GetNodeletDeployer(cfg *BootstrapConfig, clusterStatus *ClusterStatus, node
 		if err != nil {
 			return nil, fmt.Errorf("Failed to read private key: %s", sshKeyFile)
 		}
-			sshClient, err = CreateSSHClient(nodeName, cfg.SSHUser, sshKey, 22)
+		sshClient, err = CreateSSHClient(nodeName, cfg.SSHUser, sshKey, 22)
 		if err != nil {
 			return nil, fmt.Errorf("can't create ssh client to host %s, %s", nodeName, err)
 		}
@@ -200,7 +201,7 @@ func (nd *NodeletDeployer) SetOsType() {
 	// TODO: Find actual OS type of remote node once we add Ubuntu support
 	nd.OsType = OsTypeCentos
 
-	stdout, stderr, err := nd.client.RunCommand("cat", "/etc/os-release")
+	stdout, _, err := nd.client.RunCommand("cat /etc/os-release")
 	if err != nil {
 		zap.S().Infof("failed reading data from file: %s", err)
 		return
@@ -210,15 +211,14 @@ func (nd *NodeletDeployer) SetOsType() {
 		nd.OsType = OsTypeUbuntu
 		zap.S().Infof("OS type is Ubuntu")
 	} else {
-		zap.S().Infof("assuming OS type is CentOS, the os string is %s", osString) 	
+		zap.S().Infof("assuming OS type is CentOS, the os string is %s", osString)
 	}
-	
-	
+
 }
 
 func (nd *NodeletDeployer) CreatePf9User() error {
 	zap.S().Infof("Checking pf9 user on node: %s", nd.nodeletCfg.HostId)
-	 _,_, err := nd.client.RunCommand("id -u pf9")
+	_, _, err := nd.client.RunCommand("id -u pf9")
 	if err != nil {
 		zap.S().Infof("User name doesn't exist, proceeding to create")
 	} else {
