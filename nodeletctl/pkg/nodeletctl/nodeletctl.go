@@ -15,25 +15,30 @@ import (
 )
 
 type BootstrapConfig struct {
-	SSHUser                string       `json:"sshUser,omitempty"`
-	SSHPrivateKeyFile      string       `json:"sshPrivateKeyFile,omitempty"`
-	CertsDir               string       `json:"certsDir,omitempty"`
-	KubeConfig             string       `json:"kubeconfig,omitempty"`
-	Pf9KubePkg             string       `json:"nodeletPkg,omitempty"`
-	ClusterId              string       `json:"clusterName,omitempty"`
-	AllowWorkloadsOnMaster bool         `json:"allowWorkloadsOnMaster,omitempty"`
-	K8sApiPort             string       `json:"k8sApiPort,omitempty"`
-	MasterIp               string       `json:"masterIp,omitempty"`
-	MasterVipEnabled       bool         `json:"masterVipEnabled,omitempty"`
-	MasterVipInterface     string       `json:"masterVipInterface,omitempty"`
-	MasterVipVrouterId     int          `json:"masterVipVrouterId,omitempty"`
-	CalicoV4Interface      string       `json:"calicoV4Interface,omitempty"`
-	CalicoV6Interface      string       `json:"calicoV6Interface,omitempty"`
-	MTU                    string       `json:"mtu,omitempty"`
-	Privileged             string       `json:"privileged,omitempty"`
-	ContainerRuntime       string       `json:"containerRuntime,omitempty"`
-	MasterNodes            []HostConfig `json:"masterNodes"`
-	WorkerNodes            []HostConfig `json:"workerNodes"`
+	SSHUser                string                 `json:"sshUser,omitempty"`
+	SSHPrivateKeyFile      string                 `json:"sshPrivateKeyFile,omitempty"`
+	CertsDir               string                 `json:"certsDir,omitempty"`
+	KubeConfig             string                 `json:"kubeconfig,omitempty"`
+	Pf9KubePkg             string                 `json:"nodeletPkg,omitempty"`
+	ClusterId              string                 `json:"clusterName,omitempty"`
+	AllowWorkloadsOnMaster bool                   `json:"allowWorkloadsOnMaster,omitempty"`
+	K8sApiPort             string                 `json:"k8sApiPort,omitempty"`
+	MasterIp               string                 `json:"masterIp,omitempty"`
+	MasterVipEnabled       bool                   `json:"masterVipEnabled,omitempty"`
+	MasterVipInterface     string                 `json:"masterVipInterface,omitempty"`
+	MasterVipVrouterId     int                    `json:"masterVipVrouterId,omitempty"`
+	CalicoV4Interface      string                 `json:"calicoV4Interface,omitempty"`
+	CalicoV6Interface      string                 `json:"calicoV6Interface,omitempty"`
+	MTU                    string                 `json:"mtu,omitempty"`
+	Privileged             string                 `json:"privileged,omitempty"`
+	ContainerRuntime       ContainerRuntimeConfig `json:"containerRuntime,omitempty"`
+	MasterNodes            []HostConfig           `json:"masterNodes"`
+	WorkerNodes            []HostConfig           `json:"workerNodes"`
+}
+
+type ContainerRuntimeConfig struct {
+	Name         string `json:"name,omitempty"`
+	CgroupDriver string `json:"cgroupDriver,omitempty"`
 }
 
 type HostConfig struct {
@@ -45,22 +50,23 @@ type HostConfig struct {
 
 type NodeletConfig struct {
 	AllowWorkloadsOnMaster bool
-	CalicoV4Interface      string
-	CalicoV6Interface      string
-	ClusterId              string
-	ContainerRuntime       string
-	EtcdClusterState       string
-	HostId                 string
-	HostIp                 string
-	K8sApiPort             string
-	MasterList             *map[string]string
-	MasterIp               string
-	MasterVipEnabled       bool
-	MasterVipInterface     string
-	MasterVipVrouterId     int
-	Mtu                    string
-	Privileged             string
-	NodeletRole            string
+
+	CalicoV4Interface  string
+	CalicoV6Interface  string
+	ClusterId          string
+	ContainerRuntime   ContainerRuntimeConfig
+	EtcdClusterState   string
+	HostId             string
+	HostIp             string
+	K8sApiPort         string
+	MasterList         *map[string]string
+	MasterIp           string
+	MasterVipEnabled   bool
+	MasterVipInterface string
+	MasterVipVrouterId int
+	Mtu                string
+	Privileged         string
+	NodeletRole        string
 }
 
 type ClusterStatus struct {
@@ -106,7 +112,7 @@ func InitBootstrapConfig() *BootstrapConfig {
 		CalicoV4Interface:      "first-found",
 		CalicoV6Interface:      "first-found",
 		ClusterId:              DefaultClusterName,
-		ContainerRuntime:       "containerd",
+		ContainerRuntime:       ContainerRuntimeConfig{"containerd", "systemd"},
 		SSHUser:                "root",
 		SSHPrivateKeyFile:      "/root/.ssh/id_rsa",
 		Pf9KubePkg:             NodeletTarSrc,

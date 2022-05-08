@@ -73,10 +73,20 @@ oom_score = 0
   [plugins."io.containerd.grpc.v1.cri".containerd.runtimes]
     [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
       runtime_type = "io.containerd.runc.v2"
-      [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+EOF
+
+if [ "$CONTAINERD_CGROUP" = "systemd" ]; then
+    cat >> "/etc/containerd/config.toml" <<EOF
+     [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
         SystemdCgroup = true
 EOF
-    pf9ctr_restart
+else
+   cat >> "/etc/containerd/config.toml" <<EOF
+     [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+        SystemdCgroup = false
+EOF
+fi
+ pf9ctr_restart
 }
 
 
