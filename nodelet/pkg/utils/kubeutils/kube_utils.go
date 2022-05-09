@@ -18,6 +18,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/shipengqi/kube"
+	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -345,12 +346,11 @@ func AddOrUpdateTaint(node *v1.Node, taint *v1.Taint) (*v1.Node, bool, error) {
 
 // EnsureDns applies coredns yaml file
 func (u *UtilsImpl) EnsureDns(cfg config.Config) error {
-	var k8sRegistry string
-	if cfg.K8sPrivateRegistry == "" {
-		k8sRegistry = "k8s.gcr.io"
-	} else {
+	k8sRegistry := constants.K8sRegistry
+	if cfg.K8sPrivateRegistry != "" {
 		k8sRegistry = cfg.K8sPrivateRegistry
 	}
+
 	dnsIP, _ := netUtil.AddrConv(cfg.ServicesCIDR, 10)
 	type dataToAdd struct {
 		DnsIP       string
@@ -360,13 +360,23 @@ func (u *UtilsImpl) EnsureDns(cfg config.Config) error {
 		DnsIP:       dnsIP,
 		K8sRegistry: k8sRegistry,
 	}
-	err := file.NewYamlFromTemplateYaml(constants.CoreDNSTemplate, constants.CoreDNSFile, data)
+	err := os.Chmod(constants.ConfigSrcDir, 0777)
+	if err != nil {
+		return err
+	}
+	err = file.NewYamlFromTemplateYaml(constants.CoreDNSTemplate, constants.CoreDNSFile, data)
 	if err != nil {
 		return errors.Wrap(err, "could not create Coredns yaml")
 	}
 	err = u.ApplyYamlConfigFiles([]string{constants.CoreDNSFile})
 	if err != nil {
 		return errors.Wrap(err, "could not apply Coredns yaml")
+	}
+	if cfg.Debug == "false" {
+		err = os.Remove(constants.CoreDNSFile)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -380,11 +390,13 @@ func (u *UtilsImpl) EnsureAppCatalog() error {
 	if err != nil {
 		return errors.Wrapf(err, "could not get files from:%s", appCatalog)
 	}
-
+	log := zap.S()
+	log.Infof("applying files: %q", files)
 	err = u.ApplyYamlConfigFiles(files)
 	if err != nil {
 		return errors.Wrap(err, "could not apply app catalog yamls")
 	}
+
 	return nil
 }
 

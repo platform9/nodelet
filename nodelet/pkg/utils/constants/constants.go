@@ -116,6 +116,8 @@ var (
 	//K8sNamespace is namespace for kubernetes
 	K8sNamespace = "k8s.io"
 
+	K8sRegistry = "k8s.gcr.io"
+
 	ConfigSrcDir = "/opt/pf9/pf9-kube/conf"
 
 	CoreDNSTemplate = fmt.Sprintf("%s/networkapps/coredns.yaml", ConfigSrcDir)

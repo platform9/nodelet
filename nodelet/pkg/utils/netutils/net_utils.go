@@ -28,7 +28,7 @@ func New() NetInterface {
 }
 
 //AddrConv generates <pos> th IP from hostCIDR
-func (u *NetImpl) AddrConv(hostCIDR string, pos int) (string, error) {
+func (n *NetImpl) AddrConv(hostCIDR string, pos int) (string, error) {
 
 	_, ipnet, errCidr := net.ParseCIDR(hostCIDR)
 	if errCidr != nil {
@@ -43,7 +43,7 @@ func (u *NetImpl) AddrConv(hostCIDR string, pos int) (string, error) {
 
 // IpForHttp returns formatted Ip
 // If IP is IPv4 returns as it is, If IP is IPv6 returns IP with square bracks
-func (u *NetImpl) IpForHttp(masterIp string) (string, error) {
+func (n *NetImpl) IpForHttp(masterIp string) (string, error) {
 
 	if net.ParseIP(masterIp).To4() != nil {
 		return masterIp, nil
@@ -54,7 +54,7 @@ func (u *NetImpl) IpForHttp(masterIp string) (string, error) {
 }
 
 // GetNodeIdentifier returns node identifier as Hostname / Node IP
-func (u *NetImpl) GetNodeIdentifier(cfg config.Config) (string, error) {
+func (n *NetImpl) GetNodeIdentifier(cfg config.Config) (string, error) {
 
 	var err error
 	var nodeIdentifier string
@@ -67,7 +67,7 @@ func (u *NetImpl) GetNodeIdentifier(cfg config.Config) (string, error) {
 			return nodeIdentifier, fmt.Errorf("nodeIdentifier is null")
 		}
 	} else {
-		nodeIdentifier, err = u.GetNodeIP()
+		nodeIdentifier, err = n.GetNodeIP()
 		if err != nil {
 			return nodeIdentifier, errors.Wrap(err, "failed to get node IP address for node identification")
 		}
@@ -79,13 +79,13 @@ func (u *NetImpl) GetNodeIdentifier(cfg config.Config) (string, error) {
 }
 
 // GetNodeIP returns routed network interface IP
-func (u *NetImpl) GetNodeIP() (string, error) {
+func (n *NetImpl) GetNodeIP() (string, error) {
 	var err error
-	routedInterfaceName, err := u.GetRoutedNetworkInterFace()
+	routedInterfaceName, err := n.GetRoutedNetworkInterFace()
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to get routed network interface")
 	}
-	routedIp, err := u.GetIPv4ForInterfaceName(routedInterfaceName)
+	routedIp, err := n.GetIPv4ForInterfaceName(routedInterfaceName)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to get node IP")
 	}
@@ -93,7 +93,7 @@ func (u *NetImpl) GetNodeIP() (string, error) {
 }
 
 // GetRoutedNetworkInterFace returns roted network interface
-func (u *NetImpl) GetRoutedNetworkInterFace() (string, error) {
+func (n *NetImpl) GetRoutedNetworkInterFace() (string, error) {
 	routedInterface, err := nettest.RoutedInterface("ip", net.FlagUp|net.FlagBroadcast)
 	if err != nil {
 		return "", err
@@ -103,7 +103,7 @@ func (u *NetImpl) GetRoutedNetworkInterFace() (string, error) {
 }
 
 // GetIPv4ForInterfaceName returns IPv4 for given interface name
-func (u *NetImpl) GetIPv4ForInterfaceName(interfaceName string) (string, error) {
+func (n *NetImpl) GetIPv4ForInterfaceName(interfaceName string) (string, error) {
 	interfaces, _ := net.Interfaces()
 	for _, inter := range interfaces {
 		if inter.Name == interfaceName {

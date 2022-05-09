@@ -31,55 +31,55 @@ func NewPF9CoreDNSPhase() *PF9CoreDNSPhase {
 	}
 }
 
-func (l *PF9CoreDNSPhase) GetHostPhase() sunpikev1alpha1.HostPhase {
-	return *l.HostPhase
+func (c *PF9CoreDNSPhase) GetHostPhase() sunpikev1alpha1.HostPhase {
+	return *c.HostPhase
 }
 
-func (l *PF9CoreDNSPhase) GetPhaseName() string {
-	return l.HostPhase.Name
+func (c *PF9CoreDNSPhase) GetPhaseName() string {
+	return c.HostPhase.Name
 }
 
-func (l *PF9CoreDNSPhase) GetOrder() int {
-	return int(l.HostPhase.Order)
+func (c *PF9CoreDNSPhase) GetOrder() int {
+	return int(c.HostPhase.Order)
 }
 
-func (l *PF9CoreDNSPhase) Status(context.Context, config.Config) error {
+func (c *PF9CoreDNSPhase) Status(context.Context, config.Config) error {
 
-	l.log.Infof("Running Status of phase: %s", l.HostPhase.Name)
+	c.log.Infof("Running Status of phase: %s", c.HostPhase.Name)
 
-	phaseutils.SetHostStatus(l.HostPhase, constants.RunningState, "")
+	phaseutils.SetHostStatus(c.HostPhase, constants.RunningState, "")
 	return nil
 }
 
-func (l *PF9CoreDNSPhase) Start(ctx context.Context, cfg config.Config) error {
+func (c *PF9CoreDNSPhase) Start(ctx context.Context, cfg config.Config) error {
 
-	l.log.Infof("Running Start of phase: %s", l.HostPhase.Name)
+	c.log.Infof("Running Start of phase: %s", c.HostPhase.Name)
 
 	var err error
-	if l.kubeUtils == nil || l.kubeUtils.IsInterfaceNil() {
-		l.kubeUtils, err = kubeutils.NewClient()
+	if c.kubeUtils == nil || c.kubeUtils.IsInterfaceNil() {
+		c.kubeUtils, err = kubeutils.NewClient()
 		if err != nil {
-			l.log.Error(errors.Wrap(err, "could not refresh k8s client"))
-			phaseutils.SetHostStatus(l.HostPhase, constants.FailedState, err.Error())
+			c.log.Error(errors.Wrap(err, "could not refresh k8s client"))
+			phaseutils.SetHostStatus(c.HostPhase, constants.FailedState, err.Error())
 			return err
 		}
 	}
 
-	err = l.kubeUtils.EnsureDns(cfg)
+	err = c.kubeUtils.EnsureDns(cfg)
 	if err != nil {
-		l.log.Error(err)
-		phaseutils.SetHostStatus(l.HostPhase, constants.FailedState, err.Error())
+		c.log.Error(err)
+		phaseutils.SetHostStatus(c.HostPhase, constants.FailedState, err.Error())
 		return err
 	}
 
-	phaseutils.SetHostStatus(l.HostPhase, constants.RunningState, "")
+	phaseutils.SetHostStatus(c.HostPhase, constants.RunningState, "")
 	return nil
 }
 
-func (l *PF9CoreDNSPhase) Stop(ctx context.Context, cfg config.Config) error {
+func (c *PF9CoreDNSPhase) Stop(ctx context.Context, cfg config.Config) error {
 
-	l.log.Infof("Running Stop of phase: %s", l.HostPhase.Name)
+	c.log.Infof("Running Stop of phase: %s", c.HostPhase.Name)
 
-	phaseutils.SetHostStatus(l.HostPhase, constants.StoppedState, "")
+	phaseutils.SetHostStatus(c.HostPhase, constants.StoppedState, "")
 	return nil
 }
