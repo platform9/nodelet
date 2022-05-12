@@ -41,7 +41,7 @@ func NewNodeletDeployer(cfg *BootstrapConfig, sshClient ssh.Client,
 	return deployer
 }
 
-func GetNodeletDeployer(cfg *BootstrapConfig, clusterStatus *ClusterStatus, nodeletCfg *NodeletConfig, nodeName, nodeletSrcFile string, sshKeyFile string) (*NodeletDeployer, error) {
+func GetNodeletDeployer(cfg *BootstrapConfig, clusterStatus *ClusterStatus, nodeletCfg *NodeletConfig, nodeName, nodeletSrcFile string) (*NodeletDeployer, error) {
 	local, err := isLocal(nodeName)
 	if err != nil {
 		return nil, err
@@ -50,9 +50,9 @@ func GetNodeletDeployer(cfg *BootstrapConfig, clusterStatus *ClusterStatus, node
 	if local {
 		sshClient = getLocalClient()
 	} else {
-		sshKey, err := ioutil.ReadFile(sshKeyFile)
+		sshKey, err := ioutil.ReadFile(cfg.SSHPrivateKeyFile)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to read private key: %s", sshKeyFile)
+			return nil, fmt.Errorf("Failed to read private key: %s", cfg.SSHPrivateKeyFile)
 		}
 		sshClient, err = CreateSSHClient(nodeName, cfg.SSHUser, sshKey, 22)
 		if err != nil {
