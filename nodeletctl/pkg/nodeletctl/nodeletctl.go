@@ -15,25 +15,30 @@ import (
 )
 
 type BootstrapConfig struct {
-	SSHUser                string       `json:"sshUser,omitempty"`
-	SSHPrivateKeyFile      string       `json:"sshPrivateKeyFile,omitempty"`
-	CertsDir               string       `json:"certsDir,omitempty"`
-	KubeConfig             string       `json:"kubeconfig,omitempty"`
-	Pf9KubePkg             string       `json:"nodeletPkg,omitempty"`
-	ClusterId              string       `json:"clusterName,omitempty"`
-	AllowWorkloadsOnMaster bool         `json:"allowWorkloadsOnMaster,omitempty"`
-	K8sApiPort             string       `json:"k8sApiPort,omitempty"`
-	MasterIp               string       `json:"masterIp,omitempty"`
-	MasterVipEnabled       bool         `json:"masterVipEnabled,omitempty"`
-	MasterVipInterface     string       `json:"masterVipInterface,omitempty"`
-	MasterVipVrouterId     int          `json:"masterVipVrouterId,omitempty"`
-	CalicoV4Interface      string       `json:"calicoV4Interface,omitempty"`
-	CalicoV6Interface      string       `json:"calicoV6Interface,omitempty"`
-	MTU                    string       `json:"mtu,omitempty"`
-	Privileged             string       `json:"privileged,omitempty"`
-	ContainerRuntime       string       `json:"containerRuntime,omitempty"`
-	MasterNodes            []HostConfig `json:"masterNodes"`
-	WorkerNodes            []HostConfig `json:"workerNodes"`
+	SSHUser                string                 `json:"sshUser,omitempty"`
+	SSHPrivateKeyFile      string                 `json:"sshPrivateKeyFile,omitempty"`
+	CertsDir               string                 `json:"certsDir,omitempty"`
+	KubeConfig             string                 `json:"kubeconfig,omitempty"`
+	Pf9KubePkg             string                 `json:"nodeletPkg,omitempty"`
+	ClusterId              string                 `json:"clusterName,omitempty"`
+	AllowWorkloadsOnMaster bool                   `json:"allowWorkloadsOnMaster,omitempty"`
+	K8sApiPort             string                 `json:"k8sApiPort,omitempty"`
+	MasterIp               string                 `json:"masterIp,omitempty"`
+	MasterVipEnabled       bool                   `json:"masterVipEnabled,omitempty"`
+	MasterVipInterface     string                 `json:"masterVipInterface,omitempty"`
+	MasterVipVrouterId     int                    `json:"masterVipVrouterId,omitempty"`
+	CalicoV4Interface      string                 `json:"calicoV4Interface,omitempty"`
+	CalicoV6Interface      string                 `json:"calicoV6Interface,omitempty"`
+	MTU                    string                 `json:"mtu,omitempty"`
+	Privileged             string                 `json:"privileged,omitempty"`
+	ContainerRuntime       ContainerRuntimeConfig `json:"containerRuntime,omitempty"`
+	MasterNodes            []HostConfig           `json:"masterNodes"`
+	WorkerNodes            []HostConfig           `json:"workerNodes"`
+}
+
+type ContainerRuntimeConfig struct {
+	Name         string `json:"name,omitempty"`
+	CgroupDriver string `json:"cgroupDriver,omitempty"`
 }
 
 type HostConfig struct {
@@ -45,22 +50,23 @@ type HostConfig struct {
 
 type NodeletConfig struct {
 	AllowWorkloadsOnMaster bool
-	CalicoV4Interface      string
-	CalicoV6Interface      string
-	ClusterId              string
-	ContainerRuntime       string
-	EtcdClusterState       string
-	HostId                 string
-	HostIp                 string
-	K8sApiPort             string
-	MasterList             *map[string]string
-	MasterIp               string
-	MasterVipEnabled       bool
-	MasterVipInterface     string
-	MasterVipVrouterId     int
-	Mtu                    string
-	Privileged             string
-	NodeletRole            string
+
+	CalicoV4Interface  string
+	CalicoV6Interface  string
+	ClusterId          string
+	ContainerRuntime   ContainerRuntimeConfig
+	EtcdClusterState   string
+	HostId             string
+	HostIp             string
+	K8sApiPort         string
+	MasterList         *map[string]string
+	MasterIp           string
+	MasterVipEnabled   bool
+	MasterVipInterface string
+	MasterVipVrouterId int
+	Mtu                string
+	Privileged         string
+	NodeletRole        string
 }
 
 type ClusterStatus struct {
@@ -106,7 +112,7 @@ func InitBootstrapConfig() *BootstrapConfig {
 		CalicoV4Interface:      "first-found",
 		CalicoV6Interface:      "first-found",
 		ClusterId:              DefaultClusterName,
-		ContainerRuntime:       "containerd",
+		ContainerRuntime:       ContainerRuntimeConfig{"containerd", "systemd"},
 		SSHUser:                "root",
 		SSHPrivateKeyFile:      "/root/.ssh/id_rsa",
 		Pf9KubePkg:             NodeletTarSrc,
@@ -138,11 +144,7 @@ func ParseBootstrapConfig(cfgPath string) (*BootstrapConfig, error) {
 }
 
 func DeployCluster(clusterCfg *BootstrapConfig) error {
-	sshKey, err := ioutil.ReadFile(clusterCfg.SSHPrivateKeyFile)
-	if err != nil {
-		return fmt.Errorf("Failed to read private key: %s", clusterCfg.SSHPrivateKeyFile)
-	}
-
+	zap.S().Infof("Deploying cluster %s", clusterCfg.ClusterId)
 	if clusterCfg.CertsDir == "" {
 		certsDir, err := GenCALocal(clusterCfg.ClusterId)
 		if err != nil {
@@ -168,6 +170,7 @@ func DeployCluster(clusterCfg *BootstrapConfig) error {
 	}
 
 	for numMaster, host := range clusterCfg.MasterNodes {
+		zap.S().Infof("Deploying master node %s", host.NodeName)
 		nodeletCfg := new(NodeletConfig)
 		setNodeletClusterCfg(clusterCfg, nodeletCfg)
 		nodeletCfg.HostId = host.NodeName
@@ -185,8 +188,8 @@ func DeployCluster(clusterCfg *BootstrapConfig) error {
 			zap.S().Infof("Failed to generate config: %s", err)
 			return fmt.Errorf("Failed to generate config: %s", err)
 		}
-
-		deployer, err := GetNodeletDeployer(clusterCfg, globalClusterStatus, nodeletCfg, nodeletCfg.HostIp, nodeletSrcFile, sshKey)
+		zap.S().Debugf("master nodeletsrc file %s", nodeletSrcFile)
+		deployer, err := GetNodeletDeployer(clusterCfg, globalClusterStatus, nodeletCfg, nodeletCfg.HostIp, nodeletSrcFile)
 		if err != nil {
 			zap.S().Errorf("failed to get nodelet deployer: %v", err)
 			return fmt.Errorf("failed to get nodelet deployer: %v", err)
@@ -202,7 +205,7 @@ func DeployCluster(clusterCfg *BootstrapConfig) error {
 		}
 	}
 
-	if err := DeployWorkers(clusterCfg, globalClusterStatus, &clusterCfg.WorkerNodes, sshKey); err != nil {
+	if err := DeployWorkers(clusterCfg, globalClusterStatus, &clusterCfg.WorkerNodes); err != nil {
 		return fmt.Errorf("ScaleCluster failed to deploy new workers: %s", err)
 	}
 
@@ -288,16 +291,11 @@ func DeleteCluster(cfgPath string) error {
 		return fmt.Errorf("Failed to Parse Cluster Config: %s", err)
 	}
 
-	sshKey, err := ioutil.ReadFile(clusterCfg.SSHPrivateKeyFile)
-	if err != nil {
-		return fmt.Errorf("Failed to read private key: %s", clusterCfg.SSHPrivateKeyFile)
-	}
-
 	allNodes := append(clusterCfg.WorkerNodes, clusterCfg.MasterNodes...)
 	deleteFailed := false
 
 	for _, host := range allNodes {
-		deployer, err := GetNodeletDeployer(clusterCfg, nil, nil, host.NodeName, "", sshKey)
+		deployer, err := GetNodeletDeployer(clusterCfg, nil, nil, host.NodeName, "")
 		if err != nil {
 			zap.S().Errorf("failed to get nodelet deployer: %v", err)
 			return fmt.Errorf("failed to get nodelet deployer: %v", err)
@@ -317,10 +315,6 @@ func DeleteCluster(cfgPath string) error {
 }
 
 func GetClusterNodeletStatus(clusterCfg *BootstrapConfig, nodes *[]HostConfig) (*ClusterStatus, error) {
-	sshKey, err := ioutil.ReadFile(clusterCfg.SSHPrivateKeyFile)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to read private key: %s", clusterCfg.SSHPrivateKeyFile)
-	}
 
 	nodeletStatus := new(ClusterStatus)
 	nodeletStatus.statusMap = make(map[string]*NodeStatus)
@@ -335,7 +329,7 @@ func GetClusterNodeletStatus(clusterCfg *BootstrapConfig, nodes *[]HostConfig) (
 			nodeletCfg.HostIp = host.NodeName
 		}
 
-		deployer, err := GetNodeletDeployer(clusterCfg, nodeletStatus, nodeletCfg, nodeletCfg.HostIp, "", sshKey)
+		deployer, err := GetNodeletDeployer(clusterCfg, nodeletStatus, nodeletCfg, nodeletCfg.HostIp, "")
 		if err != nil {
 			zap.S().Errorf("failed to get nodelet deployer: %v", err)
 			return nil, fmt.Errorf("failed to get nodelet deployer: %v", err)
@@ -387,11 +381,6 @@ func ScaleCluster(cfgPath string) error {
 		clusterCfg.CertsDir = filepath.Join(ClusterStateDir, clusterCfg.ClusterId, "certs")
 	}
 
-	sshKey, err := ioutil.ReadFile(clusterCfg.SSHPrivateKeyFile)
-	if err != nil {
-		return fmt.Errorf("Failed to read private key: %s", clusterCfg.SSHPrivateKeyFile)
-	}
-
 	nodeletStatus := new(ClusterStatus)
 	nodeletStatus.statusMap = make(map[string]*NodeStatus)
 
@@ -408,15 +397,15 @@ func ScaleCluster(cfgPath string) error {
 	newMasters, oldMasters, currMasters := getDiffNodes(clusterCfg.MasterNodes, masters)
 	newWorkers, oldWorkers, _ := getDiffNodes(clusterCfg.WorkerNodes, workers)
 
-	if err := AddMasters(clusterCfg, nodeletStatus, &currMasters, &newMasters, sshKey); err != nil {
+	if err := AddMasters(clusterCfg, nodeletStatus, &currMasters, &newMasters); err != nil {
 		return fmt.Errorf("ScaleCluster failed to deploy new masters: %s", err)
 	}
 
-	if err := RemoveMasters(clusterCfg, nodeletStatus, &currMasters, &oldMasters, sshKey); err != nil {
+	if err := RemoveMasters(clusterCfg, nodeletStatus, &currMasters, &oldMasters); err != nil {
 		return fmt.Errorf("ScaleCluster failed to remove old masters: %s", err)
 	}
 
-	if err := DeployWorkers(clusterCfg, nodeletStatus, &newWorkers, sshKey); err != nil {
+	if err := DeployWorkers(clusterCfg, nodeletStatus, &newWorkers); err != nil {
 		return fmt.Errorf("ScaleCluster failed to deploy new workers: %s", err)
 	}
 
@@ -425,7 +414,7 @@ func ScaleCluster(cfgPath string) error {
 		return err
 	}
 
-	if err := DeleteWorkers(clusterCfg, oldWorkers, sshKey); err != nil {
+	if err := DeleteWorkers(clusterCfg, oldWorkers); err != nil {
 		return fmt.Errorf("ScaleCluster failed to cleanup old nodes: %s", err)
 	}
 
@@ -467,7 +456,8 @@ func getDiffNodes(desired []HostConfig, active []string) ([]HostConfig, []HostCo
 	return newNodes, oldNodes, currNodes
 }
 
-func AddMasters(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus, currMasters, newMasters *[]HostConfig, sshKey []byte) error {
+func AddMasters(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus, currMasters, newMasters *[]HostConfig,) error {
+	zap.S().Infof("Adding %d masters", len(*newMasters))
 	var masterList = make(map[string]string)
 	for _, host := range *currMasters {
 		if host.NodeIP != nil {
@@ -478,6 +468,7 @@ func AddMasters(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus, currM
 	}
 
 	for numMaster, host := range *newMasters {
+		zap.S().Infof("Adding master %s", host.NodeName)
 		nodeletCfg := new(NodeletConfig)
 		setNodeletClusterCfg(clusterCfg, nodeletCfg)
 		nodeletCfg.HostId = host.NodeName
@@ -490,14 +481,14 @@ func AddMasters(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus, currM
 		nodeletCfg.EtcdClusterState = "existing"
 		masterList[host.NodeName] = nodeletCfg.HostIp
 		nodeletCfg.MasterList = &masterList
-
 		nodeletSrcFile, err := GenNodeletConfigLocal(nodeletCfg, masterNodeletConfigTmpl)
 		if err != nil {
 			zap.S().Infof("Failed to generate config: %s", err)
 			return fmt.Errorf("Failed to generate config: %s", err)
 		}
+		zap.S().Debugf("nodelet src file %s", nodeletSrcFile)
 
-		deployer, err := GetNodeletDeployer(clusterCfg, clusterStatus, nodeletCfg, nodeletCfg.HostIp, nodeletSrcFile, sshKey)
+		deployer, err := GetNodeletDeployer(clusterCfg, clusterStatus, nodeletCfg, nodeletCfg.HostIp, nodeletSrcFile)
 		if err != nil {
 			zap.S().Errorf("failed to get nodelet deployer: %v", err)
 			return fmt.Errorf("failed to get nodelet deployer: %v", err)
@@ -505,11 +496,11 @@ func AddMasters(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus, currM
 		clusterStatus.statusMap[host.NodeName] = &NodeStatus{
 			deployer: deployer,
 		}
-
+		zap.S().Infof("Added master %s to etcd ", host.NodeName)
 		if err := AddNodeToEtcd(clusterCfg, currMasters, nodeletCfg.HostIp); err != nil {
 			return fmt.Errorf("Failed to add nodes %+v as etcd members: %s", newMasters, err)
 		}
-
+		zap.S().Infof("Spawning master %s", host.NodeName)
 		_, _ = deployer.SpawnMaster(numMaster)
 		if err := SyncNodes(clusterCfg, &[]HostConfig{host}); err != nil {
 			return fmt.Errorf("Failed to sync new master: %+v", host)
@@ -521,7 +512,7 @@ func AddMasters(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus, currM
 	return nil
 }
 
-func RemoveMasters(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus, currMasters, oldMasters *[]HostConfig, sshKey []byte) error {
+func RemoveMasters(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus, currMasters, oldMasters *[]HostConfig) error {
 	for _, host := range *oldMasters {
 		nodeletCfg := new(NodeletConfig)
 		setNodeletClusterCfg(clusterCfg, nodeletCfg)
@@ -535,7 +526,7 @@ func RemoveMasters(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus, cu
 			return fmt.Errorf("Failed to remove nodes %+v from etcd members: %s", host, err)
 		}
 
-		deployer, err := GetNodeletDeployer(clusterCfg, nil, nil, host.NodeName, "", sshKey)
+		deployer, err := GetNodeletDeployer(clusterCfg, nil, nil, host.NodeName, "")
 		if err != nil {
 			zap.S().Errorf("failed to get nodelet deployer: %v", err)
 			return fmt.Errorf("failed to get nodelet deployer: %v", err)
@@ -561,7 +552,7 @@ func RemoveMasters(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus, cu
 	return nil
 }
 
-func DeployWorkers(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus, workers *[]HostConfig, sshKey []byte) error {
+func DeployWorkers(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus, workers *[]HostConfig) error {
 	var wg sync.WaitGroup
 
 	for _, host := range *workers {
@@ -574,7 +565,7 @@ func DeployWorkers(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus, wo
 			zap.S().Infof("Failed to generate config: %s", err)
 			return fmt.Errorf("Failed to generate config: %s", err)
 		}
-		deployer, err := GetNodeletDeployer(clusterCfg, clusterStatus, nodeletCfg, host.NodeName, nodeletSrcFile, sshKey)
+		deployer, err := GetNodeletDeployer(clusterCfg, clusterStatus, nodeletCfg, host.NodeName, nodeletSrcFile)
 		if err != nil {
 			zap.S().Errorf("failed to get nodelet deployer: %s", err)
 			return fmt.Errorf("failed to get nodelet deployer: %s", err)
@@ -591,9 +582,9 @@ func DeployWorkers(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus, wo
 	return nil
 }
 
-func DeleteWorkers(clusterCfg *BootstrapConfig, oldNodes []HostConfig, sshKey []byte) error {
+func DeleteWorkers(clusterCfg *BootstrapConfig, oldNodes []HostConfig) error {
 	for _, host := range oldNodes {
-		deployer, err := GetNodeletDeployer(clusterCfg, nil, nil, host.NodeName, "", sshKey)
+		deployer, err := GetNodeletDeployer(clusterCfg, nil, nil, host.NodeName, "")
 		if err != nil {
 			zap.S().Errorf("failed to get nodelet deployer: %v", err)
 			return fmt.Errorf("failed to get nodelet deployer: %v", err)
@@ -641,16 +632,16 @@ func SyncNodes(clusterCfg *BootstrapConfig, nodes *[]HostConfig) error {
 }
 
 func isClusterCfgValid(clusterCfg *BootstrapConfig) bool {
-	if len(clusterCfg.WorkerNodes) == 0 {
-		zap.S().Errorf("Number of worker nodes cannot be zero")
-		return false
-	}
 	if len(clusterCfg.MasterNodes) == 0 {
 		zap.S().Errorf("Number of master nodes cannot be zero")
 		return false
 	}
 	if (len(clusterCfg.MasterNodes) % 2) == 0 {
 		zap.S().Errorf("Number of master nodes cannot be even")
+		return false
+	}
+	if !clusterCfg.AllowWorkloadsOnMaster && len(clusterCfg.WorkerNodes) == 0 {
+		zap.S().Errorf("Number of worker nodes cannot be zero when no workloads are allowed on masters")
 		return false
 	}
 	return true

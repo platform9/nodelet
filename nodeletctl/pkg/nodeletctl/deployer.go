@@ -5,14 +5,16 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
+	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
+	nodeletext "github.com/platform9/nodelet/nodelet/pkg/utils/extensionfile"
 	"github.com/platform9/pf9ctl/pkg/ssh"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/util/yaml"
-    nodeletext "github.com/platform9/nodelet/nodelet/pkg/utils/extensionfile"
 )
 
 type NodeletDeployer struct {
@@ -39,10 +41,23 @@ func NewNodeletDeployer(cfg *BootstrapConfig, sshClient ssh.Client,
 	return deployer
 }
 
-func GetNodeletDeployer(cfg *BootstrapConfig, clusterStatus *ClusterStatus, nodeletCfg *NodeletConfig, nodeName, nodeletSrcFile string, sshKey []byte) (*NodeletDeployer, error) {
-	sshClient, err := CreateSSHClient(nodeName, cfg.SSHUser, sshKey, 22)
+func GetNodeletDeployer(cfg *BootstrapConfig, clusterStatus *ClusterStatus, nodeletCfg *NodeletConfig, nodeName, nodeletSrcFile string) (*NodeletDeployer, error) {
+	local, err := isLocal(nodeName)
 	if err != nil {
-		return nil, fmt.Errorf("can't create ssh client to host %s, %s", nodeName, err)
+		return nil, err
+	}
+	var sshClient ssh.Client
+	if local {
+		sshClient = getLocalClient()
+	} else {
+		sshKey, err := ioutil.ReadFile(cfg.SSHPrivateKeyFile)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to read private key: %s", cfg.SSHPrivateKeyFile)
+		}
+		sshClient, err = CreateSSHClient(nodeName, cfg.SSHUser, sshKey, 22)
+		if err != nil {
+			return nil, fmt.Errorf("can't create ssh client to host %s, %s", nodeName, err)
+		}
 	}
 
 	deployer := NewNodeletDeployer(cfg, sshClient, nodeletSrcFile, nodeletCfg, clusterStatus)
@@ -50,9 +65,48 @@ func GetNodeletDeployer(cfg *BootstrapConfig, clusterStatus *ClusterStatus, node
 	return deployer, nil
 }
 
+func isLocal(nodeName string) (bool, error) {
+	name, err := os.Hostname()
+	if err != nil {
+		return false, fmt.Errorf("failed to get hostname: %s", err)
+	}
+	if name == nodeName {
+		return true, nil
+	}
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return false, fmt.Errorf("Can't check local interfaces %v", err)
+	}
+	for _, iface := range ifaces {
+		addrs, err := iface.Addrs()
+		if err != nil {
+			return false, fmt.Errorf("Can't get addresses for interface %s: %v", iface.Name, err)
+		}
+		for _, addr := range addrs {
+			var ip net.IP
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+			if ip == nil {
+				continue
+			}
+			if nodeName == ip.String() {
+				return true, nil
+			}
+		}
+	}
+
+	return false, nil
+}
+
 func (nd *NodeletDeployer) SpawnMaster(numMaster int) (string, error) {
+	zap.S().Infof("Spawning master: %s", nd.nodeletCfg.HostId)
 	// Add any master-specific tasks here before and after
 	if err := nd.DeployNodelet(); err != nil {
+		zap.S().Errorf("failed to deploy nodelet: %s", err)
 		SetClusterNodeStatus(nd.clusterStatus, nd.nodeletCfg.HostId, "failed", err)
 		return "failed", err
 	}
@@ -70,7 +124,9 @@ func (nd *NodeletDeployer) SpawnMaster(numMaster int) (string, error) {
 
 func (nd *NodeletDeployer) SpawnWorker(wg *sync.WaitGroup) {
 	defer wg.Done()
+	zap.S().Infof("Spawning worker: %s", nd.nodeletCfg.HostId)
 	if err := nd.DeployNodelet(); err != nil {
+		zap.S().Errorf("failed to deploy worker nodelet: %s", err)
 		SetClusterNodeStatus(nd.clusterStatus, nd.nodeletCfg.HostId, "failed", err)
 		return
 	}
@@ -82,57 +138,61 @@ func (nd *NodeletDeployer) SpawnWorker(wg *sync.WaitGroup) {
 }
 
 func (nd *NodeletDeployer) DeployNodelet() error {
+	zap.S().Infof("Deploying nodelet: %s", nd.nodeletCfg.HostId)
 	if err := nd.CreatePf9User(); err != nil {
-		return err
+		return fmt.Errorf("failed to create user: %s", err)
 	}
 	if err := nd.UploadCerts(); err != nil {
-		return err
+		return fmt.Errorf("failed to upload certs: %s", err)
 	}
 	if err := nd.CopyNodeletConfig(); err != nil {
-		return err
+		return fmt.Errorf("failed to copy nodelet config: %s", err)
 	}
 	if err := nd.InstallNodelet(); err != nil {
-		return err
+		return fmt.Errorf("failed to install nodelet: %s", err)
 	}
 	// TODO: Remove this, move to nodelet afterinstall.sh
 	if err := nd.SetPf9Ownerships(); err != nil {
-		return err
+		return fmt.Errorf("failed to set pf9 ownerships: %s", err)
 	}
 	if err := nd.StartNodelet(); err != nil {
-		return err
+		return fmt.Errorf("failed to start nodelet: %s", err)
 	}
 	return nil
 }
 
 func (nd *NodeletDeployer) ReconfigureNodelet() error {
+	zap.S().Infof("Reconfiguring nodelet: %s", nd.nodeletCfg.HostId)
 	if err := nd.CopyNodeletConfig(); err != nil {
-		return err
+		return fmt.Errorf("failed to copy nodelet config: %s", err)
 	}
 	if err := nd.RestartNodelet(); err != nil {
-		return err
+		return fmt.Errorf("failed to restart nodelet: %s", err)
 	}
 	return nil
 }
 
 func (nd *NodeletDeployer) UploadCerts() error {
+	zap.S().Infof("Uploading certs to nodelet: %s", nd.nodeletCfg.HostId)
 	srcCertPath := filepath.Join(ClusterStateDir, nd.nodeletCfg.ClusterId, "certs", RootCACRT)
 	err := UploadFileWrapper(srcCertPath, RootCACRT, RemoteCertsDir, nd.client)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to upload certs: %s", err)
 	}
 
 	srcKeyPath := filepath.Join(ClusterStateDir, nd.nodeletCfg.ClusterId, "certs", RootCAKey)
 	err = UploadFileWrapper(srcKeyPath, RootCAKey, RemoteCertsDir, nd.client)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to upload CA certs: %s", err)
 	}
 	return nil
 }
 
 func (nd *NodeletDeployer) CopyNodeletConfig() error {
+	zap.S().Infof("Copying nodelet config to node: %s", nd.nodeletCfg.HostId)
 	err := UploadFileWrapper(nd.nodeletSrcFile, NodeletConfigFile, NodeletConfigDir, nd.client)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to copy nodelet config: %s", err)
 	}
 	return nil
 }
@@ -140,24 +200,47 @@ func (nd *NodeletDeployer) CopyNodeletConfig() error {
 func (nd *NodeletDeployer) SetOsType() {
 	// TODO: Find actual OS type of remote node once we add Ubuntu support
 	nd.OsType = OsTypeCentos
+
+	stdout, _, err := nd.client.RunCommand("cat /etc/os-release")
+	if err != nil {
+		zap.S().Infof("failed reading data from file: %s", err)
+		return
+	}
+	osString := strings.ToLower(string(stdout))
+	if strings.Contains(osString, "ubuntu") {
+		nd.OsType = OsTypeUbuntu
+		zap.S().Infof("OS type is Ubuntu")
+	} else {
+		zap.S().Infof("assuming OS type is CentOS, the os string is %s", osString)
+	}
+
 }
 
 func (nd *NodeletDeployer) CreatePf9User() error {
+	zap.S().Infof("Checking pf9 user on node: %s", nd.nodeletCfg.HostId)
+	_, _, err := nd.client.RunCommand("id -u pf9")
+	if err != nil {
+		zap.S().Infof("User name doesn't exist, proceeding to create")
+	} else {
+		zap.S().Infof("User name already exist")
+		return nil
+	}
 	var cmdList []string
-
+	zap.S().Infof("Creating pf9 user")
 	cmdList = append(cmdList, "mkdir -p /opt/pf9/home")
 	cmdList = append(cmdList, "groupadd -f pf9group")
 	cmdList = append(cmdList, "id -u pf9 &>/dev/null || useradd -d /opt/pf9/home -G pf9group pf9")
 
 	for _, cmd := range cmdList {
 		if _, _, err := nd.client.RunCommand(cmd); err != nil {
-			return fmt.Errorf("CreatePf9User: %s: %s", cmd, err)
+			return fmt.Errorf("createPf9User: %s: %s", cmd, err)
 		}
 	}
 	return nil
 }
 
 func (nd *NodeletDeployer) InstallNodelet() error {
+	zap.S().Infof("Installing nodelet")
 	if err := nd.client.UploadFile(nd.pf9KubeTarSrc, NodeletTarDst, 0644, nil); err != nil {
 		return fmt.Errorf("Failed to copy pf9-kube(nodelet) RPM: %s", err)
 	}
@@ -187,6 +270,7 @@ func (nd *NodeletDeployer) InstallNodelet() error {
    TODO: Add to the nodelet after-install.sh script
 */
 func (nd *NodeletDeployer) SetPf9Ownerships() error {
+	zap.S().Infof("Setting pf9 ownership")
 	chownCmd := fmt.Sprintf("chown %s:pf9group %s ", NodeletUser, "/var/log/pf9")
 	if _, _, err := nd.client.RunCommand(chownCmd); err != nil {
 		return fmt.Errorf("Failed: %s: %s", chownCmd, err)
@@ -210,6 +294,7 @@ func (nd *NodeletDeployer) SetPf9Ownerships() error {
 }
 
 func (nd *NodeletDeployer) StartNodelet() error {
+	zap.S().Infof("Starting nodelet")
 	startCmd := "systemctl start pf9-nodeletd"
 	if _, _, err := nd.client.RunCommand(startCmd); err != nil {
 		return fmt.Errorf("Failed: %s: %s", startCmd, err)
@@ -218,6 +303,7 @@ func (nd *NodeletDeployer) StartNodelet() error {
 }
 
 func (nd *NodeletDeployer) RestartNodelet() error {
+	zap.S().Infof("Restarting nodelet")
 	startCmd := "systemctl restart pf9-nodeletd"
 	if _, _, err := nd.client.RunCommand(startCmd); err != nil {
 		return fmt.Errorf("Failed: %s: %s", startCmd, err)
@@ -226,6 +312,7 @@ func (nd *NodeletDeployer) RestartNodelet() error {
 }
 
 func (nd *NodeletDeployer) RefreshNodeletStatus() (string, error) {
+	zap.S().Infof("Refreshing nodelet status")
 	cpCmd := fmt.Sprintf("cp %s /tmp/", KubeStatusFile)
 	if _, _, err := nd.client.RunCommand(cpCmd); err != nil {
 		return "", fmt.Errorf("RefreshNodeletStatus failed: %s", err)
@@ -262,6 +349,7 @@ func (nd *NodeletDeployer) RefreshNodeletStatus() (string, error) {
    4. Finally, move to target directory
 */
 func UploadFileWrapper(srcFilePath, fileName, dstDir string, client ssh.Client) error {
+	zap.S().Infof("Uploading %s to %s", srcFilePath, dstDir)
 	mkdirCmd := "mkdir -p " + dstDir
 	if _, _, err := client.RunCommand(mkdirCmd); err != nil {
 		return fmt.Errorf("Failed: %s: %s", mkdirCmd, err)
@@ -287,7 +375,16 @@ func UploadFileWrapper(srcFilePath, fileName, dstDir string, client ssh.Client) 
 }
 
 func (nd *NodeletDeployer) DeleteNodelet() error {
-	eraseCmd := "yum erase -y pf9-kube"
+	zap.S().Infof("Deleting nodelet")
+	var eraseCmd string
+	if nd.OsType == OsTypeCentos {
+		eraseCmd = "yum erase -y pf9-kube"
+	} else if nd.OsType == OsTypeUbuntu {
+		eraseCmd = "apt remove -y pf9-kube"
+	} else {
+		return fmt.Errorf("OS type not supported")
+	}
+	
 	zap.S().Infof("Removing nodelet with cmd: %s", eraseCmd)
 	if _, _, err := nd.client.RunCommand(eraseCmd); err != nil {
 		return fmt.Errorf("Failed: %s: %s", eraseCmd, err)

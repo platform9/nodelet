@@ -453,8 +453,17 @@ staticPodPath: "${STATIC_POD_PATH}"
 tlsCertFile: "${TLS_CERT_FILE}"
 tlsPrivateKeyFile: "${TLS_PRIVATE_KEY_FILE}"
 tlsCipherSuites: ${TLS_CIPHER_SUITES}
+EOF
+
+    if [ "$CONTAINERD_CGROUP" = "systemd" ]; then
+        cat <<EOF >> ${KUBELET_BOOTSTRAP_CONFIG}
 cgroupDriver: systemd
 EOF
+    else
+        cat <<EOF >> ${KUBELET_BOOTSTRAP_CONFIG}
+cgroupDriver: cgroupfs
+EOF
+    fi
 
     # Apiserver, controller-manager, and scheduler don't run on workers, so don't need staticPodPath (it spams pf9-kubelet journalctl logs)
     if [ "$ROLE" == "worker" ]; then
@@ -540,7 +549,7 @@ function ensure_kubelet_running()
         --register-schedulable=false \
         --pod-infra-container-image=${pause_img} \
         --dynamic-config-dir=${KUBELET_DYNAMIC_CONFIG_DIR} \
-        --cgroup-driver=systemd"
+        --cgroup-driver=${CONTAINERD_CGROUP}"
     
     # container-runtime: The container runtime to use. Possible values: docker, remote
     # container-runtime-endpoint: The endpoint of remote runtime service. Currently unix socket endpoint is supported on Linux

@@ -98,7 +98,9 @@ QUAY_PRIVATE_REGISTRY: ""
 REGISTRY_MIRRORS: https://dockermirror.platform9.io/
 RESERVED_CPUS: ""
 ROLE: {{ .NodeletRole }}
-RUNTIME: {{ .ContainerRuntime }}
+RUNTIME: {{ .ContainerRuntime.Name }}
+CONTAINERD_CGROUP:  {{ .ContainerRuntime.CgroupDriver }}
+DOCKER_CGROUP: {{ .ContainerRuntime.CgroupDriver }}
 RUNTIME_CONFIG: ""
 SCHEDULER_FLAGS: ""
 SERVICES_CIDR: 10.21.0.0/22
@@ -174,7 +176,9 @@ QUAY_PRIVATE_REGISTRY: ""
 REGISTRY_MIRRORS: https://dockermirror.platform9.io/
 RESERVED_CPUS: ""
 ROLE: {{ .NodeletRole }}
-RUNTIME: {{ .ContainerRuntime }}
+RUNTIME: {{ .ContainerRuntime.Name }}
+CONTAINERD_CGROUP:  {{ .ContainerRuntime.CgroupDriver }}
+DOCKER_CGROUP: {{ .ContainerRuntime.CgroupDriver }}
 RUNTIME_CONFIG: ""
 SCHEDULER_FLAGS: ""
 SERVICES_CIDR: 10.21.0.0/22

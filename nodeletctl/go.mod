@@ -6,6 +6,7 @@ go 1.16
 
 require (
 	github.com/ghodss/yaml v1.0.0
+	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/platform9/nodelet/nodelet v0.0.0-20220420170655-9ece5c5b1f61
 	github.com/platform9/pf9ctl v0.0.0-20220112203229-a7beabbd4284
