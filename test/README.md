@@ -15,7 +15,7 @@ The top level directory should have:
 bash ./test/start-nodelete-in-docker.sh
 ```
 
-This script creates a docker cotnainer named "nodelet" and starts the nodelet inside the
+This script creates a docker container named "nodelet" and starts the nodelet inside the
 container using nodeletctl.
 
 
