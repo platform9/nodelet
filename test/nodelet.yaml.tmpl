@@ -1,0 +1,11 @@
+sshUser: root
+sshPrivateKeyFile: /root/.ssh/id_rsa
+nodeletPkg: /work/pf9-kube.tar.gz
+allowWorkloadsOnMaster: true
+masterIp: __NODE_IP_ADDRESS__
+masterVipEnabled: false
+masterVipInterface: eth0
+calicoV4Interface: "interface=eth0"
+privileged: true
+masterNodes:
+  - nodeName: __NODE_IP_ADDRESS__
