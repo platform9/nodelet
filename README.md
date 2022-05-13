@@ -32,6 +32,15 @@ Currently nodelet supports k8s 1.21 only. Support for other k8s versions is in p
    make agent-rpm # to create a rpm package
    ```
 ## Installation steps
+The easiest way to create the cluster is using nodeletctl, see the following for more details:
+
+https://github.com/platform9/nodelet/tree/main/nodeletctl
+
+## Cluster in a container
+The following describes how you can run a cluster within a docker container
+https://github.com/platform9/nodelet/tree/main/test
+
+## Installation - Long way (use nodeletctl, this section is here for historical purposes)
 
 This section contains instructions on creating a single master cluster using nodelet. Instructions for multi-master clusters will be added shortly.
 1. Create the config directories -
