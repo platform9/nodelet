@@ -16,10 +16,10 @@ import (
 )
 
 type LoadImagePhase struct {
-	HostPhase   *sunpikev1alpha1.HostPhase
-	log         *zap.SugaredLogger
-	runtime     containerutils.Runtime
-	fileUtility fileio.FileInterface
+	HostPhase *sunpikev1alpha1.HostPhase
+	log       *zap.SugaredLogger
+	runtime   containerutils.Runtime
+	fileUtils fileio.FileInterface
 }
 
 func NewLoadImagePhase() *LoadImagePhase {
@@ -29,9 +29,9 @@ func NewLoadImagePhase() *LoadImagePhase {
 			Name:  "Load user images to container runtime",
 			Order: int32(constants.LoadImagePhaseOrder),
 		},
-		log:         log,
-		runtime:     containerutils.New(),
-		fileUtility: fileio.New(),
+		log:       log,
+		runtime:   containerutils.New(),
+		fileUtils: fileio.New(),
 	}
 }
 
@@ -51,7 +51,13 @@ func (l *LoadImagePhase) Status(ctx context.Context, cfg config.Config) error {
 
 	l.log.Infof("Running Status of phase: %s", l.HostPhase.Name)
 
-	check, err := l.fileUtility.VerifyChecksum(cfg.UserImagesDir)
+	if _, err := os.Stat(cfg.UserImagesDir); os.IsNotExist(err) {
+		l.log.Warnf("User images Directory:%s is not present", cfg.UserImagesDir)
+		phaseutils.SetHostStatus(l.HostPhase, constants.RunningState, "")
+		return nil
+	}
+
+	check, err := l.fileUtils.VerifyChecksum(cfg.UserImagesDir)
 	if err != nil {
 		l.log.Error(err.Error())
 		phaseutils.SetHostStatus(l.HostPhase, constants.FailedState, err.Error())
@@ -72,9 +78,24 @@ func (l *LoadImagePhase) Start(ctx context.Context, cfg config.Config) error {
 
 	l.log.Infof("Running Start of phase: %s", l.HostPhase.Name)
 
+	if _, err := os.Stat(constants.UserImagesDir); os.IsNotExist(err) {
+
+		if err := os.Mkdir(constants.UserImagesDir, os.ModePerm); err != nil {
+			l.log.Error(err.Error())
+			phaseutils.SetHostStatus(l.HostPhase, constants.FailedState, err.Error())
+			return err
+		}
+	}
+
+	if _, err := os.Stat(cfg.UserImagesDir); os.IsNotExist(err) {
+		l.log.Warnf("User images Directory:%s is not present, so couldn't load images", cfg.UserImagesDir)
+		phaseutils.SetHostStatus(l.HostPhase, constants.RunningState, "")
+		return nil
+	}
+
 	checksumFile := fmt.Sprintf("%s/checksum/sha256sums.txt", cfg.UserImagesDir)
 	if _, err := os.Stat(checksumFile); os.IsNotExist(err) {
-		err := l.fileUtility.GenerateChecksum(cfg.UserImagesDir)
+		err := l.fileUtils.GenerateChecksum(cfg.UserImagesDir)
 		if err != nil {
 			l.log.Error(err.Error())
 			phaseutils.SetHostStatus(l.HostPhase, constants.FailedState, err.Error())

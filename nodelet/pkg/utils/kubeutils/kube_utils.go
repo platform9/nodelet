@@ -6,7 +6,6 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"os"
 	"reflect"
@@ -14,21 +13,21 @@ import (
 
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/fileio"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/netutils"
 
 	"github.com/pkg/errors"
-	"golang.org/x/net/nettest"
+	"github.com/shipengqi/kube"
+	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/kubectl/pkg/drain"
 )
 
 type Utils interface {
-	GetNodeIP() (string, error)
-	GetRoutedNetworkInterFace() (string, error)
-	GetIPv4ForInterfaceName(string) (string, error)
-	GetNodeIdentifier(config.Config) (string, error)
 	GetNodeFromK8sApi(context.Context, string) (*v1.Node, error)
 	AddLabelsToNode(context.Context, string, map[string]string) error
 	AddAnnotationsToNode(context.Context, string, map[string]string) error
@@ -38,13 +37,18 @@ type Utils interface {
 	UncordonNode(context.Context, string) error
 	K8sApiAvailable(config.Config) error
 	PreventAutoReattach() error
-	IpForHttp(string) (string, error)
 	IsInterfaceNil() bool
+	EnsureDns(config.Config) error
+	EnsureAppCatalog() error
+	ApplyYamlConfigFiles([]string) error
 }
 
 type UtilsImpl struct {
 	Clientset kubernetes.Interface
 }
+
+var netUtil = netutils.New()
+var file = fileio.New()
 
 // NewCient initialize UtilsImpl with new creted clientset
 func NewClient() (*UtilsImpl, error) {
@@ -249,64 +253,6 @@ func (u *UtilsImpl) PreventAutoReattach() error {
 	return nil
 }
 
-// GetRoutedNetworkInterFace returns roted network interface
-func (u *UtilsImpl) GetRoutedNetworkInterFace() (string, error) {
-	routedInterface, err := nettest.RoutedInterface("ip", net.FlagUp|net.FlagBroadcast)
-	if err != nil {
-		return "", err
-	}
-	routedInterfaceName := routedInterface.Name
-	return routedInterfaceName, nil
-}
-
-// GetIPv4ForInterfaceName returns IPv4 for given interface name
-func (u *UtilsImpl) GetIPv4ForInterfaceName(interfaceName string) (string, error) {
-	interfaces, _ := net.Interfaces()
-	for _, inter := range interfaces {
-		if inter.Name == interfaceName {
-			addrs, err := inter.Addrs()
-			if err != nil {
-				return "", err
-			}
-			for _, addr := range addrs {
-				switch ip := addr.(type) {
-				case *net.IPNet:
-					if ip.IP.DefaultMask() != nil {
-						return ip.IP.String(), nil
-					}
-				}
-			}
-		}
-	}
-	return "", fmt.Errorf("routedinterface not found so can't find ip")
-}
-
-// GetNodeIP returns routed network interface IP
-func (u *UtilsImpl) GetNodeIP() (string, error) {
-	var err error
-	routedInterfaceName, err := u.GetRoutedNetworkInterFace()
-	if err != nil {
-		return "", errors.Wrapf(err, "failed to get routed network interface")
-	}
-	routedIp, err := u.GetIPv4ForInterfaceName(routedInterfaceName)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to get node IP")
-	}
-	return routedIp, nil
-}
-
-// IpForHttp returns formatted Ip
-// If IP is IPv4 returns as it is, If IP is IPv6 returns IP with square bracks
-func (u *UtilsImpl) IpForHttp(masterIp string) (string, error) {
-
-	if net.ParseIP(masterIp).To4() != nil {
-		return masterIp, nil
-	} else if net.ParseIP(masterIp).To16() != nil {
-		return "[" + masterIp + "]", nil
-	}
-	return "", fmt.Errorf("invalid IP")
-}
-
 // K8sApiAvailable checks if K8s api server is available
 func (u *UtilsImpl) K8sApiAvailable(cfg config.Config) error {
 
@@ -319,7 +265,7 @@ func (u *UtilsImpl) K8sApiAvailable(cfg config.Config) error {
 	if cfg.ClusterRole == constants.RoleMaster {
 		apiEndpoint = constants.LocalHostString
 	} else {
-		apiEndpoint, err = u.IpForHttp(cfg.MasterIp)
+		apiEndpoint, err = netUtil.IpForHttp(cfg.MasterIp)
 		if err != nil {
 			return errors.Wrap(err, "failed to check K8s API available")
 		}
@@ -398,27 +344,76 @@ func AddOrUpdateTaint(node *v1.Node, taint *v1.Taint) (*v1.Node, bool, error) {
 	return newNode, true, nil
 }
 
-// GetNodeIdentifier returns node identifier as Hostname / Node IP
-func (u *UtilsImpl) GetNodeIdentifier(cfg config.Config) (string, error) {
+// EnsureDns applies coredns yaml file
+func (u *UtilsImpl) EnsureDns(cfg config.Config) error {
+	k8sRegistry := constants.K8sRegistry
+	if cfg.K8sPrivateRegistry != "" {
+		k8sRegistry = cfg.K8sPrivateRegistry
+	}
 
-	var err error
-	var nodeIdentifier string
-	if cfg.CloudProviderType == constants.LocalCloudProvider && cfg.UseHostname == constants.TrueString {
-		nodeIdentifier, err = os.Hostname()
+	dnsIP, _ := netUtil.AddrConv(cfg.ServicesCIDR, 10)
+	type dataToAdd struct {
+		DnsIP       string
+		K8sRegistry string
+	}
+	data := dataToAdd{
+		DnsIP:       dnsIP,
+		K8sRegistry: k8sRegistry,
+	}
+	err := os.Chmod(constants.ConfigSrcDir, 0777)
+	if err != nil {
+		return err
+	}
+	err = file.NewYamlFromTemplateYaml(constants.CoreDNSTemplate, constants.CoreDNSFile, data)
+	if err != nil {
+		return errors.Wrap(err, "could not create Coredns yaml")
+	}
+	err = u.ApplyYamlConfigFiles([]string{constants.CoreDNSFile})
+	if err != nil {
+		return errors.Wrap(err, "could not apply Coredns yaml")
+	}
+	if cfg.Debug == "false" {
+		err = os.Remove(constants.CoreDNSFile)
 		if err != nil {
-			return nodeIdentifier, errors.Wrap(err, "failed to get hostName for node identification")
-		}
-		if nodeIdentifier == "" {
-			return nodeIdentifier, fmt.Errorf("nodeIdentifier is null")
-		}
-	} else {
-		nodeIdentifier, err = u.GetNodeIP()
-		if err != nil {
-			return nodeIdentifier, errors.Wrap(err, "failed to get node IP address for node identification")
-		}
-		if nodeIdentifier == "" {
-			return nodeIdentifier, fmt.Errorf("nodeIdentifier is null")
+			return err
 		}
 	}
-	return nodeIdentifier, nil
+	return nil
+}
+
+// EnsureAppCatalog applies app catalog yaml files
+func (u *UtilsImpl) EnsureAppCatalog() error {
+
+	appCatalog := fmt.Sprintf("%s/appcatalog", constants.ConfigDstDir)
+
+	files, err := file.ListFilesWithPatterns(appCatalog, []string{"*.yaml", "*.yml"})
+	if err != nil {
+		return errors.Wrapf(err, "could not get files from:%s", appCatalog)
+	}
+	log := zap.S()
+	log.Infof("applying files: %q", files)
+	err = u.ApplyYamlConfigFiles(files)
+	if err != nil {
+		return errors.Wrap(err, "could not apply app catalog yamls")
+	}
+
+	return nil
+}
+
+// ApplyYamlConfigFiles applies the yaml files
+func (u *UtilsImpl) ApplyYamlConfigFiles(files []string) error {
+
+	flags := genericclioptions.NewConfigFlags(false)
+	flags.KubeConfig = &constants.KubeConfig
+	cfg := kube.NewConfig(flags)
+	cli := kube.New(cfg)
+	_, err := cli.Dial()
+	if err != nil {
+		return err
+	}
+	err = cli.Apply(files)
+	if err != nil {
+		return err
+	}
+	return nil
 }

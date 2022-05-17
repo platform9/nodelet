@@ -8,6 +8,7 @@ import (
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/kubeutils"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/netutils"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/phaseutils"
 	"go.uber.org/zap"
 
@@ -19,6 +20,7 @@ type LabelTaintNodePhase struct {
 	HostPhase *sunpikev1alpha1.HostPhase
 	log       *zap.SugaredLogger
 	kubeUtils kubeutils.Utils
+	netUtils  netutils.NetInterface
 }
 
 func NewLabelTaintNodePhase() *LabelTaintNodePhase {
@@ -33,8 +35,11 @@ func NewLabelTaintNodePhase() *LabelTaintNodePhase {
 		// admin.yaml is not present so its not possible to create k8s client.
 		// Lazily create k8s client when needed.
 		kubeUtils: nil,
+		netUtils:  netutils.New(),
 	}
 }
+
+//var netUtil = netutils.New()
 
 func (l *LabelTaintNodePhase) GetHostPhase() sunpikev1alpha1.HostPhase {
 	return *l.HostPhase
@@ -64,10 +69,12 @@ func (l *LabelTaintNodePhase) Start(ctx context.Context, cfg config.Config) erro
 	if l.kubeUtils == nil || l.kubeUtils.IsInterfaceNil() {
 		l.kubeUtils, err = kubeutils.NewClient()
 		if err != nil {
-			return errors.Wrap(err, "could not refresh k8s client")
+			l.log.Error(errors.Wrap(err, "could not refresh k8s client"))
+			phaseutils.SetHostStatus(l.HostPhase, constants.FailedState, err.Error())
+			return err
 		}
 	}
-	nodeIdentifier, err := l.kubeUtils.GetNodeIdentifier(cfg)
+	nodeIdentifier, err := l.netUtils.GetNodeIdentifier(cfg)
 	if err != nil {
 		l.log.Errorf(err.Error())
 		phaseutils.SetHostStatus(l.HostPhase, constants.FailedState, err.Error())

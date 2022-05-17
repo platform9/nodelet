@@ -78,6 +78,20 @@ func (mr *MockUtilsMockRecorder) AddTaintsToNode(arg0, arg1, arg2 interface{}) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddTaintsToNode", reflect.TypeOf((*MockUtils)(nil).AddTaintsToNode), arg0, arg1, arg2)
 }
 
+// ApplyYamlConfigFiles mocks base method.
+func (m *MockUtils) ApplyYamlConfigFiles(arg0 []string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ApplyYamlConfigFiles", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ApplyYamlConfigFiles indicates an expected call of ApplyYamlConfigFiles.
+func (mr *MockUtilsMockRecorder) ApplyYamlConfigFiles(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyYamlConfigFiles", reflect.TypeOf((*MockUtils)(nil).ApplyYamlConfigFiles), arg0)
+}
+
 // DrainNodeFromApiServer mocks base method.
 func (m *MockUtils) DrainNodeFromApiServer(arg0 context.Context, arg1 string) error {
 	m.ctrl.T.Helper()
@@ -92,19 +106,32 @@ func (mr *MockUtilsMockRecorder) DrainNodeFromApiServer(arg0, arg1 interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DrainNodeFromApiServer", reflect.TypeOf((*MockUtils)(nil).DrainNodeFromApiServer), arg0, arg1)
 }
 
-// GetIPv4ForInterfaceName mocks base method.
-func (m *MockUtils) GetIPv4ForInterfaceName(arg0 string) (string, error) {
+// EnsureAppCatalog mocks base method.
+func (m *MockUtils) EnsureAppCatalog() error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetIPv4ForInterfaceName", arg0)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "EnsureAppCatalog")
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
-// GetIPv4ForInterfaceName indicates an expected call of GetIPv4ForInterfaceName.
-func (mr *MockUtilsMockRecorder) GetIPv4ForInterfaceName(arg0 interface{}) *gomock.Call {
+// EnsureAppCatalog indicates an expected call of EnsureAppCatalog.
+func (mr *MockUtilsMockRecorder) EnsureAppCatalog() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetIPv4ForInterfaceName", reflect.TypeOf((*MockUtils)(nil).GetIPv4ForInterfaceName), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnsureAppCatalog", reflect.TypeOf((*MockUtils)(nil).EnsureAppCatalog))
+}
+
+// EnsureDns mocks base method.
+func (m *MockUtils) EnsureDns(arg0 config.Config) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EnsureDns", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// EnsureDns indicates an expected call of EnsureDns.
+func (mr *MockUtilsMockRecorder) EnsureDns(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnsureDns", reflect.TypeOf((*MockUtils)(nil).EnsureDns), arg0)
 }
 
 // GetNodeFromK8sApi mocks base method.
@@ -120,66 +147,6 @@ func (m *MockUtils) GetNodeFromK8sApi(arg0 context.Context, arg1 string) (*v1.No
 func (mr *MockUtilsMockRecorder) GetNodeFromK8sApi(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNodeFromK8sApi", reflect.TypeOf((*MockUtils)(nil).GetNodeFromK8sApi), arg0, arg1)
-}
-
-// GetNodeIP mocks base method.
-func (m *MockUtils) GetNodeIP() (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetNodeIP")
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetNodeIP indicates an expected call of GetNodeIP.
-func (mr *MockUtilsMockRecorder) GetNodeIP() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNodeIP", reflect.TypeOf((*MockUtils)(nil).GetNodeIP))
-}
-
-// GetNodeIdentifier mocks base method.
-func (m *MockUtils) GetNodeIdentifier(arg0 config.Config) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetNodeIdentifier", arg0)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetNodeIdentifier indicates an expected call of GetNodeIdentifier.
-func (mr *MockUtilsMockRecorder) GetNodeIdentifier(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNodeIdentifier", reflect.TypeOf((*MockUtils)(nil).GetNodeIdentifier), arg0)
-}
-
-// GetRoutedNetworkInterFace mocks base method.
-func (m *MockUtils) GetRoutedNetworkInterFace() (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRoutedNetworkInterFace")
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetRoutedNetworkInterFace indicates an expected call of GetRoutedNetworkInterFace.
-func (mr *MockUtilsMockRecorder) GetRoutedNetworkInterFace() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRoutedNetworkInterFace", reflect.TypeOf((*MockUtils)(nil).GetRoutedNetworkInterFace))
-}
-
-// IpForHttp mocks base method.
-func (m *MockUtils) IpForHttp(arg0 string) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IpForHttp", arg0)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// IpForHttp indicates an expected call of IpForHttp.
-func (mr *MockUtilsMockRecorder) IpForHttp(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IpForHttp", reflect.TypeOf((*MockUtils)(nil).IpForHttp), arg0)
 }
 
 // IsInterfaceNil mocks base method.

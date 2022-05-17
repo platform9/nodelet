@@ -1,6 +1,8 @@
 package constants
 
-import "fmt"
+import (
+	"fmt"
+)
 
 const (
 	// ConfigDir : Directory for nodelet config files
@@ -107,12 +109,20 @@ var (
 	ChecksumDir = fmt.Sprintf("%s/checksum", UserImagesDir)
 	// ChecksumFile contains sha256 hash for tar archives of user images
 	ChecksumFile = fmt.Sprintf("%s/sha256sums.txt", ChecksumDir)
-	// ContainerdAddress is default address for containerd socket
-	ContainerdAddress = "/run/containerd/containerd.sock"
+	// ContainerdSocket is default address for containerd socket
+	ContainerdSocket = "/run/containerd/containerd.sock"
 	// DefaultSnapShotter is default snapshotter for containerd
 	DefaultSnapShotter = "overlayfs"
 	//K8sNamespace is namespace for kubernetes
 	K8sNamespace = "k8s.io"
+
+	K8sRegistry = "k8s.gcr.io"
+
+	ConfigSrcDir = "/opt/pf9/pf9-kube/conf"
+
+	CoreDNSTemplate = fmt.Sprintf("%s/networkapps/coredns.yaml", ConfigSrcDir)
+
+	CoreDNSFile = fmt.Sprintf("%s/networkapps/coredns-applied.yaml", ConfigSrcDir)
 
 	// Phase orders of all the phases
 	NoRolePhaseOrder                   = 10

@@ -24,6 +24,7 @@ var _ = Describe("Test Uncordon node phase", func() {
 		ctx                context.Context
 		fakeCfg            *config.Config
 		fakeKubeUtils      *mocks.MockUtils
+		fakeNetUtils       *mocks.MockNetInterface
 		fakeNode           *v1.Node
 		fakeNodeIdentifier string
 	)
@@ -39,7 +40,9 @@ var _ = Describe("Test Uncordon node phase", func() {
 		fakeCfg.UseCgroups = false
 
 		fakeKubeUtils = mocks.NewMockUtils(mockCtrl)
+		fakeNetUtils = mocks.NewMockNetInterface(mockCtrl)
 		fakePhase.kubeUtils = fakeKubeUtils
+		fakePhase.netUtils = fakeNetUtils
 		fakeNodeIdentifier = "10.128.242.67"
 		fakeNode = &v1.Node{
 			ObjectMeta: metav1.ObjectMeta{
@@ -72,7 +75,7 @@ var _ = Describe("Test Uncordon node phase", func() {
 
 		It("Fails when can't get nodeIdentifier or its null", func() {
 			err := errors.New("fake error")
-			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, err).Times(1)
+			fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, err).Times(1)
 			fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
 			reterr := fakePhase.Status(ctx, *fakeCfg)
 			assert.NotNil(GinkgoT(), reterr)
@@ -80,7 +83,7 @@ var _ = Describe("Test Uncordon node phase", func() {
 		})
 		It("When Kube stack is still booting up it does nothing and returns nil", func() {
 			constants.KubeStackStartFileMarker = "testdata/dummy.txt"
-			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
+			fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
 			fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
 			err := fakePhase.Status(ctx, *fakeCfg)
 			assert.Nil(GinkgoT(), err)
@@ -88,7 +91,7 @@ var _ = Describe("Test Uncordon node phase", func() {
 		})
 		It("Fails when it can't get node from k8s api", func() {
 			err := errors.New("fake error")
-			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
+			fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
 			fakeKubeUtils.EXPECT().GetNodeFromK8sApi(ctx, fakeNodeIdentifier).Return(fakeNode, err).Times(1)
 			fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
 			reterr := fakePhase.Status(ctx, *fakeCfg)
@@ -97,7 +100,7 @@ var _ = Describe("Test Uncordon node phase", func() {
 		})
 		It("If KubeStackShutDown annotation is present it does nothing and returns nil as node was cordoned by PF9", func() {
 			fakeNode.ObjectMeta.Annotations["KubeStackShutDown"] = "true"
-			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
+			fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
 			fakeKubeUtils.EXPECT().GetNodeFromK8sApi(ctx, fakeNodeIdentifier).Return(fakeNode, nil).Times(1)
 			fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
 			err := fakePhase.Status(ctx, *fakeCfg)
@@ -113,7 +116,7 @@ var _ = Describe("Test Uncordon node phase", func() {
 				}
 			})
 			It("It adds userNodeCordon annotation", func() {
-				fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
+				fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
 				fakeKubeUtils.EXPECT().GetNodeFromK8sApi(ctx, fakeNodeIdentifier).Return(fakeNode, nil).Times(1)
 				fakeKubeUtils.EXPECT().AddAnnotationsToNode(ctx, fakeNodeIdentifier, annotsToAdd).Return(nil).Times(1)
 				fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
@@ -121,7 +124,7 @@ var _ = Describe("Test Uncordon node phase", func() {
 				assert.Nil(GinkgoT(), ret)
 			})
 			It("It fails to add userNodeCordon annotation when add annotation fails", func() {
-				fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
+				fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
 				fakeKubeUtils.EXPECT().GetNodeFromK8sApi(ctx, fakeNodeIdentifier).Return(fakeNode, nil).Times(1)
 				err := errors.New("fake error")
 				fakeKubeUtils.EXPECT().AddAnnotationsToNode(ctx, fakeNodeIdentifier, annotsToAdd).Return(err).Times(1)
@@ -138,7 +141,7 @@ var _ = Describe("Test Uncordon node phase", func() {
 				annotsToRemove = []string{"UserNodeCordon"}
 			})
 			It("It removes userNodeCordon annotation", func() {
-				fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
+				fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
 				fakeKubeUtils.EXPECT().GetNodeFromK8sApi(ctx, fakeNodeIdentifier).Return(fakeNode, nil).Times(1)
 				fakeKubeUtils.EXPECT().RemoveAnnotationsFromNode(ctx, fakeNodeIdentifier, annotsToRemove).Return(nil).Times(1)
 				fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
@@ -146,7 +149,7 @@ var _ = Describe("Test Uncordon node phase", func() {
 				assert.Nil(GinkgoT(), ret)
 			})
 			It("It fails to remove userNodeCordon annotation when remove annotation fails", func() {
-				fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
+				fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
 				fakeKubeUtils.EXPECT().GetNodeFromK8sApi(ctx, fakeNodeIdentifier).Return(fakeNode, nil).Times(1)
 				err := errors.New("fake error")
 				fakeKubeUtils.EXPECT().RemoveAnnotationsFromNode(ctx, fakeNodeIdentifier, annotsToRemove).Return(err).Times(1)
@@ -165,7 +168,7 @@ var _ = Describe("Test Uncordon node phase", func() {
 		})
 		It("Fails when can't get nodeIdentifier or its null", func() {
 			err := errors.New("fake error")
-			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, err).Times(1)
+			fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, err).Times(1)
 			fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
 			reterr := fakePhase.Start(ctx, *fakeCfg)
 			assert.NotNil(GinkgoT(), reterr)
@@ -174,7 +177,7 @@ var _ = Describe("Test Uncordon node phase", func() {
 		It("Fails when nodeIdentifier is 127.0.0.1", func() {
 			err := fmt.Errorf("node interface might have lost IP address. Failing")
 			fakeNodeIdentifier = "127.0.0.1"
-			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
+			fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
 			fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
 			reterr := fakePhase.Start(ctx, *fakeCfg)
 			assert.NotNil(GinkgoT(), reterr)
@@ -182,7 +185,7 @@ var _ = Describe("Test Uncordon node phase", func() {
 		})
 		It("Fails when can't remove KubeStackShutDown annotation (if present) as this is kube stack startup", func() {
 			err := errors.New("fake error")
-			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
+			fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
 			fakeKubeUtils.EXPECT().RemoveAnnotationsFromNode(ctx, fakeNodeIdentifier, annotsToRemove).Return(err).Times(1)
 			fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
 			reterr := fakePhase.Start(ctx, *fakeCfg)
@@ -192,7 +195,7 @@ var _ = Describe("Test Uncordon node phase", func() {
 		It("Fails when can't get node from k8s api", func() {
 
 			err := errors.New("fake error")
-			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
+			fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
 			fakeKubeUtils.EXPECT().RemoveAnnotationsFromNode(ctx, fakeNodeIdentifier, annotsToRemove).Return(nil).Times(1)
 			fakeKubeUtils.EXPECT().GetNodeFromK8sApi(ctx, fakeNodeIdentifier).Return(fakeNode, err).Times(1)
 			fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
@@ -202,7 +205,7 @@ var _ = Describe("Test Uncordon node phase", func() {
 		})
 		It("If node cordoned (By User) DO NOT uncordon, exit", func() {
 			fakeNode.ObjectMeta.Annotations["UserNodeCordon"] = "true"
-			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
+			fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
 			fakeKubeUtils.EXPECT().RemoveAnnotationsFromNode(ctx, fakeNodeIdentifier, annotsToRemove).Return(nil).Times(1)
 			fakeKubeUtils.EXPECT().GetNodeFromK8sApi(ctx, fakeNodeIdentifier).Return(fakeNode, nil).Times(1)
 			fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
@@ -211,7 +214,7 @@ var _ = Describe("Test Uncordon node phase", func() {
 		})
 		It("Fails when can't uncordon node", func() {
 			err := errors.New("fake error")
-			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
+			fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
 			fakeKubeUtils.EXPECT().RemoveAnnotationsFromNode(ctx, fakeNodeIdentifier, annotsToRemove).Return(nil).Times(1)
 			fakeKubeUtils.EXPECT().GetNodeFromK8sApi(ctx, fakeNodeIdentifier).Return(fakeNode, nil).Times(1)
 			fakeKubeUtils.EXPECT().UncordonNode(ctx, fakeNodeIdentifier).Return(err).Times(1)
@@ -222,7 +225,7 @@ var _ = Describe("Test Uncordon node phase", func() {
 		})
 		It("Fails when can't prevent auto reattach (i.e. can't delete the qbert metadata file)", func() {
 			err := errors.New("fake error")
-			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
+			fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
 			fakeKubeUtils.EXPECT().RemoveAnnotationsFromNode(ctx, fakeNodeIdentifier, annotsToRemove).Return(nil).Times(1)
 			fakeKubeUtils.EXPECT().GetNodeFromK8sApi(ctx, fakeNodeIdentifier).Return(fakeNode, nil).Times(1)
 			fakeKubeUtils.EXPECT().UncordonNode(ctx, fakeNodeIdentifier).Return(nil).Times(1)
@@ -233,7 +236,7 @@ var _ = Describe("Test Uncordon node phase", func() {
 			assert.Equal(GinkgoT(), reterr, err)
 		})
 		It("To succeed)", func() {
-			fakeKubeUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
+			fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
 			fakeKubeUtils.EXPECT().RemoveAnnotationsFromNode(ctx, fakeNodeIdentifier, annotsToRemove).Return(nil).Times(1)
 			fakeKubeUtils.EXPECT().GetNodeFromK8sApi(ctx, fakeNodeIdentifier).Return(fakeNode, nil).Times(1)
 			fakeKubeUtils.EXPECT().UncordonNode(ctx, fakeNodeIdentifier).Return(nil).Times(1)

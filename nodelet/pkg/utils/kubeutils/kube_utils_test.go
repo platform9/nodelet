@@ -7,7 +7,6 @@ import (
 	. "github.com/onsi/ginkgo"
 	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
-	"github.com/pkg/errors"
 
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
 	"github.com/stretchr/testify/assert"
@@ -205,23 +204,4 @@ var _ = Describe("Test Kube Utils", func() {
 			assert.NotNil(GinkgoT(), err)
 		})
 	})
-	Context("Validates IP ", func() {
-		It("If ipv4 it returns as it is", func() {
-			ip, err := utilsImpl.IpForHttp("10.12.13.14")
-			assert.Nil(GinkgoT(), err)
-			assert.Equal(GinkgoT(), ip, "10.12.13.14")
-		})
-		It("If ipv6 it adds bracket", func() {
-			ip, err := utilsImpl.IpForHttp("2001:db8::1234:5678")
-			assert.Nil(GinkgoT(), err)
-			assert.Equal(GinkgoT(), ip, "[2001:db8::1234:5678]")
-		})
-		It("Fails if invalid ip ", func() {
-			err := errors.New("invalid IP")
-			_, reterr := utilsImpl.IpForHttp("10.12.1314")
-			assert.NotNil(GinkgoT(), err)
-			assert.Equal(GinkgoT(), reterr.Error(), err.Error())
-		})
-	})
-
 })

@@ -136,6 +136,35 @@ func (mr *MockFileInterfaceMockRecorder) ListFiles(arg0 interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFiles", reflect.TypeOf((*MockFileInterface)(nil).ListFiles), arg0)
 }
 
+// ListFilesWithPatterns mocks base method.
+func (m *MockFileInterface) ListFilesWithPatterns(arg0 string, arg1 []string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListFilesWithPatterns", arg0, arg1)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListFilesWithPatterns indicates an expected call of ListFilesWithPatterns.
+func (mr *MockFileInterfaceMockRecorder) ListFilesWithPatterns(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFilesWithPatterns", reflect.TypeOf((*MockFileInterface)(nil).ListFilesWithPatterns), arg0, arg1)
+}
+
+// NewYamlFromTemplateYaml mocks base method.
+func (m *MockFileInterface) NewYamlFromTemplateYaml(arg0, arg1 string, arg2 interface{}) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "NewYamlFromTemplateYaml", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// NewYamlFromTemplateYaml indicates an expected call of NewYamlFromTemplateYaml.
+func (mr *MockFileInterfaceMockRecorder) NewYamlFromTemplateYaml(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewYamlFromTemplateYaml", reflect.TypeOf((*MockFileInterface)(nil).NewYamlFromTemplateYaml), arg0, arg1, arg2)
+}
+
 // ReadFile mocks base method.
 func (m *MockFileInterface) ReadFile(arg0 string) ([]byte, error) {
 	m.ctrl.T.Helper()

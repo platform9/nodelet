@@ -3,6 +3,7 @@ module github.com/platform9/nodelet/nodelet
 go 1.17
 
 require (
+	github.com/apparentlymart/go-cidr v1.1.0
 	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/choria-io/go-validator v1.1.1
 	github.com/containerd/containerd v1.6.2
@@ -19,6 +20,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/platform9/pf9-qbert/sunpike/apiserver v0.0.0
 	github.com/platform9/pf9-qbert/sunpike/conductor v0.0.0-20210928133414-c4e8ce211671
+	github.com/shipengqi/kube v0.1.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
@@ -29,6 +31,7 @@ require (
 	google.golang.org/grpc v1.43.0
 	k8s.io/api v0.23.5
 	k8s.io/apimachinery v0.23.5
+	k8s.io/cli-runtime v0.23.4
 	k8s.io/client-go v0.23.5
 	k8s.io/kubectl v0.23.0-alpha.0
 )
@@ -118,10 +121,10 @@ require (
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
-	k8s.io/cli-runtime v0.23.4 // indirect
 	k8s.io/component-base v0.23.0-alpha.0 // indirect
 	k8s.io/klog/v2 v2.30.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20211115234752-e816edb12b65 // indirect
+	k8s.io/metrics v0.23.1 // indirect
 	k8s.io/utils v0.0.0-20211116205334-6203023598ed // indirect
 	sigs.k8s.io/json v0.0.0-20211020170558-c049b76a60c6 // indirect
 	sigs.k8s.io/kustomize/api v0.10.1 // indirect

@@ -82,6 +82,9 @@ type Config struct {
 	K8sApiPort                string  `mapstructure:"K8S_API_PORT"`
 	MasterSchedulable         bool    `mapstructure:"ALLOW_WORKLOADS_ON_MASTER"`
 	UserImagesDir             string  `mapstructure:"USER_IMAGES_DIR"`
+	K8sPrivateRegistry        string  `mapstructure:"K8S_PRIVATE_REGISTRY"`
+	ServicesCIDR              string  `mapstructure:"SERVICES_CIDR"`
+	AppCatalogEnabled         bool    `mapstructure:"APP_CATALOG_ENABLED"`
 }
 
 // ToStringMap converts the Config struct to a map of strings
