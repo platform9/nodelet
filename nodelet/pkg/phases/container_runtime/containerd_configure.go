@@ -41,7 +41,10 @@ func NewContainerdConfigPhase(baseDir string) (*ContainerdConfigPhase, error) {
 		Fs:   containerdZip,
 		Root: baseDir,
 	}
-	containerdRunPhase := newContainerdRunPhaseInternal(conn, baseDir)
+	containerdRunPhase, err := newContainerdRunPhaseInternal(conn, baseDir)
+	if err != nil {
+		return nil, fmt.Errorf("error creating containerd run phase: %v", err)
+	}
 	runtimeConfigPhase := &ContainerdConfigPhase{
 		baseDir: baseDir,
 		hostPhase: &sunpikev1alpha1.HostPhase{
