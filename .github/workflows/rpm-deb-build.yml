@@ -27,12 +27,7 @@ jobs:
 
     - name: Set up fpm
       run: gem install fpm
-      
-    - name: Make nodeletctl
-      shell: bash
-      run: |
-        cd nodeletctl && go build .
-        
+  
     - name: Make
       run: make agent-rpm agent-deb --max-load=$(nproc)
       
