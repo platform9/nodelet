@@ -41,6 +41,7 @@ type Utils interface {
 	EnsureDns(config.Config) error
 	EnsureAppCatalog() error
 	ApplyYamlConfigFiles([]string) error
+	GetApiserverEndpointIp(context.Context, string, string) (string, error)
 }
 
 type UtilsImpl struct {
@@ -207,6 +208,15 @@ func (u *UtilsImpl) GetNodeFromK8sApi(ctx context.Context, nodeName string) (*v1
 		return node, errors.Wrap(err, "failed to get node")
 	}
 	return node, nil
+}
+
+func (u *UtilsImpl) GetApiserverEndpointIp(ctx context.Context, namespace string, name string) (string, error) {
+	endPoint, err := u.Clientset.CoreV1().Endpoints(namespace).Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return "", errors.Wrap(err, "failed to get endpoints")
+	}
+	ip := endPoint.Subsets[0].Addresses[0].IP
+	return ip, nil
 }
 
 // UncordonNode uncordons node

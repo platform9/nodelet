@@ -7,6 +7,7 @@ require (
 	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/choria-io/go-validator v1.1.1
 	github.com/containerd/containerd v1.6.2
+	github.com/docker/libcontainer v2.2.1+incompatible
 	github.com/erwinvaneyk/goversion v0.1.3
 	github.com/ghodss/yaml v1.0.0
 	github.com/golang/mock v1.6.0

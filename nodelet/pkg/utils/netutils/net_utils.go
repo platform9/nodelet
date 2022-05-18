@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/apparentlymart/go-cidr/cidr"
+	"github.com/docker/libcontainer/netlink"
 	"github.com/pkg/errors"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
@@ -21,6 +22,7 @@ type NetInterface interface {
 	GetIPv4ForInterfaceName(string) (string, error)
 	GetNodeIP() (string, error)
 	GetNodeIdentifier(config.Config) (string, error)
+	SetUpVeth(string, string, string) error
 }
 
 func New() NetInterface {
@@ -122,4 +124,37 @@ func (n *NetImpl) GetIPv4ForInterfaceName(interfaceName string) (string, error) 
 		}
 	}
 	return "", fmt.Errorf("routedinterface not found so can't find ip")
+}
+
+func (n *NetImpl) SetUpVeth(ip string, veth0 string, veth1 string) error {
+	_, err := net.InterfaceByName(veth0)
+	if err == nil {
+		err = netlink.NetworkLinkDel(veth0)
+		if err != nil {
+			return errors.Wrapf(err, "could not delete: %s ", veth0)
+		}
+	}
+	err = netlink.NetworkCreateVethPair(veth0, veth1, 1000)
+	if err != nil {
+		return errors.Wrapf(err, "could not create veth pair: %s and %s ", veth0, veth1)
+	}
+	var veth0Interface *net.Interface
+	veth0Interface, err = net.InterfaceByName(veth0)
+	if err != nil {
+		return errors.Wrapf(err, "could not create veth0 interface")
+	}
+	cidr := fmt.Sprintf("%s/32", ip)
+	ipAddr, ipNet, err := net.ParseCIDR(cidr)
+	if err != nil {
+		return errors.Wrapf(err, "could not parse: %s ", cidr)
+	}
+	err = netlink.NetworkLinkAddIp(veth0Interface, ipAddr, ipNet)
+	if err != nil {
+		return errors.Wrapf(err, "could not add ip: %s to %s ", ipAddr, veth0)
+	}
+	err = netlink.NetworkLinkUp(veth0Interface)
+	if err != nil {
+		return errors.Wrapf(err, "could not bring up: %s ", veth0)
+	}
+	return nil
 }
