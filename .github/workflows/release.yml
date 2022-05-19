@@ -29,9 +29,20 @@ jobs:
     - name: Make
       run: make agent-rpm agent-deb --max-load=$(nproc)
 
+  
+    - name: Make nodeletctl
+      env: 
+        GOPRIVATE: github.com/platform9
+        GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
+      run: |
+        cd nodeletctl
+        git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
+        go build .
+
     - name: Release
       uses: softprops/action-gh-release@v1
       with:
         files: |
           build/pf9-kube/rpmbuild/RPMS/x86_64/pf9-kube-*.rpm*
           build/pf9-kube/pf9-kube-*.deb*
+          nodeletctl/nodeletctl
