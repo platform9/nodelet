@@ -30,4 +30,13 @@ jobs:
   
     - name: Make
       run: make agent-rpm agent-deb --max-load=$(nproc)
-      
+  
+    - name: Make nodeletctl
+      env: 
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        cd nodeletctl
+        git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
+        go env -w "GOPRIVATE=github.com/platform9/*"
+        go build .
+
