@@ -39,6 +39,13 @@ jobs:
         git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
         go build .
 
+    - name: Create tar file
+      run: |
+          cp build/pf9-kube/rpmbuild/RPMS/x86_64/pf9-kube-*.rpm* ./
+          cp build/pf9-kube/pf9-kube-*.deb* ./
+          tar -cvzf ./pf9-nodelet.tar.gz ./pf9-kube*.deb* ./pf9-kube-*.rpm*
+
+
     - name: Release
       uses: softprops/action-gh-release@v1
       with:
@@ -46,3 +53,4 @@ jobs:
           build/pf9-kube/rpmbuild/RPMS/x86_64/pf9-kube-*.rpm*
           build/pf9-kube/pf9-kube-*.deb*
           nodeletctl/nodeletctl
+          pf9-nodelet.tar.gz
