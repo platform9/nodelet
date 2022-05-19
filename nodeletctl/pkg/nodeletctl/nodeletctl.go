@@ -456,7 +456,7 @@ func getDiffNodes(desired []HostConfig, active []string) ([]HostConfig, []HostCo
 	return newNodes, oldNodes, currNodes
 }
 
-func AddMasters(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus, currMasters, newMasters *[]HostConfig,) error {
+func AddMasters(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus, currMasters, newMasters *[]HostConfig) error {
 	zap.S().Infof("Adding %d masters", len(*newMasters))
 	var masterList = make(map[string]string)
 	for _, host := range *currMasters {
@@ -594,6 +594,59 @@ func DeleteWorkers(clusterCfg *BootstrapConfig, oldNodes []HostConfig) error {
 		if err != nil {
 			return fmt.Errorf("Failed to delete node %s: %s\n", host.NodeName, err)
 		}
+	}
+	return nil
+}
+
+func RegenClusterCerts(cfgPath string) error {
+	clusterCfg, err := ParseBootstrapConfig(cfgPath)
+	if err != nil {
+		zap.S().Infof("Failed to Parse Cluster Config: %s", err)
+		return fmt.Errorf("Failed to Parse Cluster Config: %s", err)
+	}
+
+	err = RegenCA(clusterCfg)
+	if err != nil {
+		zap.S().Errorf("Failed to regenerate new CA: %s", err)
+		return fmt.Errorf("Failed to regenerate new CA: %s", err)
+	}
+
+	clusterStatus := new(ClusterStatus)
+	clusterStatus.statusMap = make(map[string]*NodeStatus)
+	allNodes := append(clusterCfg.MasterNodes, clusterCfg.WorkerNodes...)
+	var wg sync.WaitGroup
+
+	for _, host := range allNodes {
+		nodeletCfg := new(NodeletConfig)
+		setNodeletClusterCfg(clusterCfg, nodeletCfg)
+		nodeletCfg.HostId = host.NodeName
+		if host.NodeIP != nil {
+			nodeletCfg.HostIp = *host.NodeIP
+		} else {
+			nodeletCfg.HostIp = host.NodeName
+		}
+
+		deployer, err := GetNodeletDeployer(clusterCfg, clusterStatus, nodeletCfg, nodeletCfg.HostIp, "")
+		if err != nil {
+			zap.S().Errorf("failed to get nodelet deployer: %v", err)
+			return fmt.Errorf("failed to get nodelet deployer: %v", err)
+		}
+		clusterStatus.statusMap[host.NodeName] = &NodeStatus{
+			deployer: deployer,
+		}
+
+		/*	if err := deployer.RegenCerts(); err != nil {
+			zap.S().Errorf("Failed to upload new CA to host %s: %s", host.NodeName, err)
+			return fmt.Errorf("Failed to upload new CA to host %s: %s", host.NodeName, err)
+		}*/
+
+		wg.Add(1)
+		go deployer.RegenCerts(&wg)
+	}
+	wg.Wait()
+	// This blocks until all nodes are converged/ok
+	if err := SyncNodes(clusterCfg, nil); err != nil {
+		return err
 	}
 	return nil
 }
