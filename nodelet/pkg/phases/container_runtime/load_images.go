@@ -80,7 +80,7 @@ func (l *LoadImagePhase) Start(ctx context.Context, cfg config.Config) error {
 
 	if _, err := os.Stat(constants.UserImagesDir); os.IsNotExist(err) {
 
-		if err := os.Mkdir(constants.UserImagesDir, os.ModePerm); err != nil {
+		if err := os.MkdirAll(constants.UserImagesDir, os.ModePerm); err != nil {
 			l.log.Error(err.Error())
 			phaseutils.SetHostStatus(l.HostPhase, constants.FailedState, err.Error())
 			return err
