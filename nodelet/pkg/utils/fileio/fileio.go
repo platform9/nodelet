@@ -264,7 +264,7 @@ func (f *Pf9FileIO) GenerateChecksum(imageDir string) error {
 	}
 	ChecksumDir := fmt.Sprintf("%s/checksum", imageDir)
 	if _, err := os.Stat(ChecksumDir); os.IsNotExist(err) {
-		if err := os.Mkdir(ChecksumDir, os.ModePerm); err != nil {
+		if err := os.MkdirAll(ChecksumDir, os.ModePerm); err != nil {
 			return errors.Wrapf(err, "failed to create directory: %s", ChecksumDir)
 		}
 	}
