@@ -360,11 +360,7 @@ func (u *UtilsImpl) EnsureDns(cfg config.Config) error {
 		DnsIP:       dnsIP,
 		K8sRegistry: k8sRegistry,
 	}
-	err := os.Chmod(constants.ConfigSrcDir, 0777)
-	if err != nil {
-		return err
-	}
-	err = file.NewYamlFromTemplateYaml(constants.CoreDNSTemplate, constants.CoreDNSFile, data)
+	err := file.NewYamlFromTemplateYaml(constants.CoreDNSTemplate, constants.CoreDNSFile, data)
 	if err != nil {
 		return errors.Wrap(err, "could not create Coredns yaml")
 	}

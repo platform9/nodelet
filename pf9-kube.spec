@@ -136,6 +136,8 @@ if [ "$1" == 1 ]; then
     chown -R root:pf9group /opt/pf9/pf9-kube || true
     # Remove write permissions
     chmod -w -R /opt/pf9/pf9-kube || true
+    # Add write and execute permissions /opt/pf9/pf9-kube/conf to allow templates to be rendered
+    chmod 0770 -R /opt/pf9/pf9-kube/conf/
     mkdir -p /var/opt/pf9/kube/apiserver-config
     chown -R pf9:pf9group /var/opt/pf9 /etc/pf9
 fi
