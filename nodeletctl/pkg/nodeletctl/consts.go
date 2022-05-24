@@ -15,7 +15,7 @@ const (
 	NodeConverged      = "converging"
 	NodeHealthy        = "ok"
 	CACertExpiryYears  = 3
-	CAExpiryThreshold  = 90
+	CAExpiryLimitDays  = 90
 	RootCACRT          = "rootCA.crt"
 	RootCAKey          = "rootCA.key"
 	AdminKubeconfig    = "admin.kubeconfig"

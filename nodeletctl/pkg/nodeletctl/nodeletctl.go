@@ -641,7 +641,7 @@ func RegenClusterCerts(cfgPath string) error {
 		}*/
 
 		wg.Add(1)
-		go deployer.RegenCerts(&wg)
+		go deployer.UploadCertsAndRestartStack(&wg)
 	}
 	wg.Wait()
 	// This blocks until all nodes are converged/ok

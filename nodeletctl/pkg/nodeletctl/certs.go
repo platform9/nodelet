@@ -254,7 +254,7 @@ func RenewCAIfExpiring(cfg *BootstrapConfig) error {
 
 	diffTime := expireTime.Sub(currTime)
 	daysTillExpiry := int64(diffTime.Hours() / 24)
-	if daysTillExpiry < CAExpiryThreshold {
+	if daysTillExpiry < CAExpiryLimitDays {
 		zap.S().Infof("Cert is expiring in %d days (%d hours), will re-generate", daysTillExpiry, diffTime.Hours())
 		return RegenCA(cfg)
 	}

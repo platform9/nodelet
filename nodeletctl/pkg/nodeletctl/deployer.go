@@ -17,6 +17,11 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
+/* Everything in deployer is a wrapper around shell commands. This is because it executes on
+ * remote machines via an SSH client, so we cannot use native Golang packages.
+ * Add any commands to exec here to onboard the node or install nodelet
+ */
+
 type NodeletDeployer struct {
 	user           string
 	OsType         string
@@ -419,7 +424,7 @@ func (nd *NodeletDeployer) DeleteOldCerts() error {
 	return nil
 }
 
-func (nd *NodeletDeployer) RegenCerts(wg *sync.WaitGroup) error {
+func (nd *NodeletDeployer) UploadCertsAndRestartStack(wg *sync.WaitGroup) error {
 	defer wg.Done()
 
 	if err := nd.UploadCerts(); err != nil {
