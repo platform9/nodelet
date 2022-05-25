@@ -211,11 +211,12 @@ AGENT_TEST_DIR := $(AGENT_SRC_DIR)/test
 AGENT_TEST_NODE_MODULES_DIR := $(AGENT_TEST_DIR)/node_modules
 AGENT_BUILD_DIR := $(BUILD_DIR)/pf9-kube
 RPMBUILD_DIR := $(AGENT_BUILD_DIR)/rpmbuild
-PF9_KUBE_VERSION := $(or $(TAG_NAME), $(NODELET_VERSION)-pmk.$(BUILD_NUMBER))
+PF9_KUBE_VERSION := $(or $(TAG_NAME), $(NODELET_VERSION))
+PF9_KUBE_RELEASE := pmk.$(BUILD_NUMBER)
 PF9_KUBE_VERSION_WITH_GITHASH := $(PF9_KUBE_VERSION)-$(GITHASH)
 PF9_KUBE_RPM_BUILD_DIR := $(AGENT_BUILD_DIR)/rpmbuild/RPMS/x86_64
-PF9_KUBE_RPM_FILE := $(PF9_KUBE_RPM_BUILD_DIR)/nodelet-$(PF9_KUBE_VERSION).x86_64.rpm
-PF9_KUBE_DEB_FILE := $(AGENT_BUILD_DIR)/nodelet-$(PF9_KUBE_VERSION).x86_64.deb
+PF9_KUBE_RPM_FILE := $(PF9_KUBE_RPM_BUILD_DIR)/nodelet-$(PF9_KUBE_VERSION)-$(PF9_KUBE_RELEASE).x86_64.rpm
+PF9_KUBE_DEB_FILE := $(AGENT_BUILD_DIR)/nodelet-$(PF9_KUBE_VERSION)-$(PF9_KUBE_RELEASE).x86_64.deb
 PF9_KUBE_SRCDIR := $(AGENT_BUILD_DIR)/pf9-kube-src
 PF9_KUBE_WRAPPER_STAGE:= $(AGENT_BUILD_DIR)/pf9-kube-wrapper-stage
 PF9_KUBE_WRAPPER := $(AGENT_BUILD_DIR)/RPMS/x86_64/nodelet-wrapper-$(PF9_KUBE_VERSION_WITH_GITHASH).x86_64.rpm
@@ -540,7 +541,7 @@ $(PF9_KUBE_RPM_FILE): | $(RPM_SRC_ROOT)
 	    --define "_topdir $(RPMBUILD_DIR)"  \
 	    --define "_src_dir $(RPM_SRC_ROOT)"  \
 	    --define "_version $(PF9_KUBE_VERSION)" \
-	    --define "_release $(PF9_KUBE_VERSION)-$(GITHASH)" \
+	    --define "_release $(PF9_RELEASE_VERSION)" \
 	    --define "_githash $(GITHASH)" $(AGENT_SRC_DIR)/pf9-kube.spec
 	./sign_packages.sh $(PF9_KUBE_RPM_FILE)
 	md5sum $(PF9_KUBE_RPM_FILE) | cut -d' ' -f 1  > $(PF9_KUBE_RPM_FILE).md5
@@ -551,7 +552,7 @@ agent-rpm: check-env $(PF9_KUBE_RPM_FILE)
 $(PF9_KUBE_DEB_FILE): $(DEB_SRC_ROOT)
 	fpm -t deb -s dir -n pf9-kube \
 		--description "Platform9 kubernetes(Nodelet) deb package. Built on git hash $(GITHASH)" \
-		-v $(PF9_KUBE_VERSION) --provides nodelet --provides pf9app \
+		-v $(PF9_KUBE_VERSION)-$(PF9_RELEASE_VERSION) --provides nodelet --provides pf9app \
 		--license "Commercial" --architecture all --url "http://www.platform9.net" --vendor Platform9 \
 		-d curl -d gzip -d net-tools -d socat -d keepalived -d cgroup-tools \
 		--after-install $(AGENT_SRC_DIR)/pf9-kube-after-install.sh \
