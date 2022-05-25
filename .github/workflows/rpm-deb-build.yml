@@ -29,6 +29,8 @@ jobs:
       run: gem install fpm
   
     - name: Make
+      env:
+        BUILD_NUMBER: ${{ env.GITHUB_RUN_NUMBER }}
       run: make agent-rpm agent-deb --max-load=$(nproc)
   
     - name: Make nodeletctl

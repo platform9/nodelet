@@ -27,6 +27,8 @@ jobs:
       run: gem install fpm
       
     - name: Make
+      env:
+        TAG_NAME: ${{ env.GITHUB_REF_NAME }}
       run: make agent-rpm agent-deb --max-load=$(nproc)
 
   

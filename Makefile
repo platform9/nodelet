@@ -211,15 +211,14 @@ AGENT_TEST_DIR := $(AGENT_SRC_DIR)/test
 AGENT_TEST_NODE_MODULES_DIR := $(AGENT_TEST_DIR)/node_modules
 AGENT_BUILD_DIR := $(BUILD_DIR)/pf9-kube
 RPMBUILD_DIR := $(AGENT_BUILD_DIR)/rpmbuild
-AGENT_VERSION ?= $(KUBE_VERSION)
-PF9_KUBE_VERSION := $(AGENT_VERSION)-pmk.$(BUILD_NUMBER)
-PF9_KUBE_VERSION_WITH_GITHASH := $(PF9_KUBE_VERSION).$(GITHASH)
+PF9_KUBE_VERSION := $(or $(TAG_NAME), $(NODELET_VERSION)-pmk.$(BUILD_NUMBER))
+PF9_KUBE_VERSION_WITH_GITHASH := $(PF9_KUBE_VERSION)-$(GITHASH)
 PF9_KUBE_RPM_BUILD_DIR := $(AGENT_BUILD_DIR)/rpmbuild/RPMS/x86_64
-PF9_KUBE_RPM_FILE := $(PF9_KUBE_RPM_BUILD_DIR)/pf9-kube-$(PF9_KUBE_VERSION).x86_64.rpm
-PF9_KUBE_DEB_FILE := $(AGENT_BUILD_DIR)/pf9-kube-$(PF9_KUBE_VERSION).x86_64.deb
+PF9_KUBE_RPM_FILE := $(PF9_KUBE_RPM_BUILD_DIR)/nodelet-$(PF9_KUBE_VERSION).x86_64.rpm
+PF9_KUBE_DEB_FILE := $(AGENT_BUILD_DIR)/nodelet-$(PF9_KUBE_VERSION).x86_64.deb
 PF9_KUBE_SRCDIR := $(AGENT_BUILD_DIR)/pf9-kube-src
 PF9_KUBE_WRAPPER_STAGE:= $(AGENT_BUILD_DIR)/pf9-kube-wrapper-stage
-PF9_KUBE_WRAPPER := $(AGENT_BUILD_DIR)/RPMS/x86_64/pf9-kube-wrapper-$(PF9_KUBE_VERSION_WITH_GITHASH).x86_64.rpm
+PF9_KUBE_WRAPPER := $(AGENT_BUILD_DIR)/RPMS/x86_64/nodelet-wrapper-$(PF9_KUBE_VERSION_WITH_GITHASH).x86_64.rpm
 
 SUPPORTED_ROLES_BUCKET = supportedroleversions
 PACKAGE_BUCKET = package-repo.platform9.com
@@ -268,7 +267,7 @@ $(PF9_KUBE_SRCDIR):
 	rm -fr $@
 	mkdir -p $@
 
-PF9_KUBE_DEB_FILE_WITH_VERSION := $(AGENT_BUILD_DIR)/pf9-kube-$(PF9_KUBE_VERSION).x86_64.deb
+PF9_KUBE_DEB_FILE_WITH_VERSION := $(AGENT_BUILD_DIR)/nodelet-$(PF9_KUBE_VERSION).x86_64.deb
 COMMON_SRC_ROOT := $(PF9_KUBE_SRCDIR)/common
 RPM_SRC_ROOT := $(PF9_KUBE_SRCDIR)/rpmsrc
 DEB_SRC_ROOT := $(PF9_KUBE_SRCDIR)/debsrc
@@ -540,8 +539,8 @@ $(PF9_KUBE_RPM_FILE): | $(RPM_SRC_ROOT)
 	rpmbuild -bb \
 	    --define "_topdir $(RPMBUILD_DIR)"  \
 	    --define "_src_dir $(RPM_SRC_ROOT)"  \
-	    --define "_version $(AGENT_VERSION)" \
-	    --define "_release pmk.$(BUILD_NUMBER)" \
+	    --define "_version $(PF9_KUBE_VERSION)" \
+	    --define "_release $(PF9_KUBE_VERSION)-$(GITHASH)" \
 	    --define "_githash $(GITHASH)" $(AGENT_SRC_DIR)/pf9-kube.spec
 	./sign_packages.sh $(PF9_KUBE_RPM_FILE)
 	md5sum $(PF9_KUBE_RPM_FILE) | cut -d' ' -f 1  > $(PF9_KUBE_RPM_FILE).md5
@@ -551,8 +550,8 @@ agent-rpm: check-env $(PF9_KUBE_RPM_FILE)
 
 $(PF9_KUBE_DEB_FILE): $(DEB_SRC_ROOT)
 	fpm -t deb -s dir -n pf9-kube \
-		--description "Platform9 kubernetes deb package. Built on git hash $(GITHASH)" \
-		-v $(PF9_KUBE_VERSION) --provides pf9-kube --provides pf9app \
+		--description "Platform9 kubernetes(Nodelet) deb package. Built on git hash $(GITHASH)" \
+		-v $(PF9_KUBE_VERSION) --provides nodelet --provides pf9app \
 		--license "Commercial" --architecture all --url "http://www.platform9.net" --vendor Platform9 \
 		-d curl -d gzip -d net-tools -d socat -d keepalived -d cgroup-tools \
 		--after-install $(AGENT_SRC_DIR)/pf9-kube-after-install.sh \
@@ -597,7 +596,7 @@ $(PF9_KUBE_WRAPPER): $(PF9_KUBE_RPM_FILE) $(PF9_KUBE_WRAPPER_STAGE) $(PF9_KUBE_D
 	cp $(AGENT_SRC_DIR)/metadata.json ${PF9_KUBE_WRAPPER_STAGE}/metadata.json
 	sed -e "s/__BUILDNUM__/$(BUILD_NUMBER)/g" -e "s/__GITHASH__/$(GITHASH)/g" $(AGENT_SRC_DIR)/pf9-kube-wrapper.spec > $(PF9_KUBE_WRAPPER_STAGE)/pf9-kube-wrapper.spec
 	rpmbuild -bb \
-	    --define "_version $(AGENT_VERSION)" \
+	    --define "_version $(PF9_KUBE_VERSION)" \
 	    --define "_src_dir $(PF9_KUBE_WRAPPER_STAGE)" \
 	    --define "_topdir $(AGENT_BUILD_DIR)"  $(PF9_KUBE_WRAPPER_STAGE)/pf9-kube-wrapper.spec
 	./sign_packages.sh $(PF9_KUBE_WRAPPER)
@@ -628,7 +627,7 @@ agent-du-upgrade:
 	$(eval NEW_BUILD_NUMBER=$(shell expr 1 + $(EXISTING_BUILD_NUMBER)))
 	BUILD_NUMBER=$(NEW_BUILD_NUMBER) make agent-wrapper
 
-	$(eval WRAPPER_RPM=pf9-kube-wrapper-$(KUBE_VERSION)-pmk.$(NEW_BUILD_NUMBER).$(GITHASH).x86_64.rpm)
+	$(eval WRAPPER_RPM=nodelet-wrapper-$(KUBE_VERSION)-pmk.$(NEW_BUILD_NUMBER).$(GITHASH).x86_64.rpm)
 
 	scp $(SSH_OPTS) $(AGENT_BUILD_DIR)/RPMS/x86_64/$(WRAPPER_RPM) $(DU):~/
 	ssh $(SSH_OPTS) -tt $(DU) sudo rpm --upgrade --force $(WRAPPER_RPM)
@@ -704,7 +703,7 @@ upload-host-packages:
 			echo $(component_version) && \
 			md5ext=".md5" && \
 			for ext in rpm deb; do \
-					pkg="pf9-kube-$${component_version}.x86_64.$${ext}"; \
+					pkg="nodelet-$${component_version}.x86_64.$${ext}"; \
 					path=$(BUILD_DIR)/artifacts/$${pkg}; \
 					s3url=$(S3_URL_ROOT)/pf9-kube/$${component_version}/$${pkg}; \
 					puburl=$(PUB_URL_ROOT); \
