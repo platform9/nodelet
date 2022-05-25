@@ -29,6 +29,7 @@ jobs:
     - name: Make
       env:
         TAG_NAME: ${{ env.GITHUB_REF_NAME }}
+        BUILD_NUMBER: ${{ env.GITHUB_RUN_NUMBER }}
       run: make agent-rpm agent-deb --max-load=$(nproc)
 
   
