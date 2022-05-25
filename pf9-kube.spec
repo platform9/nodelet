@@ -1,10 +1,10 @@
-Name:           pf9-kube
+Name:           nodelet
 Version:        %{_version}
 Release:        %{_release}
 Summary:        Platform9 Kubernetes Agent
 License:        Commercial
 URL:            http://www.platform9.net
-Provides:       pf9-kube
+Provides:       nodelet
 Provides:       pf9app
 Requires:       curl
 Requires:       gzip
