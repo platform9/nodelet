@@ -234,3 +234,47 @@ func writeKubeconfigFile(args *KubeConfigData) error {
 	zap.S().Infof("Wrote kubeconfig to %s\n", kubeconfigFile)
 	return nil
 }
+
+func RenewCAIfExpiring(cfg *BootstrapConfig) error {
+	certsDir := filepath.Join(ClusterStateDir, cfg.ClusterId, "certs")
+	caCertFile := filepath.Join(certsDir, RootCACRT)
+
+	caFile, err := ioutil.ReadFile(caCertFile)
+	if err != nil {
+		return fmt.Errorf("Failed to read CA Cert %s: %s", caCertFile, err)
+	}
+	caPEM, _ := pem.Decode(caFile)
+	ca, err := x509.ParseCertificate(caPEM.Bytes)
+	if err != nil {
+		return fmt.Errorf("Failed to parse CA Cert %s: %s", caCertFile, err)
+	}
+
+	currTime := time.Now()
+	expireTime := ca.NotAfter
+
+	diffTime := expireTime.Sub(currTime)
+	daysTillExpiry := int64(diffTime.Hours() / 24)
+	if daysTillExpiry < CAExpiryLimitDays {
+		zap.S().Infof("Cert is expiring in %d days (%d hours), will re-generate", daysTillExpiry, diffTime.Hours())
+		return RegenCA(cfg)
+	}
+	return nil
+}
+
+func RegenCA(cfg *BootstrapConfig) error {
+	certsDir := filepath.Join(ClusterStateDir, cfg.ClusterId, "certs")
+	if err := os.RemoveAll(certsDir); err != nil {
+		return fmt.Errorf("Failed to remove old certs directory: %s", err)
+	}
+
+	_, err := GenCALocal(cfg.ClusterId)
+	if err != nil {
+		return fmt.Errorf("Cert regeneration failed: %s\n", err)
+	}
+
+	err = GenKubeconfig(cfg)
+	if err != nil {
+		return fmt.Errorf("Failed to regen kubeconfig with new CA: %s", err)
+	}
+	return nil
+}

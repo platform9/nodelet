@@ -17,6 +17,11 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
+/* Everything in deployer is a wrapper around shell commands. This is because it executes on
+ * remote machines via an SSH client, so we cannot use native Golang packages.
+ * Add any commands to exec here to onboard the node or install nodelet
+ */
+
 type NodeletDeployer struct {
 	user           string
 	OsType         string
@@ -311,6 +316,20 @@ func (nd *NodeletDeployer) RestartNodelet() error {
 	return nil
 }
 
+func (nd *NodeletDeployer) NodeletStackRestart() error {
+	var cmdList []string
+	cmdList = append(cmdList, "systemctl stop pf9-nodeletd")
+	cmdList = append(cmdList, "/opt/pf9/nodelet/nodeletd phases stop --force |& tee /tmp/nodeletStop.log")
+
+	for _, cmd := range cmdList {
+		if _, _, err := nd.client.RunCommand(cmd); err != nil {
+			return fmt.Errorf("NodeletStackRestart cmd failed: %s: %s", cmd, err)
+		}
+	}
+
+	return nd.RestartNodelet()
+}
+
 func (nd *NodeletDeployer) RefreshNodeletStatus() (string, error) {
 	zap.S().Infof("Refreshing nodelet status")
 	cpCmd := fmt.Sprintf("cp %s /tmp/", KubeStatusFile)
@@ -384,7 +403,7 @@ func (nd *NodeletDeployer) DeleteNodelet() error {
 	} else {
 		return fmt.Errorf("OS type not supported")
 	}
-	
+
 	zap.S().Infof("Removing nodelet with cmd: %s", eraseCmd)
 	if _, _, err := nd.client.RunCommand(eraseCmd); err != nil {
 		return fmt.Errorf("Failed: %s: %s", eraseCmd, err)
@@ -394,6 +413,30 @@ func (nd *NodeletDeployer) DeleteNodelet() error {
 	if _, _, err := nd.client.RunCommand(cleanupCmd); err != nil {
 		return fmt.Errorf("Failed: %s: %s", cleanupCmd, err)
 	}
+	return nil
+}
+
+func (nd *NodeletDeployer) DeleteOldCerts() error {
+	deleteCmd := "rm -rf /etc/pf9/kube.d/certs"
+	if _, _, err := nd.client.RunCommand(deleteCmd); err != nil {
+		return fmt.Errorf("Failed to remove old certs: %s", err)
+	}
+	return nil
+}
+
+func (nd *NodeletDeployer) UploadCertsAndRestartStack(wg *sync.WaitGroup) error {
+	defer wg.Done()
+
+	if err := nd.UploadCerts(); err != nil {
+		return fmt.Errorf("failed to upload new CA certs: %s", err)
+	}
+	if err := nd.DeleteOldCerts(); err != nil {
+		return fmt.Errorf("failed to clear old client certs: %s", err)
+	}
+	if err := nd.NodeletStackRestart(); err != nil {
+		return fmt.Errorf("failed to stop/start nodelet stack: %s", err)
+	}
+
 	return nil
 }
 
