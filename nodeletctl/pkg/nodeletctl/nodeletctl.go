@@ -613,10 +613,32 @@ func RegenClusterCerts(cfgPath string) error {
 
 	clusterStatus := new(ClusterStatus)
 	clusterStatus.statusMap = make(map[string]*NodeStatus)
-	allNodes := append(clusterCfg.MasterNodes, clusterCfg.WorkerNodes...)
+
+	firstMaster := []HostConfig{clusterCfg.MasterNodes[0]}
+	otherMasters := clusterCfg.MasterNodes[1:]
+
+	if err := regenCertsForHosts(clusterCfg, otherMasters); err != nil {
+		zap.S().Errorf("Failed to regen certs for masters %+v: err", otherMasters)
+		return fmt.Errorf("Failed to regen certs for masters %+v: err", otherMasters)
+	}
+
+	if err := regenCertsForHosts(clusterCfg, clusterCfg.WorkerNodes); err != nil {
+		zap.S().Errorf("Failed to regen certs for masters %+v: err", otherMasters)
+		return fmt.Errorf("Failed to regen certs for masters %+v: err", otherMasters)
+	}
+
+	if err := regenCertsForHosts(clusterCfg, firstMaster); err != nil {
+		zap.S().Errorf("Failed to regen certs for masters %+v: err", otherMasters)
+		return fmt.Errorf("Failed to regen certs for masters %+v: err", otherMasters)
+	}
+
+	return nil
+}
+
+func regenCertsForHosts(clusterCfg *BootstrapConfig, nodes []HostConfig) error {
 	var wg sync.WaitGroup
 
-	for _, host := range allNodes {
+	for _, host := range nodes {
 		nodeletCfg := new(NodeletConfig)
 		setNodeletClusterCfg(clusterCfg, nodeletCfg)
 		nodeletCfg.HostId = host.NodeName
@@ -626,26 +648,17 @@ func RegenClusterCerts(cfgPath string) error {
 			nodeletCfg.HostIp = host.NodeName
 		}
 
-		deployer, err := GetNodeletDeployer(clusterCfg, clusterStatus, nodeletCfg, nodeletCfg.HostIp, "")
+		deployer, err := GetNodeletDeployer(clusterCfg, nil, nodeletCfg, nodeletCfg.HostIp, "")
 		if err != nil {
-			zap.S().Errorf("failed to get nodelet deployer: %v", err)
-			return fmt.Errorf("failed to get nodelet deployer: %v", err)
+			zap.S().Errorf("failed to get nodelet deployer: %s", err)
+			return fmt.Errorf("failed to get nodelet deployer: %s", err)
 		}
-		clusterStatus.statusMap[host.NodeName] = &NodeStatus{
-			deployer: deployer,
-		}
-
-		/*	if err := deployer.RegenCerts(); err != nil {
-			zap.S().Errorf("Failed to upload new CA to host %s: %s", host.NodeName, err)
-			return fmt.Errorf("Failed to upload new CA to host %s: %s", host.NodeName, err)
-		}*/
 
 		wg.Add(1)
 		go deployer.UploadCertsAndRestartStack(&wg)
 	}
 	wg.Wait()
-	// This blocks until all nodes are converged/ok
-	if err := SyncNodes(clusterCfg, nil); err != nil {
+	if err := SyncNodes(clusterCfg, &nodes); err != nil {
 		return err
 	}
 	return nil
