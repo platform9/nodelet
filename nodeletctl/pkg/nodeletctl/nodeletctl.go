@@ -613,10 +613,12 @@ func RegenClusterCerts(cfgPath string) error {
 
 	clusterStatus := new(ClusterStatus)
 	clusterStatus.statusMap = make(map[string]*NodeStatus)
-	allNodes := append(clusterCfg.MasterNodes, clusterCfg.WorkerNodes...)
+
+	firstMaster := clusterCfg.MasterNodes[0]
+	otherMasters := clusterCfg.MasterNodes[1:]
 	var wg sync.WaitGroup
 
-	for _, host := range allNodes {
+	for _, host := range otherMasters {
 		nodeletCfg := new(NodeletConfig)
 		setNodeletClusterCfg(clusterCfg, nodeletCfg)
 		nodeletCfg.HostId = host.NodeName
@@ -644,6 +646,63 @@ func RegenClusterCerts(cfgPath string) error {
 		go deployer.UploadCertsAndRestartStack(&wg)
 	}
 	wg.Wait()
+	if err := SyncNodes(clusterCfg, &otherMasters); err != nil {
+		return err
+	}
+
+	for _, host := range clusterCfg.WorkerNodes {
+		nodeletCfg := new(NodeletConfig)
+		setNodeletClusterCfg(clusterCfg, nodeletCfg)
+		nodeletCfg.HostId = host.NodeName
+		if host.NodeIP != nil {
+			nodeletCfg.HostIp = *host.NodeIP
+		} else {
+			nodeletCfg.HostIp = host.NodeName
+		}
+
+		deployer, err := GetNodeletDeployer(clusterCfg, clusterStatus, nodeletCfg, nodeletCfg.HostIp, "")
+		if err != nil {
+			zap.S().Errorf("failed to get nodelet deployer: %v", err)
+			return fmt.Errorf("failed to get nodelet deployer: %v", err)
+		}
+		clusterStatus.statusMap[host.NodeName] = &NodeStatus{
+			deployer: deployer,
+		}
+
+		/*	if err := deployer.RegenCerts(); err != nil {
+			zap.S().Errorf("Failed to upload new CA to host %s: %s", host.NodeName, err)
+			return fmt.Errorf("Failed to upload new CA to host %s: %s", host.NodeName, err)
+		}*/
+
+		wg.Add(1)
+		go deployer.UploadCertsAndRestartStack(&wg)
+	}
+	wg.Wait()
+	if err := SyncNodes(clusterCfg, &clusterCfg.WorkerNodes); err != nil {
+		return err
+	}
+
+	nodeletCfg := new(NodeletConfig)
+	setNodeletClusterCfg(clusterCfg, nodeletCfg)
+	nodeletCfg.HostId = firstMaster.NodeName
+	if firstMaster.NodeIP != nil {
+		nodeletCfg.HostIp = *firstMaster.NodeIP
+	} else {
+		nodeletCfg.HostIp = firstMaster.NodeName
+	}
+
+	deployer, err := GetNodeletDeployer(clusterCfg, clusterStatus, nodeletCfg, nodeletCfg.HostIp, "")
+	if err != nil {
+		zap.S().Errorf("failed to get nodelet deployer: %v", err)
+		return fmt.Errorf("failed to get nodelet deployer: %v", err)
+	}
+	clusterStatus.statusMap[firstMaster.NodeName] = &NodeStatus{
+		deployer: deployer,
+	}
+
+	wg.Add(1)
+	go deployer.UploadCertsAndRestartStack(&wg)
+
 	// This blocks until all nodes are converged/ok
 	if err := SyncNodes(clusterCfg, nil); err != nil {
 		return err

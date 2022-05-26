@@ -424,6 +424,14 @@ func (nd *NodeletDeployer) DeleteOldCerts() error {
 	return nil
 }
 
+func (nd *NodeletDeployer) DeleteCniDir() error {
+	deleteCmd := "rm -rf /etc/cni/net.d/"
+	if _, _, err := nd.client.RunCommand(deleteCmd); err != nil {
+		return fmt.Errorf("Failed to remove old certs: %s", err)
+	}
+	return nil
+}
+
 func (nd *NodeletDeployer) UploadCertsAndRestartStack(wg *sync.WaitGroup) error {
 	defer wg.Done()
 
@@ -431,6 +439,9 @@ func (nd *NodeletDeployer) UploadCertsAndRestartStack(wg *sync.WaitGroup) error 
 		return fmt.Errorf("failed to upload new CA certs: %s", err)
 	}
 	if err := nd.DeleteOldCerts(); err != nil {
+		return fmt.Errorf("failed to clear old client certs: %s", err)
+	}
+	if err := nd.DeleteCniDir(); err != nil {
 		return fmt.Errorf("failed to clear old client certs: %s", err)
 	}
 	if err := nd.NodeletStackRestart(); err != nil {
