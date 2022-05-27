@@ -6,7 +6,7 @@
 if [[ -n "${TAG_NAME}" ]]; then
   echo "TAG_NAME env found, so using that TAG_NAME:${TAG_NAME}"
   TAG=$TAG_NAME
-elif [[ $(git describe --tags HEAD | echo $?) -eq 0 ]]; then
+elif [[ $(git describe --tags HEAD > /dev/null 2>&1; echo $?) -eq 0 ]]; then
   TAG=$(git describe --tags HEAD)
   IFS='-'
   echo "A latest tag found in git:${TAG}"
