@@ -27,7 +27,7 @@ AGENT_SRC_DIR ?= ..
 AGENT_BUILD_DIR ?= build
 
 # Version to embed into Nodelet.
-NODELET_VERSION_RELEASE ?= $(shell ../get-version.bash)-$(shell ../get-release.bash)
+NODELET_VERSION_RELEASE ?= $(shell $(AGENT_SRC_DIR)/get-version.bash)-$(shell $(AGENT_SRC_DIR)/get-release.bash)
 
 # Note: we need realpath because these variables are used to identify Docker
 # volume paths, which require an absolute path.
