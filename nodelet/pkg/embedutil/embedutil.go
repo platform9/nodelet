@@ -22,8 +22,8 @@ func (efs *EmbedFS) Extract(dest string) error {
 
 func (efs *EmbedFS) Copy(filepath string, destpath string) error {
 	zap.S().Infof("Copying '%s' to '%s'", filepath, destpath)
-	err := os.MkdirAll(path.Dir(destpath), 0755); 
-	if err != nil &&  !os.IsExist(err){
+	err := os.MkdirAll(path.Dir(destpath), 0755)
+	if err != nil && !os.IsExist(err) {
 		return fmt.Errorf("failed to create directory '%s': %s", path.Dir(destpath), err)
 	}
 	srcFile, err := efs.Fs.Open(filepath)
@@ -46,7 +46,7 @@ func (efs *EmbedFS) extract(root string, dest string) error {
 	zap.S().Infof("Extracting %s to '%s'", root, dest)
 	items, err := efs.Fs.ReadDir(root)
 	if err != nil {
-		return fmt.Errorf("failed to read pf9-kube directory: %s", err)
+		return fmt.Errorf("failed to read %s directory: %s", root, err)
 	}
 	for _, item := range items {
 		filepath := path.Join(root, item.Name())
