@@ -14,8 +14,8 @@ DOCKER_BUILD_CMD=${DOCKER} build
 DOCKER_RMI_CMD=${DOCKER} rmi
 RM=rm
 REPEAT_TESTS ?= "1"
-GITBRANCH=$(git symbolic-ref --short HEAD)
-GITCOMMIT=$(git rev-parse HEAD)
+GITBRANCH=$(shell git symbolic-ref --short HEAD)
+GITCOMMIT=$(shell git rev-parse HEAD)
 
 # Using PWD is not guaranteed to be the directory of the Makefile. Use these instead:
 MAKE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
@@ -80,7 +80,7 @@ nodelet: nodelet-setup
 			${COMPILE_IMAGE} \
 			sh -xc 'cd /go/src/${REPO_URL}/${ORG}/${REPO} && \
 			which goversion > /dev/null && \
-			go build -mod=vendor -ldflags "-extldflags \"-static\" $$(goversion ldflags --print-ldflag=false --build-by=docker-golang --version=${NODELET_VERSION_RELEASE} --git-branch=${GITBRANCH} --git-commit=${GITBRANCH})" \
+			go build -mod=vendor -ldflags "-extldflags \"-static\" $$(goversion ldflags --print-ldflag=false --build-by=docker-golang --version=${NODELET_VERSION_RELEASE} --git-branch=${GITBRANCH} --git-commit=${GITCOMMIT})" \
 			-o /build/bin/nodeletd \
 			./cmd/nodeletd';
 
