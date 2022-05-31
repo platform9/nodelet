@@ -242,13 +242,14 @@ func (nd *NodeletDeployer) CreatePf9User() error {
 func (nd *NodeletDeployer) InstallNodelet() error {
 	zap.S().Infof("Installing nodelet")
 	if err := nd.client.UploadFile(nd.pf9KubeTarSrc, NodeletTarDst, 0644, nil); err != nil {
-		return fmt.Errorf("Failed to copy pf9-kube(nodelet) RPM: %s", err)
+		return fmt.Errorf("Failed to copy nodelet RPM: %s", err)
 	}
 
 	unTarCmd := "tar -C /tmp/ -xzvf " + NodeletTarDst
 	if _, _, err := nd.client.RunCommand(unTarCmd); err != nil {
 		return fmt.Errorf("Failed: %s: %s", unTarCmd, err)
 	}
+
 
 	var installCmd string
 	if nd.OsType == OsTypeCentos {
@@ -378,9 +379,9 @@ func (nd *NodeletDeployer) DeleteNodelet() error {
 	zap.S().Infof("Deleting nodelet")
 	var eraseCmd string
 	if nd.OsType == OsTypeCentos {
-		eraseCmd = "yum erase -y pf9-kube"
+		eraseCmd = "yum erase -y nodelet"
 	} else if nd.OsType == OsTypeUbuntu {
-		eraseCmd = "apt remove -y pf9-kube"
+		eraseCmd = "apt remove -y nodelet"
 	} else {
 		return fmt.Errorf("OS type not supported")
 	}
