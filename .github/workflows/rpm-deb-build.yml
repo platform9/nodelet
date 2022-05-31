@@ -32,7 +32,7 @@ jobs:
   
     - name: Make
       env:
-        BUILD_NUMBER: ${{ env.GITHUB_RUN_NUMBER }}
+        BUILD_NUMBER: ${{ github.run_number }}
       run: make agent-rpm agent-deb --max-load=$(nproc)
   
     - name: Make nodeletctl
