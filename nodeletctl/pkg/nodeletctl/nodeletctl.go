@@ -381,6 +381,10 @@ func ScaleCluster(cfgPath string) error {
 		clusterCfg.CertsDir = filepath.Join(ClusterStateDir, clusterCfg.ClusterId, "certs")
 	}
 
+	return scaleCluster(clusterCfg)
+}
+
+func scaleCluster(clusterCfg *BootstrapConfig) error {
 	nodeletStatus := new(ClusterStatus)
 	nodeletStatus.statusMap = make(map[string]*NodeStatus)
 
@@ -605,17 +609,35 @@ func RegenClusterCerts(cfgPath string) error {
 		return fmt.Errorf("Failed to Parse Cluster Config: %s", err)
 	}
 
+	clusterStatus := new(ClusterStatus)
+	clusterStatus.statusMap = make(map[string]*NodeStatus)
+
+	firstMaster := []HostConfig{clusterCfg.MasterNodes[0]}
+	otherMasters := clusterCfg.MasterNodes[1:]
+
+	// Scale existing cluster down to 1 master + workers
+	tempClusterCfg := clusterCfg
+	tempClusterCfg.MasterNodes = firstMaster
+	if err := scaleCluster(tempClusterCfg); err != nil {
+		zap.S().Errorf("Failed tos cale cluster down to 1 master %+v: %s", firstMaster, err)
+		return fmt.Errorf("Failed tos cale cluster down to 1 master %+v: %s", firstMaster, err)
+	}
+
+	// Create a New CA + kubeconfig
 	err = RegenCA(clusterCfg)
 	if err != nil {
 		zap.S().Errorf("Failed to regenerate new CA: %s", err)
 		return fmt.Errorf("Failed to regenerate new CA: %s", err)
 	}
 
-	clusterStatus := new(ClusterStatus)
-	clusterStatus.statusMap = make(map[string]*NodeStatus)
-
-	firstMaster := []HostConfig{clusterCfg.MasterNodes[0]}
-	otherMasters := clusterCfg.MasterNodes[1:]
+	// Spawn a new cluster with only remaining master nodes we previously scaled down
+	newClusterCfg := clusterCfg
+	newClusterCfg.MasterNodes = otherMasters
+	newClusterCfg.WorkerNodes = []HostConfig{}
+	if err := DeployCluster(newClusterCfg); err != nil {
+		zap.S().Errorf("Failed to deploy new cluster for remaining masters: %+v: %s", otherMasters, err)
+		return fmt.Errorf("Failed to deploy new cluster for remaining masters: %+v: %s", otherMasters, err)
+	}
 
 	if err := regenCertsForHosts(clusterCfg, otherMasters); err != nil {
 		zap.S().Errorf("Failed to regen certs for masters %+v: err", otherMasters)
