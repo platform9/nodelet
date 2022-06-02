@@ -85,13 +85,6 @@ METALLB_CIDR: ""
 METALLB_ENABLED: "false"
 MIN_NUM_WORKERS: "0"
 MTU_SIZE: {{ .Mtu }}
-OS_AUTH_URL: ""
-OS_PASSWORD: ""
-OS_PROJECT_DOMAIN_NAME: ""
-OS_PROJECT_NAME: ""
-OS_REGION: ""
-OS_USER_DOMAIN_NAME: ""
-OS_USERNAME: ""
 PF9_NETWORK_PLUGIN: calico
 PRIVILEGED: {{ .Privileged }}
 QUAY_PRIVATE_REGISTRY: ""
@@ -108,6 +101,9 @@ TOPOLOGY_MANAGER_POLICY: none
 USE_HOSTNAME: "false"
 STANDALONE: "true"
 DOCKER_ROOT: /var/lib/docker
+{{if .UserImages -}}
+USER_IMAGES_DIR: "/var/opt/pf9/images"
+{{ end }}
 `
 
 const workerNodeletConfigTmpl = `
@@ -186,6 +182,9 @@ TOPOLOGY_MANAGER_POLICY: none
 USE_HOSTNAME: "false"
 STANDALONE: "true"
 DOCKER_ROOT: /var/lib/docker
+{{if .UserImages -}}
+USER_IMAGES_DIR: "/var/opt/pf9/images"
+{{ end }}
 `
 const adminKubeconfigTemplate = `
 apiVersion: v1

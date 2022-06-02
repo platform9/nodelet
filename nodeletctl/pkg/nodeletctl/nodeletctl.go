@@ -32,6 +32,7 @@ type BootstrapConfig struct {
 	MTU                    string                 `json:"mtu,omitempty"`
 	Privileged             string                 `json:"privileged,omitempty"`
 	ContainerRuntime       ContainerRuntimeConfig `json:"containerRuntime,omitempty"`
+	UserImages             *string                `json:"userImages,omitempty"`
 	MasterNodes            []HostConfig           `json:"masterNodes"`
 	WorkerNodes            []HostConfig           `json:"workerNodes"`
 }
@@ -50,23 +51,23 @@ type HostConfig struct {
 
 type NodeletConfig struct {
 	AllowWorkloadsOnMaster bool
-
-	CalicoV4Interface  string
-	CalicoV6Interface  string
-	ClusterId          string
-	ContainerRuntime   ContainerRuntimeConfig
-	EtcdClusterState   string
-	HostId             string
-	HostIp             string
-	K8sApiPort         string
-	MasterList         *map[string]string
-	MasterIp           string
-	MasterVipEnabled   bool
-	MasterVipInterface string
-	MasterVipVrouterId int
-	Mtu                string
-	Privileged         string
-	NodeletRole        string
+	CalicoV4Interface      string
+	CalicoV6Interface      string
+	ClusterId              string
+	ContainerRuntime       ContainerRuntimeConfig
+	EtcdClusterState       string
+	HostId                 string
+	HostIp                 string
+	K8sApiPort             string
+	MasterList             *map[string]string
+	MasterIp               string
+	MasterVipEnabled       bool
+	MasterVipInterface     string
+	MasterVipVrouterId     int
+	Mtu                    string
+	Privileged             string
+	NodeletRole            string
+	UserImages             *string
 }
 
 type ClusterStatus struct {
@@ -257,6 +258,7 @@ func setNodeletClusterCfg(cfg *BootstrapConfig, nodelet *NodeletConfig) {
 	nodelet.MasterVipVrouterId = cfg.MasterVipVrouterId
 	nodelet.Mtu = cfg.MTU
 	nodelet.Privileged = cfg.Privileged
+	nodelet.UserImages = cfg.UserImages
 }
 
 func GenNodeletConfigLocal(host *NodeletConfig, templateName string) (string, error) {

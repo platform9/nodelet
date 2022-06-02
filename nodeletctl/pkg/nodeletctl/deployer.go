@@ -150,6 +150,9 @@ func (nd *NodeletDeployer) DeployNodelet() error {
 	if err := nd.UploadCerts(); err != nil {
 		return fmt.Errorf("failed to upload certs: %s", err)
 	}
+	if err := nd.UploadUserImages(); err != nil {
+		return fmt.Errorf("failed to upload user container images: %s", err)
+	}
 	if err := nd.CopyNodeletConfig(); err != nil {
 		return fmt.Errorf("failed to copy nodelet config: %s", err)
 	}
@@ -493,6 +496,27 @@ func (nd *NodeletDeployer) UploadCertsAndRestartStack(wg *sync.WaitGroup) error 
 		return fmt.Errorf("failed to stop/start nodelet stack: %s", err)
 	}
 
+	return nil
+}
+
+func (nd *NodeletDeployer) UploadUserImages() error {
+	if nd.nodeletCfg.UserImages == nil {
+		zap.S().Infof("No offline container images specified, skipping upload...")
+		return nil
+	}
+
+	userImagesSrc := *nd.nodeletCfg.UserImages
+	zap.S().Infof("Uploading user images: %s", userImagesSrc)
+	if _, err := os.Stat(userImagesSrc); os.IsNotExist(err) {
+		zap.S().Errorf("User Images file does not exist: %s", err)
+		return fmt.Errorf("User Images file does not exist: %s", err)
+	}
+
+	filename := filepath.Base(userImagesSrc)
+	err := UploadFileWrapper(userImagesSrc, filename, UserImagesDir, nd.client)
+	if err != nil {
+		return fmt.Errorf("Failed to upload user images: %s", err)
+	}
 	return nil
 }
 
