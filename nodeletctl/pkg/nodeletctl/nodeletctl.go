@@ -107,6 +107,130 @@ func CreateCluster(cfgPath string) error {
 	return nil
 }
 
+func UpgradeCluster(cfgPath string) error {
+
+	clusterCfg, err := ParseBootstrapConfig(cfgPath)
+	if err != nil {
+		zap.S().Infof("Failed to Parse Cluster Config: %s", err)
+		return fmt.Errorf("Failed to Parse Cluster Config: %s", err)
+	}
+
+	if clusterCfg.MasterVipEnabled {
+		if clusterCfg.MasterVipInterface == "" {
+			return fmt.Errorf("MasterVipInterface cannot be empty when MasterVip is enabled")
+		}
+		if clusterCfg.MasterVipVrouterId < 1 || clusterCfg.MasterVipVrouterId > 255 {
+			return fmt.Errorf("MasterVipVrouterId should be in the range 1-255 when MasterVip is enabled")
+		}
+	}
+
+	// TODO: Need to validate if nodelet version in the bootstrap is the supported version, possibly by
+	// checking a manifest file in the rpm/deb package
+
+	if err != nil {
+		return fmt.Errorf("failed to DetermineKubePkgName: %s", err)
+	}
+
+	globalClusterStatus = new(ClusterStatus)
+	globalClusterStatus.statusMap = make(map[string]*NodeStatus)
+
+	var masterList = make(map[string]string)
+	for _, host := range clusterCfg.MasterNodes {
+		if host.NodeIP != nil {
+			masterList[host.NodeName] = *host.NodeIP
+		} else {
+			masterList[host.NodeName] = host.NodeName
+		}
+	}
+
+	masters, err := GetCurrentMasters(clusterCfg)
+	if err != nil {
+		return fmt.Errorf("Failed to get active K8s masters: %s", err)
+	}
+
+	workers, err := GetCurrentWorkers(clusterCfg)
+	if err != nil {
+		return fmt.Errorf("Failed to get active K8s workers: %s", err)
+	}
+
+	if len(clusterCfg.MasterNodes) != len(masters) {
+		return fmt.Errorf("Masters in the cluster and Bootstrap config doesnt match", err)
+	}
+
+	if len(clusterCfg.WorkerNodes) != len(workers) {
+		return fmt.Errorf("Workers in the cluster and Bootstrap config doesnt match", err)
+	}
+
+	// Upgrade each master node sequentially
+	for _, host := range clusterCfg.MasterNodes {
+		zap.S().Infof("Upgrading master node: ", host.NodeName)
+		// Build nodeletconfig and deployer
+		nodeletCfg := new(NodeletConfig)
+		setNodeletClusterCfg(clusterCfg, nodeletCfg)
+		nodeletCfg.HostId = host.NodeName
+		if host.NodeIP != nil {
+			nodeletCfg.HostIp = *host.NodeIP
+		} else {
+			nodeletCfg.HostIp = host.NodeName
+		}
+		nodeletCfg.NodeletRole = "master"
+		nodeletCfg.MasterList = &masterList
+		nodeletCfg.EtcdClusterState = "new"
+
+		nodeletSrcFile, err := GenNodeletConfigLocal(nodeletCfg, masterNodeletConfigTmpl)
+		if err != nil {
+			zap.S().Infof("Failed to generate config: %s", err)
+			return fmt.Errorf("Failed to generate config: %s", err)
+		}
+		zap.S().Debugf("master nodeletsrc file %s", nodeletSrcFile)
+
+		deployer, err := GetNodeletDeployer(clusterCfg, globalClusterStatus, nodeletCfg, nodeletCfg.HostIp, nodeletSrcFile)
+		if err != nil {
+			zap.S().Errorf("failed to get nodelet deployer: %v", err)
+			return fmt.Errorf("failed to get nodelet deployer: %v", err)
+		}
+		globalClusterStatus.statusMap[host.NodeName] = &NodeStatus{
+			deployer: deployer,
+		}
+
+		if err := deployer.UpgradeNode(); err != nil {
+			SetClusterNodeStatus(deployer.clusterStatus, deployer.nodeletCfg.HostId, "failed", err)
+		}
+	}
+
+	// Upgrade each worker node sequentially
+	for _, host := range clusterCfg.WorkerNodes {
+		zap.S().Infof("Upgrading worker: ", host.NodeName)
+		nodeletCfg := new(NodeletConfig)
+		setNodeletClusterCfg(clusterCfg, nodeletCfg)
+		nodeletCfg.HostId = host.NodeName
+		nodeletCfg.NodeletRole = "worker"
+		nodeletSrcFile, err := GenNodeletConfigLocal(nodeletCfg, workerNodeletConfigTmpl)
+		if err != nil {
+			zap.S().Infof("Failed to generate config: %s", err)
+			return fmt.Errorf("Failed to generate config: %s", err)
+		}
+		deployer, err := GetNodeletDeployer(clusterCfg, globalClusterStatus, nodeletCfg, host.NodeName, nodeletSrcFile)
+		if err != nil {
+			zap.S().Errorf("failed to get nodelet deployer: %s", err)
+			return fmt.Errorf("failed to get nodelet deployer: %s", err)
+		}
+		globalClusterStatus.statusMap[host.NodeName] = &NodeStatus{
+			deployer: deployer,
+		}
+
+		if err := deployer.UpgradeNode(); err != nil {
+			SetClusterNodeStatus(deployer.clusterStatus, deployer.nodeletCfg.HostId, "failed", err)
+		}
+	}
+
+	SyncNodes(clusterCfg, nil)
+
+	zap.S().Infof("Cluster Upgraded successfully")
+	return nil
+}
+
+
 func InitBootstrapConfig() *BootstrapConfig {
 	bootstrapCfg := &BootstrapConfig{
 		AllowWorkloadsOnMaster: false,
@@ -126,6 +250,7 @@ func InitBootstrapConfig() *BootstrapConfig {
 }
 
 func ParseBootstrapConfig(cfgPath string) (*BootstrapConfig, error) {
+	zap.S().Infof("ParseBootstrapConfig cfgPath: %s", cfgPath)
 	cfgFile, err := ioutil.ReadFile(cfgPath)
 	if err != nil {
 		return nil, fmt.Errorf("Error opening bootstrap config file: %s", cfgFile)
@@ -134,7 +259,7 @@ func ParseBootstrapConfig(cfgPath string) (*BootstrapConfig, error) {
 	bootstrapConfig := InitBootstrapConfig()
 	err = yaml.Unmarshal(cfgFile, bootstrapConfig)
 	if err != nil {
-		return nil, fmt.Errorf("Error decoding bootstrap config\n")
+		return nil, fmt.Errorf("error decoding bootstrap config: %v", err)
 	}
 
 	if !isClusterCfgValid(bootstrapConfig) {
@@ -211,7 +336,7 @@ func DeployCluster(clusterCfg *BootstrapConfig) error {
 	}
 
 	SyncNodes(clusterCfg, nil)
-
+	zap.S().Infof("Cluster deployed successfully")
 	return nil
 }
 
@@ -687,7 +812,7 @@ func SyncNodes(clusterCfg *BootstrapConfig, nodes *[]HostConfig) error {
 		for {
 			select {
 			case <-done:
-				zap.S().Infof("Cluster created succesfully\n")
+				zap.S().Infof("Cluster converged successfully\n")
 				return
 			case <-ticker.C:
 				zap.S().Infof("Syncing cluster state...\n")
