@@ -24,4 +24,5 @@ const (
 	ClusterTimeout     = 30
 	WorkerLabel        = "node-role.kubernetes.io/worker"
 	MasterLabel        = "node-role.kubernetes.io/master"
+	UserImagesDir      = "/var/opt/pf9/images"
 )
