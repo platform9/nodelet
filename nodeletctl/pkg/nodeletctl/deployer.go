@@ -239,29 +239,73 @@ func (nd *NodeletDeployer) CreatePf9User() error {
 	return nil
 }
 
+func (nd *NodeletDeployer) DetermineNodeletPkgName(nodeletPkgsDir string) (string, error) {
+	lsNodeletCmd := "ls " + nodeletPkgsDir
+	stdOut, stdErr, err := nd.client.RunCommand(lsNodeletCmd)
+	if err != nil {
+		return "", fmt.Errorf("Failed to run : %s: %s: %s", lsNodeletCmd, err, stdErr)
+	}
+
+	nodeletPkgNames := strings.Split(string(stdOut), " ")
+	nodeletPkgName := ""
+	for _, pkgName := range nodeletPkgNames {
+		pkgName = strings.TrimSpace(pkgName)
+		zap.S().Infof("Matching pkg: %s", pkgName)
+		if nd.OsType == OsTypeCentos && strings.HasSuffix(pkgName, ".rpm") {
+			nodeletPkgName = pkgName
+			zap.S().Infof("Match found for pkg: %s and os: %s", pkgName, nd.OsType)
+			break
+		} else if nd.OsType == OsTypeUbuntu && strings.HasSuffix(pkgName, ".deb"){
+			nodeletPkgName = pkgName
+			zap.S().Infof("Match found for pkg: %s and os: %s", pkgName, nd.OsType)
+			break
+		}
+	}
+
+	if nodeletPkgName == "" {
+		return "", fmt.Errorf("Nodelet package for the OS:  %s, not found", nd.OsType)
+	}
+	return nodeletPkgName, nil
+}
+
 func (nd *NodeletDeployer) InstallNodelet() error {
 	zap.S().Infof("Installing nodelet")
 	if err := nd.client.UploadFile(nd.pf9KubeTarSrc, NodeletTarDst, 0644, nil); err != nil {
 		return fmt.Errorf("Failed to copy nodelet RPM: %s", err)
 	}
 
-	unTarCmd := "tar -C /tmp/ -xzvf " + NodeletTarDst
-	if _, _, err := nd.client.RunCommand(unTarCmd); err != nil {
-		return fmt.Errorf("Failed: %s: %s", unTarCmd, err)
+	clearTmpCmd := "rm -Rf " + NodeletPkgsTmpDir
+	if _, stdErr, err := nd.client.RunCommand(clearTmpCmd); err != nil {
+		return fmt.Errorf("Failed: %s: %s: %s", clearTmpCmd, err, stdErr)
 	}
 
+	createTmpCmd := "mkdir -p " + NodeletPkgsTmpDir
+	if _, stdErr, err := nd.client.RunCommand(createTmpCmd); err != nil {
+		return fmt.Errorf("Failed: %s: %s: %s", createTmpCmd, err, stdErr)
+	}
 
+	unTarCmd := "tar -C " + NodeletPkgsTmpDir + " -xzvf " + NodeletTarDst
+	if _, stdErr, err := nd.client.RunCommand(unTarCmd); err != nil {
+		return fmt.Errorf("Failed: %s: %s: %s", unTarCmd, err, stdErr)
+	}
+
+	nodeletPkgName, err := nd.DetermineNodeletPkgName(NodeletPkgsTmpDir)
+	if err != nil {
+		return fmt.Errorf("Failed to DetermineNodeletPkgName: %s", err)
+	}
+
+	nodeletPkgPath := NodeletPkgsTmpDir + nodeletPkgName
 	var installCmd string
 	if nd.OsType == OsTypeCentos {
-		installCmd = "yum install -y " + filepath.Join("/tmp/", NodeletRpmName)
+		installCmd = "yum install -y " + nodeletPkgPath
 	} else if nd.OsType == OsTypeUbuntu {
-		installCmd = "apt-get install -y " + filepath.Join("/tmp/", NodeletDebName)
+		installCmd = "apt-get install -y " + nodeletPkgPath
 	} else {
 		return fmt.Errorf("OS type not supported")
 	}
 
-	if _, _, err := nd.client.RunCommand(installCmd); err != nil {
-		return fmt.Errorf("Failed: %s: %s", installCmd, err)
+	if stdOut, stdErr, err := nd.client.RunCommand(installCmd); err != nil {
+		return fmt.Errorf("Failed to run %s: %s: %s: %s", installCmd, err, stdErr, stdOut)
 	}
 
 	return nil
