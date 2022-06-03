@@ -89,11 +89,6 @@ func CreateCluster(cfgPath string) error {
 		return fmt.Errorf("Failed to Parse Cluster Config: %s", err)
 	}
 
-	if clusterCfg.MasterVipEnabled {
-		rand.Seed(time.Now().UnixNano())
-		clusterCfg.MasterVipVrouterId = rand.Intn(254) + 1
-	}
-
 	if err := DeployCluster(clusterCfg); err != nil {
 		zap.S().Infof("Cluster failed: %s\n", err)
 		return fmt.Errorf("Cluster failed: %s", err)
@@ -113,15 +108,6 @@ func UpgradeCluster(cfgPath string) error {
 	if err != nil {
 		zap.S().Infof("Failed to Parse Cluster Config: %s", err)
 		return fmt.Errorf("Failed to Parse Cluster Config: %s", err)
-	}
-
-	if clusterCfg.MasterVipEnabled {
-		if clusterCfg.MasterVipInterface == "" {
-			return fmt.Errorf("MasterVipInterface cannot be empty when MasterVip is enabled")
-		}
-		if clusterCfg.MasterVipVrouterId < 1 || clusterCfg.MasterVipVrouterId > 255 {
-			return fmt.Errorf("MasterVipVrouterId should be in the range 1-255 when MasterVip is enabled")
-		}
 	}
 
 	// TODO: Need to validate if nodelet version in the bootstrap is the supported version, possibly by
@@ -156,9 +142,17 @@ func UpgradeCluster(cfgPath string) error {
 	if len(clusterCfg.MasterNodes) != len(masters) {
 		return fmt.Errorf("Masters in the cluster and Bootstrap config doesnt match", err)
 	}
+	newMasters, oldMasters, _ := getDiffNodes(clusterCfg.MasterNodes, masters)
+	if len(newMasters) != 0 || len(oldMasters) != 0 {
+		return fmt.Errorf("Masters in the cluster and Bootstrap config doesnt match")
+	}
 
 	if len(clusterCfg.WorkerNodes) != len(workers) {
 		return fmt.Errorf("Workers in the cluster and Bootstrap config doesnt match", err)
+	}
+	newWorkers, oldWorkers, _ := getDiffNodes(clusterCfg.WorkerNodes, workers)
+	if len(newWorkers) != 0 || len(oldWorkers) != 0 {
+		return fmt.Errorf("Workers in the cluster and Bootstrap config doesnt match")
 	}
 
 	// Upgrade each master node sequentially
@@ -193,12 +187,25 @@ func UpgradeCluster(cfgPath string) error {
 			deployer: deployer,
 		}
 
-		if err := deployer.UpgradeNode(); err != nil {
+		if err := deployer.UpgradeMaster(); err != nil {
 			SetClusterNodeStatus(deployer.clusterStatus, deployer.nodeletCfg.HostId, "failed", err)
 		}
 	}
 
-	// Upgrade each worker node sequentially
+	if err := UpgradeWorkers(clusterCfg, globalClusterStatus); err != nil {
+		zap.S().Infof("Failed to upgrade workers: %s", err)
+		return fmt.Errorf("Failed to upgrade workers: %s", err)
+	}
+
+	SyncNodes(clusterCfg, nil)
+
+	zap.S().Infof("Cluster Upgraded successfully")
+	return nil
+}
+
+func UpgradeWorkers(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus) error {
+	// Upgrade each worker node parallely
+	var wg sync.WaitGroup
 	for _, host := range clusterCfg.WorkerNodes {
 		zap.S().Infof("Upgrading worker: ", host.NodeName)
 		nodeletCfg := new(NodeletConfig)
@@ -210,27 +217,20 @@ func UpgradeCluster(cfgPath string) error {
 			zap.S().Infof("Failed to generate config: %s", err)
 			return fmt.Errorf("Failed to generate config: %s", err)
 		}
-		deployer, err := GetNodeletDeployer(clusterCfg, globalClusterStatus, nodeletCfg, host.NodeName, nodeletSrcFile)
+		deployer, err := GetNodeletDeployer(clusterCfg, clusterStatus, nodeletCfg, host.NodeName, nodeletSrcFile)
 		if err != nil {
 			zap.S().Errorf("failed to get nodelet deployer: %s", err)
 			return fmt.Errorf("failed to get nodelet deployer: %s", err)
 		}
-		globalClusterStatus.statusMap[host.NodeName] = &NodeStatus{
+		clusterStatus.statusMap[host.NodeName] = &NodeStatus{
 			deployer: deployer,
 		}
-
-		if err := deployer.UpgradeNode(); err != nil {
-			SetClusterNodeStatus(deployer.clusterStatus, deployer.nodeletCfg.HostId, "failed", err)
-		}
+		wg.Add(1)
+		go deployer.UpgradeWorker(&wg)
 	}
-
-	SyncNodes(clusterCfg, nil)
-
-	zap.S().Infof("Cluster Upgraded successfully")
+	wg.Wait()
 	return nil
 }
-
-
 func InitBootstrapConfig() *BootstrapConfig {
 	bootstrapCfg := &BootstrapConfig{
 		AllowWorkloadsOnMaster: false,
@@ -262,8 +262,8 @@ func ParseBootstrapConfig(cfgPath string) (*BootstrapConfig, error) {
 		return nil, fmt.Errorf("error decoding bootstrap config: %v", err)
 	}
 
-	if !isClusterCfgValid(bootstrapConfig) {
-		return nil, fmt.Errorf("Invalid cluster config")
+	if err := isClusterCfgValid(bootstrapConfig); err != nil {
+		return nil, fmt.Errorf("Invalid cluster config: %s", err)
 	}
 
 	return bootstrapConfig, nil
@@ -824,20 +824,25 @@ func SyncNodes(clusterCfg *BootstrapConfig, nodes *[]HostConfig) error {
 	return nil
 }
 
-func isClusterCfgValid(clusterCfg *BootstrapConfig) bool {
+func isClusterCfgValid(clusterCfg *BootstrapConfig) error {
 	if len(clusterCfg.MasterNodes) == 0 {
-		zap.S().Errorf("Number of master nodes cannot be zero")
-		return false
+		return fmt.Errorf("Number of master nodes cannot be zero")
 	}
 	if (len(clusterCfg.MasterNodes) % 2) == 0 {
-		zap.S().Errorf("Number of master nodes cannot be even")
-		return false
+		return fmt.Errorf("Number of master nodes cannot be even")
 	}
 	if !clusterCfg.AllowWorkloadsOnMaster && len(clusterCfg.WorkerNodes) == 0 {
-		zap.S().Errorf("Number of worker nodes cannot be zero when no workloads are allowed on masters")
-		return false
+		return fmt.Errorf("Number of worker nodes cannot be zero when no workloads are allowed on masters")
 	}
-	return true
+	if clusterCfg.MasterVipEnabled {
+		if clusterCfg.MasterVipInterface == "" {
+			return fmt.Errorf("MasterVipInterface cannot be empty when MasterVip is enabled")
+		}
+		if clusterCfg.MasterVipVrouterId < 1 || clusterCfg.MasterVipVrouterId > 255 {
+			return fmt.Errorf("MasterVipVrouterId should be in the range 1-255 when MasterVip is enabled")
+		}
+	}
+	return nil
 }
 
 func (cfg *BootstrapConfig) saveClusterConfig() error {
