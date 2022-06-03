@@ -128,7 +128,7 @@ func (nd *NodeletDeployer) DetermineKubePkgName() (string, error) {
 	return pkgName, nil
 }
 
-func (nd *NodeletDeployer) UpgradeNode() error {
+func (nd *NodeletDeployer) UpgradeMaster() error {
 
 	// Uninstall pf9-kube
 	if err := nd.UninstallNodelet("pf9-kube"); err != nil {
@@ -152,6 +152,36 @@ func (nd *NodeletDeployer) UpgradeNode() error {
 	}
 
 	return nil
+}
+
+func (nd *NodeletDeployer) UpgradeWorker(wg *sync.WaitGroup) {
+	defer wg.Done()
+	// Uninstall pf9-kube
+	if err := nd.UninstallNodelet("pf9-kube"); err != nil {
+		err = fmt.Errorf("Failed to uninstall pf9-kube(nodelet): %s", err)
+		SetClusterNodeStatus(nd.clusterStatus, nd.nodeletCfg.HostId, "failed", err)
+		//return fmt.Errorf("Failed to uninstall pf9-kube(nodelet): %s", err)
+	}
+
+	//zap.S().Infof("In UpgradeNode with upgradeToVersionPkgName:", nd.nodeletPkgName)
+
+	if err := nd.CopyNodeletConfig(); err != nil {
+		err = fmt.Errorf("failed to copy nodelet config: %s", err)
+		SetClusterNodeStatus(nd.clusterStatus, nd.nodeletCfg.HostId, "failed", err)
+	}
+
+	// Install new pf9-kube
+	if err := nd.InstallNodelet(); err != nil {
+		err = fmt.Errorf("Failed to install pf9-kube(nodelet): %s", err)
+		SetClusterNodeStatus(nd.clusterStatus, nd.nodeletCfg.HostId, "failed", err)
+	}
+
+	// Restart nodeletd
+	if err := nd.RestartNodelet(); err != nil {
+		err = fmt.Errorf("Failed to restart pf9-kube(nodelet): %s", err)
+		SetClusterNodeStatus(nd.clusterStatus, nd.nodeletCfg.HostId, "failed", err)
+	}
+
 }
 
 func (nd *NodeletDeployer) SpawnMaster(numMaster int) (string, error) {
