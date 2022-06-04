@@ -15,25 +15,41 @@ import (
 )
 
 type BootstrapConfig struct {
-	SSHUser                string                 `json:"sshUser,omitempty"`
-	SSHPrivateKeyFile      string                 `json:"sshPrivateKeyFile,omitempty"`
-	CertsDir               string                 `json:"certsDir,omitempty"`
-	KubeConfig             string                 `json:"kubeconfig,omitempty"`
-	Pf9KubePkg             string                 `json:"nodeletPkg,omitempty"`
-	ClusterId              string                 `json:"clusterName,omitempty"`
-	AllowWorkloadsOnMaster bool                   `json:"allowWorkloadsOnMaster,omitempty"`
-	K8sApiPort             string                 `json:"k8sApiPort,omitempty"`
-	MasterIp               string                 `json:"masterIp,omitempty"`
-	MasterVipEnabled       bool                   `json:"masterVipEnabled,omitempty"`
-	MasterVipInterface     string                 `json:"masterVipInterface,omitempty"`
-	MasterVipVrouterId     int                    `json:"masterVipVrouterId,omitempty"`
-	CalicoV4Interface      string                 `json:"calicoV4Interface,omitempty"`
-	CalicoV6Interface      string                 `json:"calicoV6Interface,omitempty"`
-	MTU                    string                 `json:"mtu,omitempty"`
-	Privileged             string                 `json:"privileged,omitempty"`
-	ContainerRuntime       ContainerRuntimeConfig `json:"containerRuntime,omitempty"`
-	MasterNodes            []HostConfig           `json:"masterNodes"`
-	WorkerNodes            []HostConfig           `json:"workerNodes"`
+	KubeConfig string `json:"kubeconfig,omitempty"`
+	Pf9KubePkg string `json:"nodeletPkg,omitempty"`
+
+	Connection struct {
+		SSHUser           string `json:"sshUser,omitempty"`
+		SSHPrivateKeyFile string `json:"sshPrivateKeyFile,omitempty"`
+	} `json:"connection,omitempty"`
+
+	Certs struct {
+		CertsDir string `json:"certsDir,omitempty"`
+	} `json:"Certs,omitempty"`
+
+	Cluster struct {
+		ClusterId              string `json:"clusterName,omitempty"`
+		AllowWorkloadsOnMaster bool   `json:"allowWorkloadsOnMaster,omitempty"`
+		Privileged             string `json:"privileged,omitempty"`
+	} `json:"cluster,omitempty"`
+
+	ApiIp struct {
+		K8sApiPort         string `json:"k8sApiPort,omitempty"`
+		MasterIp           string `json:"masterIp,omitempty"`
+		MasterVipEnabled   bool   `json:"masterVipEnabled,omitempty"`
+		MasterVipInterface string `json:"masterVipInterface,omitempty"`
+		MasterVipVrouterId int    `json:"masterVipVrouterId,omitempty"`
+	} `json:"apiIp,omitemtpy"`
+
+	Calico struct {
+		CalicoV4Interface string `json:"calicoV4Interface,omitempty"`
+		CalicoV6Interface string `json:"calicoV6Interface,omitempty"`
+		MTU               string `json:"mtu,omitempty"`
+	} `json:"calico,omitempty"`
+
+	ContainerRuntime ContainerRuntimeConfig `json:"containerRuntime,omitempty"`
+	MasterNodes      []HostConfig           `json:"masterNodes"`
+	WorkerNodes      []HostConfig           `json:"workerNodes"`
 }
 
 type ContainerRuntimeConfig struct {
@@ -88,9 +104,9 @@ func CreateCluster(cfgPath string) error {
 		return fmt.Errorf("Failed to Parse Cluster Config: %s", err)
 	}
 
-	if clusterCfg.MasterVipEnabled {
+	if clusterCfg.ApiIp.MasterVipEnabled {
 		rand.Seed(time.Now().UnixNano())
-		clusterCfg.MasterVipVrouterId = rand.Intn(254) + 1
+		clusterCfg.ApiIp.MasterVipVrouterId = rand.Intn(254) + 1
 	}
 
 	if err := DeployCluster(clusterCfg); err != nil {
@@ -108,18 +124,27 @@ func CreateCluster(cfgPath string) error {
 
 func InitBootstrapConfig() *BootstrapConfig {
 	bootstrapCfg := &BootstrapConfig{
-		AllowWorkloadsOnMaster: false,
-		CalicoV4Interface:      "first-found",
-		CalicoV6Interface:      "first-found",
-		ClusterId:              DefaultClusterName,
+		ApiIp: {
+			AllowWorkloadsOnMaster: false,
+			K8sApiPort:             "443",
+			MasterVipEnabled:       false,
+	
+		},
+		Calico: { 
+			CalicoV4Interface:      "first-found",
+			CalicoV6Interface:      "first-found",
+			MTU:                    "1440",
+		},
+		Cluster: {
+			Privileged:             "true",
+			ClusterId:              DefaultClusterName,
+		},
 		ContainerRuntime:       ContainerRuntimeConfig{"containerd", "systemd"},
-		SSHUser:                "root",
-		SSHPrivateKeyFile:      "/root/.ssh/id_rsa",
+		Connection: {
+			SSHUser:                "root",
+			SSHPrivateKeyFile:      "/root/.ssh/id_rsa",
+		},
 		Pf9KubePkg:             NodeletTarSrc,
-		Privileged:             "true",
-		K8sApiPort:             "443",
-		MasterVipEnabled:       false,
-		MTU:                    "1440",
 	}
 	return bootstrapCfg
 }
@@ -144,13 +169,13 @@ func ParseBootstrapConfig(cfgPath string) (*BootstrapConfig, error) {
 }
 
 func DeployCluster(clusterCfg *BootstrapConfig) error {
-	zap.S().Infof("Deploying cluster %s", clusterCfg.ClusterId)
-	if clusterCfg.CertsDir == "" {
-		certsDir, err := GenCALocal(clusterCfg.ClusterId)
+	zap.S().Infof("Deploying cluster %s", clusterCfg.Cluster.ClusterId)
+	if clusterCfg.Certs.CertsDir == "" {
+		certsDir, err := GenCALocal(clusterCfg.Cluster.ClusterId)
 		if err != nil {
 			return fmt.Errorf("Cert generation failed: %s\n", err)
 		}
-		clusterCfg.CertsDir = certsDir
+		clusterCfg.Certs.CertsDir = certsDir
 	}
 
 	if err := GenKubeconfig(clusterCfg); err != nil {
@@ -245,18 +270,18 @@ func SyncAndRetry(clusterCfg *BootstrapConfig, nodeletStatus *ClusterStatus, nod
 }
 
 func setNodeletClusterCfg(cfg *BootstrapConfig, nodelet *NodeletConfig) {
-	nodelet.AllowWorkloadsOnMaster = cfg.AllowWorkloadsOnMaster
-	nodelet.CalicoV4Interface = cfg.CalicoV4Interface
-	nodelet.CalicoV6Interface = cfg.CalicoV6Interface
-	nodelet.ClusterId = cfg.ClusterId
+	nodelet.AllowWorkloadsOnMaster = cfg.Cluster.AllowWorkloadsOnMaster
+	nodelet.CalicoV4Interface = cfg.Calico.CalicoV4Interface
+	nodelet.CalicoV6Interface = cfg.Calico.CalicoV6Interface
+	nodelet.ClusterId = cfg.Cluster.ClusterId
 	nodelet.ContainerRuntime = cfg.ContainerRuntime
-	nodelet.K8sApiPort = cfg.K8sApiPort
-	nodelet.MasterIp = cfg.MasterIp
-	nodelet.MasterVipEnabled = cfg.MasterVipEnabled
-	nodelet.MasterVipInterface = cfg.MasterVipInterface
-	nodelet.MasterVipVrouterId = cfg.MasterVipVrouterId
-	nodelet.Mtu = cfg.MTU
-	nodelet.Privileged = cfg.Privileged
+	nodelet.K8sApiPort = cfg.ApiIp.K8sApiPort
+	nodelet.MasterIp = cfg.ApiIp.MasterIp
+	nodelet.MasterVipEnabled = cfg.ApiIp.MasterVipEnabled
+	nodelet.MasterVipInterface = cfg.ApiIp.MasterVipInterface
+	nodelet.MasterVipVrouterId = cfg.ApiIp.MasterVipVrouterId
+	nodelet.Mtu = cfg.Calico.MTU
+	nodelet.Privileged = cfg.Cluster.Privileged
 }
 
 func GenNodeletConfigLocal(host *NodeletConfig, templateName string) (string, error) {
@@ -375,10 +400,10 @@ func ScaleCluster(cfgPath string) error {
 		return fmt.Errorf("Failed to Parse Cluster Config: %s", err)
 	}
 
-	if clusterCfg.CertsDir == "" && !CertsExist(clusterCfg.ClusterId) {
-		return fmt.Errorf("Could not find existing certs for cluster %s", clusterCfg.ClusterId)
-	} else if clusterCfg.CertsDir == "" {
-		clusterCfg.CertsDir = filepath.Join(ClusterStateDir, clusterCfg.ClusterId, "certs")
+	if clusterCfg.Certs.CertsDir == "" && !CertsExist(clusterCfg.Cluster.ClusterId) {
+		return fmt.Errorf("Could not find existing certs for cluster %s", clusterCfg.Cluster.ClusterId)
+	} else if clusterCfg.Certs.CertsDir == "" {
+		clusterCfg.Certs.CertsDir = filepath.Join(ClusterStateDir, clusterCfg.Cluster.ClusterId, "certs")
 	}
 
 	nodeletStatus := new(ClusterStatus)
@@ -531,7 +556,7 @@ func RemoveMasters(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus, cu
 			zap.S().Errorf("failed to get nodelet deployer: %v", err)
 			return fmt.Errorf("failed to get nodelet deployer: %v", err)
 		}
-		zap.S().Infof("Removing node %s from cluster %s", host.NodeName, clusterCfg.ClusterId)
+		zap.S().Infof("Removing node %s from cluster %s", host.NodeName, clusterCfg.Cluster.ClusterId)
 		err = deployer.DeleteNodelet()
 		if err != nil {
 			return fmt.Errorf("Failed to delete node %s: %s\n", host.NodeName, err)
@@ -574,7 +599,7 @@ func DeployWorkers(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus, wo
 			deployer: deployer,
 		}
 		wg.Add(1)
-		zap.S().Infof("Adding worker %s to cluster %s", host.NodeName, clusterCfg.ClusterId)
+		zap.S().Infof("Adding worker %s to cluster %s", host.NodeName, clusterCfg.Cluster.ClusterId)
 		go deployer.SpawnWorker(&wg)
 	}
 
@@ -589,7 +614,7 @@ func DeleteWorkers(clusterCfg *BootstrapConfig, oldNodes []HostConfig) error {
 			zap.S().Errorf("failed to get nodelet deployer: %v", err)
 			return fmt.Errorf("failed to get nodelet deployer: %v", err)
 		}
-		zap.S().Infof("Removing node %s from cluster %s", host.NodeName, clusterCfg.ClusterId)
+		zap.S().Infof("Removing node %s from cluster %s", host.NodeName, clusterCfg.Cluster.ClusterId)
 		err = deployer.DeleteNodelet()
 		if err != nil {
 			return fmt.Errorf("Failed to delete node %s: %s\n", host.NodeName, err)
@@ -684,30 +709,30 @@ func SyncNodes(clusterCfg *BootstrapConfig, nodes *[]HostConfig) error {
 	return nil
 }
 
-func isClusterCfgValid(clusterCfg *BootstrapConfig) bool {
-	if len(clusterCfg.MasterNodes) == 0 {
+func isClusterCfgValid(bootstrapCfg *BootstrapConfig) bool {
+	if len(bootstrapCfg.MasterNodes) == 0 {
 		zap.S().Errorf("Number of master nodes cannot be zero")
 		return false
 	}
-	if (len(clusterCfg.MasterNodes) % 2) == 0 {
+	if (len(bootstrapCfg.MasterNodes) % 2) == 0 {
 		zap.S().Errorf("Number of master nodes cannot be even")
 		return false
 	}
-	if !clusterCfg.AllowWorkloadsOnMaster && len(clusterCfg.WorkerNodes) == 0 {
+	if !bootstrapCfg.Cluster.AllowWorkloadsOnMaster && len(bootstrapCfg.WorkerNodes) == 0 {
 		zap.S().Errorf("Number of worker nodes cannot be zero when no workloads are allowed on masters")
 		return false
 	}
 	return true
 }
 
-func (cfg *BootstrapConfig) saveClusterConfig() error {
-	bytes, err := yaml.Marshal(cfg)
+func (bootstrapCfg *BootstrapConfig) saveClusterConfig() error {
+	bytes, err := yaml.Marshal(bootstrapCfg)
 	if err != nil {
 		return fmt.Errorf("Failed to marshal cluster config into YAML: %s", err)
 	}
 
-	clusterFileName := cfg.ClusterId + ".yaml"
-	clusterFile := filepath.Join(ClusterStateDir, cfg.ClusterId, clusterFileName)
+	clusterFileName := bootstrapCfg.Cluster.ClusterId + ".yaml"
+	clusterFile := filepath.Join(ClusterStateDir, bootstrapCfg.Cluster.ClusterId, clusterFileName)
 
 	if err := ioutil.WriteFile(clusterFile, bytes, 0644); err != nil {
 		return fmt.Errorf("Failed to save updated cluster file: %s", err)
