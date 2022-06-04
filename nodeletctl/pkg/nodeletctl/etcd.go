@@ -25,9 +25,9 @@ func InitEtcdClient(clusterCfg *BootstrapConfig, activeMasters *[]HostConfig) (*
 		etcdEndpoints = append(etcdEndpoints, endpoint)
 	}
 
-	etcdCert := filepath.Join("/etc/nodelet", clusterCfg.ClusterId, "certs/adminCert.pem")
-	etcdCertKey := filepath.Join("/etc/nodelet", clusterCfg.ClusterId, "certs/adminKey.pem")
-	etcdCa := filepath.Join("/etc/nodelet", clusterCfg.ClusterId, "certs/rootCA.crt")
+	etcdCert := filepath.Join("/etc/nodelet", clusterCfg.Cluster.ClusterId, "certs/adminCert.pem")
+	etcdCertKey := filepath.Join("/etc/nodelet", clusterCfg.Cluster.ClusterId, "certs/adminKey.pem")
+	etcdCa := filepath.Join("/etc/nodelet", clusterCfg.Cluster.ClusterId, "certs/rootCA.crt")
 
 	cert, err := tls.LoadX509KeyPair(etcdCert, etcdCertKey)
 	if err != nil {

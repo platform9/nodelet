@@ -35,7 +35,7 @@ type NodeletDeployer struct {
 func NewNodeletDeployer(cfg *BootstrapConfig, sshClient ssh.Client,
 	srcFile string, nodeletCfg *NodeletConfig, clusterStatus *ClusterStatus) *NodeletDeployer {
 	deployer := new(NodeletDeployer)
-	deployer.user = cfg.SSHUser
+	deployer.user = cfg.Connection.SSHUser
 	deployer.client = sshClient
 	deployer.nodeletSrcFile = srcFile
 	deployer.nodeletCfg = nodeletCfg
@@ -55,11 +55,11 @@ func GetNodeletDeployer(cfg *BootstrapConfig, clusterStatus *ClusterStatus, node
 	if local {
 		sshClient = getLocalClient()
 	} else {
-		sshKey, err := ioutil.ReadFile(cfg.SSHPrivateKeyFile)
+		sshKey, err := ioutil.ReadFile(cfg.Connection.SSHPrivateKeyFile)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to read private key: %s", cfg.SSHPrivateKeyFile)
+			return nil, fmt.Errorf("Failed to read private key: %s", cfg.Connection.SSHPrivateKeyFile)
 		}
-		sshClient, err = CreateSSHClient(nodeName, cfg.SSHUser, sshKey, 22)
+		sshClient, err = CreateSSHClient(nodeName, cfg.Connection.SSHUser, sshKey, 22)
 		if err != nil {
 			return nil, fmt.Errorf("can't create ssh client to host %s, %s", nodeName, err)
 		}

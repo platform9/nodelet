@@ -118,7 +118,7 @@ func CertsExist(clusterName string) bool {
 }
 
 func GenKubeconfig(cfg *BootstrapConfig) error {
-	certsDir := filepath.Join(ClusterStateDir, cfg.ClusterId, "certs")
+	certsDir := filepath.Join(ClusterStateDir, cfg.Cluster.ClusterId, "certs")
 	caCertPath := filepath.Join(certsDir, "rootCA.crt")
 	caKeyPath := filepath.Join(certsDir, "rootCA.key")
 
@@ -197,9 +197,9 @@ func GenKubeconfig(cfg *BootstrapConfig) error {
 	adminKeyB64 := base64.StdEncoding.EncodeToString(adminPrivKeyPEM.Bytes())
 
 	kubeconfigArgs := &KubeConfigData{
-		ClusterId:      cfg.ClusterId,
-		MasterIp:       cfg.MasterIp,
-		K8sApiPort:     cfg.K8sApiPort,
+		ClusterId:      cfg.Cluster.ClusterId,
+		MasterIp:       cfg.ApiIp.MasterIp,
+		K8sApiPort:     cfg.ApiIp.K8sApiPort,
 		CACertData:     CACertB64,
 		ClientCertData: adminCertB64,
 		ClientKeyData:  adminKeyB64,
@@ -236,7 +236,7 @@ func writeKubeconfigFile(args *KubeConfigData) error {
 }
 
 func RenewCAIfExpiring(cfg *BootstrapConfig) error {
-	certsDir := filepath.Join(ClusterStateDir, cfg.ClusterId, "certs")
+	certsDir := filepath.Join(ClusterStateDir, cfg.Cluster.ClusterId, "certs")
 	caCertFile := filepath.Join(certsDir, RootCACRT)
 
 	caFile, err := ioutil.ReadFile(caCertFile)
@@ -262,12 +262,12 @@ func RenewCAIfExpiring(cfg *BootstrapConfig) error {
 }
 
 func RegenCA(cfg *BootstrapConfig) error {
-	certsDir := filepath.Join(ClusterStateDir, cfg.ClusterId, "certs")
+	certsDir := filepath.Join(ClusterStateDir, cfg.Cluster.ClusterId, "certs")
 	if err := os.RemoveAll(certsDir); err != nil {
 		return fmt.Errorf("Failed to remove old certs directory: %s", err)
 	}
 
-	_, err := GenCALocal(cfg.ClusterId)
+	_, err := GenCALocal(cfg.Cluster.ClusterId)
 	if err != nil {
 		return fmt.Errorf("Cert regeneration failed: %s\n", err)
 	}

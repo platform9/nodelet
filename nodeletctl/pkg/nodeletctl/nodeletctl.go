@@ -124,28 +124,22 @@ func CreateCluster(cfgPath string) error {
 
 func InitBootstrapConfig() *BootstrapConfig {
 	bootstrapCfg := &BootstrapConfig{
-		ApiIp: {
-			AllowWorkloadsOnMaster: false,
-			K8sApiPort:             "443",
-			MasterVipEnabled:       false,
-	
-		},
-		Calico: { 
-			CalicoV4Interface:      "first-found",
-			CalicoV6Interface:      "first-found",
-			MTU:                    "1440",
-		},
-		Cluster: {
-			Privileged:             "true",
-			ClusterId:              DefaultClusterName,
-		},
-		ContainerRuntime:       ContainerRuntimeConfig{"containerd", "systemd"},
-		Connection: {
-			SSHUser:                "root",
-			SSHPrivateKeyFile:      "/root/.ssh/id_rsa",
-		},
-		Pf9KubePkg:             NodeletTarSrc,
+		ContainerRuntime: ContainerRuntimeConfig{"containerd", "systemd"},
+		Pf9KubePkg:       NodeletTarSrc,
 	}
+	bootstrapCfg.Cluster.AllowWorkloadsOnMaster = false
+	bootstrapCfg.ApiIp.K8sApiPort = "443"
+	bootstrapCfg.ApiIp.MasterVipEnabled = false
+	bootstrapCfg.Calico.CalicoV4Interface = "first-found"
+	bootstrapCfg.Calico.CalicoV6Interface = "first-found"
+	bootstrapCfg.Calico.MTU = "1440"
+
+	bootstrapCfg.Cluster.Privileged = "true"
+	bootstrapCfg.Cluster.ClusterId = DefaultClusterName
+
+	bootstrapCfg.Connection.SSHUser = "root"
+	bootstrapCfg.Connection.SSHPrivateKeyFile = "/root/.ssh/id_rsa"
+
 	return bootstrapCfg
 }
 
