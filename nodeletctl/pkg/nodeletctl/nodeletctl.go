@@ -3,7 +3,6 @@ package nodeletctl
 import (
 	"fmt"
 	"io/ioutil"
-	"math/rand"
 	"os"
 	"path/filepath"
 	"sync"
@@ -157,7 +156,7 @@ func UpgradeCluster(cfgPath string) error {
 
 	// Upgrade each master node sequentially
 	for _, host := range clusterCfg.MasterNodes {
-		zap.S().Infof("Upgrading master node: ", host.NodeName)
+		zap.S().Infof("Upgrading master node: %s", host.NodeName)
 		// Build nodeletconfig and deployer
 		nodeletCfg := new(NodeletConfig)
 		setNodeletClusterCfg(clusterCfg, nodeletCfg)
@@ -207,7 +206,7 @@ func UpgradeWorkers(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus) e
 	// Upgrade each worker node parallely
 	var wg sync.WaitGroup
 	for _, host := range clusterCfg.WorkerNodes {
-		zap.S().Infof("Upgrading worker: ", host.NodeName)
+		zap.S().Infof("Upgrading worker: %s", host.NodeName)
 		nodeletCfg := new(NodeletConfig)
 		setNodeletClusterCfg(clusterCfg, nodeletCfg)
 		nodeletCfg.HostId = host.NodeName

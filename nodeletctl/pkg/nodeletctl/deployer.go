@@ -30,7 +30,6 @@ type NodeletDeployer struct {
 	nodeletCfg     *NodeletConfig
 	pf9KubeTarSrc  string
 	clusterStatus  *ClusterStatus
-	nodeletPkgName string
 }
 
 func NewNodeletDeployer(cfg *BootstrapConfig, sshClient ssh.Client,
@@ -66,12 +65,6 @@ func GetNodeletDeployer(cfg *BootstrapConfig, clusterStatus *ClusterStatus, node
 	}
 
 	deployer := NewNodeletDeployer(cfg, sshClient, nodeletSrcFile, nodeletCfg, clusterStatus)
-	nodeletPkgName, err := deployer.DetermineKubePkgName()
-	if err != nil {
-		return nil, fmt.Errorf("Error in DetermineKubePkgName: %v", err)
-	}
-	deployer.nodeletPkgName = nodeletPkgName
-
 	return deployer, nil
 }
 
@@ -112,27 +105,11 @@ func isLocal(nodeName string) (bool, error) {
 	return false, nil
 }
 
-func (nd *NodeletDeployer) DetermineKubePkgName() (string, error) {
-
-	// TODO: Determine pkg name from nd.pf9KubeTarSrc, by extracting tar and reading rpm/deb
-	pkgVersion := "1.21.3-pmk.0"
-
-	pkgName := ""
-	if nd.OsType == OsTypeCentos {
-		pkgName = fmt.Sprintf("pf9-kube-%s.x86_64.rpm", pkgVersion)
-	} else if nd.OsType == OsTypeUbuntu {
-		pkgName = fmt.Sprintf("pf9-kube-%s.x86_64.deb", pkgVersion)
-	} else {
-		return "", fmt.Errorf("OS type not supported")
-	}
-	return pkgName, nil
-}
-
 func (nd *NodeletDeployer) UpgradeMaster() error {
 
 	// Uninstall pf9-kube
-	if err := nd.UninstallNodelet("pf9-kube"); err != nil {
-		return fmt.Errorf("Failed to uninstall pf9-kube(nodelet): %s", err)
+	if err := nd.UninstallNodelet("nodelet"); err != nil {
+		return fmt.Errorf("Failed to uninstall nodelet: %s", err)
 	}
 
 	//zap.S().Infof("In UpgradeNode with upgradeToVersionPkgName:", nd.nodeletPkgName)
@@ -143,12 +120,12 @@ func (nd *NodeletDeployer) UpgradeMaster() error {
 
 	// Install new pf9-kube
 	if err := nd.InstallNodelet(); err != nil {
-		return fmt.Errorf("Failed to install pf9-kube(nodelet): %s", err)
+		return fmt.Errorf("Failed to install nodelet: %s", err)
 	}
 
 	// Restart nodeletd
 	if err := nd.RestartNodelet(); err != nil {
-		return fmt.Errorf("Failed to restart pf9-kube(nodelet): %s", err)
+		return fmt.Errorf("Failed to restart nodelet: %s", err)
 	}
 
 	return nil
@@ -157,8 +134,8 @@ func (nd *NodeletDeployer) UpgradeMaster() error {
 func (nd *NodeletDeployer) UpgradeWorker(wg *sync.WaitGroup) {
 	defer wg.Done()
 	// Uninstall pf9-kube
-	if err := nd.UninstallNodelet("pf9-kube"); err != nil {
-		err = fmt.Errorf("Failed to uninstall pf9-kube(nodelet): %s", err)
+	if err := nd.UninstallNodelet("nodelet"); err != nil {
+		err = fmt.Errorf("Failed to uninstall nodelet: %s", err)
 		SetClusterNodeStatus(nd.clusterStatus, nd.nodeletCfg.HostId, "failed", err)
 		//return fmt.Errorf("Failed to uninstall pf9-kube(nodelet): %s", err)
 	}
@@ -172,13 +149,13 @@ func (nd *NodeletDeployer) UpgradeWorker(wg *sync.WaitGroup) {
 
 	// Install new pf9-kube
 	if err := nd.InstallNodelet(); err != nil {
-		err = fmt.Errorf("Failed to install pf9-kube(nodelet): %s", err)
+		err = fmt.Errorf("Failed to install nodelet: %s", err)
 		SetClusterNodeStatus(nd.clusterStatus, nd.nodeletCfg.HostId, "failed", err)
 	}
 
 	// Restart nodeletd
 	if err := nd.RestartNodelet(); err != nil {
-		err = fmt.Errorf("Failed to restart pf9-kube(nodelet): %s", err)
+		err = fmt.Errorf("Failed to restart nodelet: %s", err)
 		SetClusterNodeStatus(nd.clusterStatus, nd.nodeletCfg.HostId, "failed", err)
 	}
 
@@ -355,7 +332,7 @@ func (nd *NodeletDeployer) DetermineNodeletPkgName(nodeletPkgsDir string) (strin
 }
 
 func (nd *NodeletDeployer) UninstallNodelet(nodeletPkgName string) error {
-	zap.S().Infof("Uninstalling nodelet with pkg name:", nodeletPkgName)
+	zap.S().Infof("Uninstalling nodelet with pkg name: %s", nodeletPkgName)
 	uninstallCmd := ""
 	if nd.OsType == OsTypeCentos {
 		uninstallCmd = "yum erase -y " + nodeletPkgName
@@ -373,7 +350,6 @@ func (nd *NodeletDeployer) UninstallNodelet(nodeletPkgName string) error {
 }
 
 func (nd *NodeletDeployer) InstallNodelet() error {
-	zap.S().Infof("Installing nodelet with pkg:", nd.nodeletPkgName)
 	if err := nd.client.UploadFile(nd.pf9KubeTarSrc, NodeletTarDst, 0644, nil); err != nil {
 		return fmt.Errorf("Failed to copy nodelet RPM: %s", err)
 	}
