@@ -89,12 +89,17 @@ fi
  pf9ctr_restart
 }
 
+function set_containerd_sock_permissions_pf9()
+{
+    setfacl -m user:pf9:rwx /run/containerd/containerd.sock
+}
 
 function configure_containerd()
 {
     load_containerd_kernel_modules
     set_containerd_sysctl_params
     containerd_config
+    set_containerd_sock_permissions_pf9
     if [ "$pf9_kube_http_proxy_configured" = "true" ]; then
         configure_containerd_http_proxy
     fi
