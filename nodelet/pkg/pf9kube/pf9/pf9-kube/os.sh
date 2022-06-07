@@ -91,7 +91,7 @@ fi
 
 function set_containerd_sock_permissions_pf9()
 {
-    setfacl -m user:pf9:rwx /run/containerd/containerd.sock
+    setfacl -m user:pf9:rwx /run/containerd/containerd.sock || chown pf9:pf9group /run/containerd/containerd.sock
 }
 
 function configure_containerd()
