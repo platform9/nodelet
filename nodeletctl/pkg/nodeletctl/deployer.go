@@ -306,8 +306,7 @@ func (nd *NodeletDeployer) DetermineNodeletPkgName(nodeletPkgsDir string) (strin
 	if err != nil {
 		return "", fmt.Errorf("Failed to run : %s: %s: %s", lsNodeletCmd, err, stdErr)
 	}
-
-	nodeletPkgNames := strings.Split(string(stdOut), " ")
+	nodeletPkgNames := strings.Split(string(stdOut), "\n")
 	nodeletPkgName := ""
 	for _, pkgName := range nodeletPkgNames {
 		pkgName = strings.TrimSpace(pkgName)
