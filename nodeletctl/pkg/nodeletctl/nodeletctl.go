@@ -31,7 +31,7 @@ type BootstrapConfig struct {
 	MTU                    string                 `json:"mtu,omitempty"`
 	Privileged             string                 `json:"privileged,omitempty"`
 	ContainerRuntime       ContainerRuntimeConfig `json:"containerRuntime,omitempty"`
-	UserImages             *string                `json:"userImages,omitempty"`
+	UserImages             []string               `json:"userImages,omitempty"`
 	MasterNodes            []HostConfig           `json:"masterNodes"`
 	WorkerNodes            []HostConfig           `json:"workerNodes"`
 }
@@ -66,7 +66,7 @@ type NodeletConfig struct {
 	Mtu                    string
 	Privileged             string
 	NodeletRole            string
-	UserImages             *string
+	UserImages             []string
 }
 
 type ClusterStatus struct {

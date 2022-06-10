@@ -334,7 +334,7 @@ func (nd *NodeletDeployer) UninstallNodelet(nodeletPkgName string) error {
 	if nd.OsType == OsTypeCentos {
 		uninstallCmd = "yum erase -y " + nodeletPkgName
 	} else if nd.OsType == OsTypeUbuntu {
-		uninstallCmd = "apt-get uninstall -y " +  nodeletPkgName
+		uninstallCmd = "apt-get uninstall -y " + nodeletPkgName
 	} else {
 		return fmt.Errorf("OS type not supported")
 	}
@@ -574,17 +574,18 @@ func (nd *NodeletDeployer) UploadUserImages() error {
 		return nil
 	}
 
-	userImagesSrc := *nd.nodeletCfg.UserImages
-	zap.S().Infof("Uploading user images: %s", userImagesSrc)
-	if _, err := os.Stat(userImagesSrc); os.IsNotExist(err) {
-		zap.S().Errorf("User Images file does not exist: %s", err)
-		return fmt.Errorf("User Images file does not exist: %s", err)
-	}
+	for _, imgTarSrc := range nd.nodeletCfg.UserImages {
+		zap.S().Infof("Uploading user images: %s", imgTarSrc)
+		if _, err := os.Stat(imgTarSrc); os.IsNotExist(err) {
+			zap.S().Errorf("User Images file does not exist: %s", err)
+			return fmt.Errorf("User Images file does not exist: %s", err)
+		}
 
-	filename := filepath.Base(userImagesSrc)
-	err := UploadFileWrapper(userImagesSrc, filename, UserImagesDir, nd.client)
-	if err != nil {
-		return fmt.Errorf("Failed to upload user images: %s", err)
+		filename := filepath.Base(imgTarSrc)
+		err := UploadFileWrapper(imgTarSrc, filename, UserImagesDir, nd.client)
+		if err != nil {
+			return fmt.Errorf("Failed to upload user images: %s", err)
+		}
 	}
 	return nil
 }
