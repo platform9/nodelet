@@ -111,6 +111,8 @@ var (
 	ChecksumFile = fmt.Sprintf("%s/sha256sums.txt", ChecksumDir)
 	// ContainerdSocket is default address for containerd socket
 	ContainerdSocket = "/run/containerd/containerd.sock"
+
+	DockerSocket = "/var/run/docker.sock"
 	// DefaultSnapShotter is default snapshotter for containerd
 	DefaultSnapShotter = "overlayfs"
 	//K8sNamespace is namespace for kubernetes
@@ -123,6 +125,10 @@ var (
 	CoreDNSTemplate = fmt.Sprintf("%s/networkapps/coredns.yaml", ConfigSrcDir)
 
 	CoreDNSFile = fmt.Sprintf("%s/networkapps/coredns-applied.yaml", ConfigSrcDir)
+
+	Pf9KubeHttpProxyConfigured = "false"
+
+	CloudConfigFile = "/etc/pf9/kube.d/cloud-config"
 
 	// Phase orders of all the phases
 	NoRolePhaseOrder                   = 10

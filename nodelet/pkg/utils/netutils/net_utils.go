@@ -23,6 +23,7 @@ type NetInterface interface {
 	GetNodeIP() (string, error)
 	GetNodeIdentifier(config.Config) (string, error)
 	SetUpVeth(string, string, string) error
+	TearDownVeth(string) error
 }
 
 func New() NetInterface {
@@ -141,7 +142,7 @@ func (n *NetImpl) SetUpVeth(ip string, veth0 string, veth1 string) error {
 	var veth0Interface *net.Interface
 	veth0Interface, err = net.InterfaceByName(veth0)
 	if err != nil {
-		return errors.Wrapf(err, "could not create veth0 interface")
+		return errors.Wrapf(err, "could not get veth0 interface")
 	}
 	cidr := fmt.Sprintf("%s/32", ip)
 	ipAddr, ipNet, err := net.ParseCIDR(cidr)
@@ -155,6 +156,20 @@ func (n *NetImpl) SetUpVeth(ip string, veth0 string, veth1 string) error {
 	err = netlink.NetworkLinkUp(veth0Interface)
 	if err != nil {
 		return errors.Wrapf(err, "could not bring up: %s ", veth0)
+	}
+	return nil
+}
+
+func (n *NetImpl) TearDownVeth(veth0 string) error {
+	var veth0Interface *net.Interface
+	var err error
+	veth0Interface, err = net.InterfaceByName(veth0)
+	if err != nil {
+		return errors.Wrapf(err, "could not get veth0 interface")
+	}
+	err = netlink.NetworkLinkDown(veth0Interface)
+	if err != nil {
+		return errors.Wrapf(err, "could not bring down: %s ", veth0)
 	}
 	return nil
 }

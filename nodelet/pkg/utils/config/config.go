@@ -86,6 +86,9 @@ type Config struct {
 	ServicesCIDR              string  `mapstructure:"SERVICES_CIDR"`
 	AppCatalogEnabled         bool    `mapstructure:"APP_CATALOG_ENABLED"`
 	MasterlessEnabled         bool    `mapstructure:"MASTERLESS_ENABLED"`
+	DockerPrivateRegistry     string  `mapstructure:"DOCKER_PRIVATE_REGISTRY"`
+	Runtime                   string  `mapstructure:"RUNTIME"`
+	KubeletCloudConfig        string  `mapstructure:"KUBELET_CLOUD_CONFIG"`
 }
 
 // ToStringMap converts the Config struct to a map of strings

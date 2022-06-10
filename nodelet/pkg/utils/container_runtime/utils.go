@@ -17,19 +17,19 @@ import (
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 )
 
-type Runtime interface {
-	LoadImagesFromDir(context.Context, string, string) error
-	LoadImagesFromFile(context.Context, string) error
-}
+// type Runtime interface {
+// 	LoadImagesFromDir(context.Context, string, string) error
+// 	LoadImagesFromFile(context.Context, string) error
+// }
 
-type RuntimeUtil struct{}
+type RuntimeImageUtil struct{}
 
-func New() Runtime {
-	return &RuntimeUtil{}
+func New() ImageInRuntime {
+	return &RuntimeImageUtil{}
 }
 
 // LoadImagesFromDir loads images from all tar files in the given directory to container runtime with given namespace
-func (r *RuntimeUtil) LoadImagesFromDir(ctx context.Context, imageDir string, namespace string) error {
+func (r *RuntimeImageUtil) LoadImagesFromDir(ctx context.Context, imageDir string, namespace string) error {
 	items, _ := ioutil.ReadDir(imageDir)
 	for _, item := range items {
 		if item.IsDir() {
@@ -47,7 +47,7 @@ func (r *RuntimeUtil) LoadImagesFromDir(ctx context.Context, imageDir string, na
 }
 
 // LoadImagesFromFile loads images from given tar file to container runtime
-func (r *RuntimeUtil) LoadImagesFromFile(ctx context.Context, fileName string) error {
+func (r *RuntimeImageUtil) LoadImagesFromFile(ctx context.Context, fileName string) error {
 
 	f, err := os.Open(fileName)
 	if err != nil {
