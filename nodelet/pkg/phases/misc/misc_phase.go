@@ -62,21 +62,21 @@ func (m *MiscPhase) Status(ctx context.Context, cfg config.Config) error {
 
 	nodeIdentifier, err = m.netUtils.GetNodeIdentifier(cfg)
 	if err != nil {
-		m.log.Errorf(err.Error())
+		m.log.Error(err.Error())
 		phaseutils.SetHostStatus(m.HostPhase, constants.FailedState, err.Error())
 		return err
 	}
 	m.log.Infof("Node name is %v", nodeIdentifier)
 
 	if nodeIdentifier == constants.LoopBackIpString {
-		m.log.Errorf("Fetched node endpoint as 127.0.0.1. Node interface might have lost IP address. Failing.")
+		m.log.Error("Fetched node endpoint as 127.0.0.1. Node interface might have lost IP address. Failing.")
 		phaseutils.SetHostStatus(m.HostPhase, constants.FailedState, "Fetched node endpoint as 127.0.0.1. Node interface might have lost IP address. Failing.")
 		return fmt.Errorf("node interface might have lost IP address. Failing")
 	}
 
 	err = m.kubeUtils.K8sApiAvailable(cfg)
 	if err != nil {
-		m.log.Errorf("api not available :%w", err)
+		m.log.Error(errors.Wrapf(err, "api not available"))
 		phaseutils.SetHostStatus(m.HostPhase, constants.FailedState, err.Error())
 		return err
 	}
@@ -84,7 +84,7 @@ func (m *MiscPhase) Status(ctx context.Context, cfg config.Config) error {
 	//checking if node is Up
 	_, err = m.kubeUtils.GetNodeFromK8sApi(ctx, nodeIdentifier)
 	if err != nil {
-		m.log.Errorf("node %s is not up", nodeIdentifier)
+		m.log.Errorf("node %s is not up: %w", nodeIdentifier, err)
 		return err
 	}
 	//TODO: is it needed to check if node is in ready state
@@ -108,7 +108,7 @@ func (m *MiscPhase) Start(ctx context.Context, cfg config.Config) error {
 
 	err = m.kubeUtils.WriteCloudProviderConfig(cfg)
 	if err != nil {
-		m.log.Errorf("could not write cloud config file")
+		m.log.Error(errors.Wrap(err, "could not write cloud config file"))
 		return err
 	}
 	phaseutils.SetHostStatus(m.HostPhase, constants.RunningState, "")

@@ -12,7 +12,7 @@ import (
 	"go.uber.org/zap"
 )
 
-type DockerImpl struct {
+type Docker struct {
 	Service string
 	Cli     string
 	Socket  string
@@ -30,7 +30,7 @@ func NewDocker() (Runtime, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &DockerImpl{
+	return &Docker{
 		Service: "docker",
 		Cli:     "/usr/bin/docker",
 		Socket:  constants.DockerSocket,
@@ -45,12 +45,12 @@ func newDockerClient() (*client.Client, error) {
 	dclient, err := client.NewClientWithOpts(opts)
 	if err != nil {
 		zap.S().Errorf("Could not create docker client: %s", err)
-		return nil, err
+		return nil, errors.Wrap(err, "couldn't create docker client")
 	}
 	return dclient, nil
 }
 
-func (d *DockerImpl) EnsureFreshContainerRunning(ctx context.Context, cfg config.Config, containerName string, containerImage string) error {
+func (d *Docker) EnsureFreshContainerRunning(ctx context.Context, cfg config.Config, containerName string, containerImage string) error {
 
 	err = d.EnsureContainerDestroyed(ctx, cfg, containerName)
 	if err != nil {
@@ -78,7 +78,7 @@ func (d *DockerImpl) EnsureFreshContainerRunning(ctx context.Context, cfg config
 
 }
 
-func (d *DockerImpl) EnsureContainerDestroyed(ctx context.Context, cfg config.Config, containerName string) error {
+func (d *Docker) EnsureContainerDestroyed(ctx context.Context, cfg config.Config, containerName string) error {
 	d.log.Infof("Ensuring container %s is destroyed", containerName)
 
 	_, err := d.Client.ContainerInspect(ctx, containerName)
@@ -105,7 +105,7 @@ func (d *DockerImpl) EnsureContainerDestroyed(ctx context.Context, cfg config.Co
 	return nil
 }
 
-func (d *DockerImpl) EnsureContainerStoppedOrNonExistent(ctx context.Context, cfg config.Config, containerName string) error {
+func (d *Docker) EnsureContainerStoppedOrNonExistent(ctx context.Context, cfg config.Config, containerName string) error {
 	d.log.Infof("Ensuring container %s is stopped or non-existent", containerName)
 	cont, err := d.Client.ContainerInspect(ctx, containerName)
 	if err != nil {

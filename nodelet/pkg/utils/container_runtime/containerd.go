@@ -7,12 +7,13 @@ import (
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/oci"
+	"github.com/pkg/errors"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 	"go.uber.org/zap"
 )
 
-type ContainerdImpl struct {
+type Containerd struct {
 	Service string
 	Cli     string
 	Crictl  string
@@ -31,7 +32,7 @@ func NewContainerd() (Runtime, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &ContainerdImpl{
+	return &Containerd{
 		Service: "containerd",
 		Cli:     "/opt/pf9/pf9-kube/bin/nerdctl",
 		Crictl:  "/opt/pf9/pf9-kube/bin/crictl",
@@ -46,19 +47,19 @@ func newContainerdClient() (*containerd.Client, error) {
 	containerdclient, err = containerd.New(constants.ContainerdSocket)
 	if err != nil {
 		zap.S().Info("failed to create containerd client")
-		return nil, err
+		return nil, errors.Wrap(err, "failed to create containerd client")
 	}
 	return containerdclient, nil
 }
 
-func (c *ContainerdImpl) EnsureFreshContainerRunning(ctx context.Context, cfg config.Config, containerName string, containerImage string) error {
+func (c *Containerd) EnsureFreshContainerRunning(ctx context.Context, cfg config.Config, containerName string, containerImage string) error {
 	err := c.EnsureContainerDestroyed(ctx, cfg, containerName)
 	if err != nil {
 		return err
 	}
 	img, err := c.Client.GetImage(ctx, containerImage)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "couldn't get %s iamge from client", containerImage)
 	}
 	container, err := c.Client.NewContainer(
 		ctx,
@@ -67,34 +68,34 @@ func (c *ContainerdImpl) EnsureFreshContainerRunning(ctx context.Context, cfg co
 		containerd.WithImageName(containerImage),
 	)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "couldn't create container %s", containerName)
 	}
 
 	// create a task from the container
 	task, err := container.NewTask(ctx, cio.NewCreator(cio.WithStdio))
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "couldn't create task from container %s", containerName)
 	}
 
 	err = task.Start(ctx)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "couldn't start task from container %s", containerName)
 	}
 	return nil
 }
 
-func (c *ContainerdImpl) EnsureContainerDestroyed(ctx context.Context, cfg config.Config, containerName string) error {
+func (c *Containerd) EnsureContainerDestroyed(ctx context.Context, cfg config.Config, containerName string) error {
 
 	containers, err := c.Client.Containers(ctx)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "couldn't get containers from containerd client")
 	}
 
 	for _, container := range containers {
 		if container.ID() == containerName {
 			err = container.Delete(ctx, containerd.WithSnapshotCleanup)
 			if err != nil {
-				return err
+				return errors.Wrapf(err, "couldn't delete %s container", containerName)
 			}
 			break
 		}
@@ -102,23 +103,23 @@ func (c *ContainerdImpl) EnsureContainerDestroyed(ctx context.Context, cfg confi
 	return nil
 }
 
-func (c *ContainerdImpl) EnsureContainerStoppedOrNonExistent(ctx context.Context, cfg config.Config, containerName string) error {
+func (c *Containerd) EnsureContainerStoppedOrNonExistent(ctx context.Context, cfg config.Config, containerName string) error {
 
 	c.log.Infof("Ensuring container %s is stopped or non-existent", containerName)
 	containers, err := c.Client.Containers(ctx)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "couldn't get containers from containerd client")
 	}
 	containerPresent := false
 	for _, container := range containers {
 		if container.ID() == containerName {
 			task, err := container.Task(ctx, cio.NewAttach())
 			if err != nil {
-				return err
+				return errors.Wrapf(err, "couldn't get task from container %s", containerName)
 			}
 			task.Kill(ctx, syscall.SIGTERM)
 			if err != nil {
-				return err
+				return errors.Wrapf(err, "couldn't kill task from container %s", containerName)
 			}
 			containerPresent = true
 			return nil
