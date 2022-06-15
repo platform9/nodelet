@@ -30,7 +30,7 @@ var _ = Describe("Test Load user images to container runtime phase", func() {
 		fakePhase       *LoadImagePhase
 		ctx             context.Context
 		fakeCfg         *config.Config
-		fakeRuntimeUtil *mocks.MockRuntime
+		fakeRuntimeUtil *mocks.MockImageUtils
 		fakeFileUtils   *mocks.MockFileInterface
 	)
 
@@ -43,9 +43,9 @@ var _ = Describe("Test Load user images to container runtime phase", func() {
 		fakeCfg, err = config.GetDefaultConfig()
 		assert.Nil(GinkgoT(), err)
 		fakeCfg.UseCgroups = false
-		fakeRuntimeUtil = mocks.NewMockRuntime(mockCtrl)
+		fakeRuntimeUtil = mocks.NewMockImageUtils(mockCtrl)
 		fakeFileUtils = mocks.NewMockFileInterface(mockCtrl)
-		fakePhase.runtime = fakeRuntimeUtil
+		fakePhase.imageUtil = fakeRuntimeUtil
 		fakePhase.fileUtils = fakeFileUtils
 		fakeCfg.UserImagesDir = "testdata"
 		constants.UserImagesDir = "testdata"

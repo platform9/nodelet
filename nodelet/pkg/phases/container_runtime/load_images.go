@@ -18,7 +18,7 @@ import (
 type LoadImagePhase struct {
 	HostPhase *sunpikev1alpha1.HostPhase
 	log       *zap.SugaredLogger
-	runtime   containerutils.Runtime
+	imageUtil containerutils.ImageUtils
 	fileUtils fileio.FileInterface
 }
 
@@ -30,7 +30,7 @@ func NewLoadImagePhase() *LoadImagePhase {
 			Order: int32(constants.LoadImagePhaseOrder),
 		},
 		log:       log,
-		runtime:   containerutils.New(),
+		imageUtil: containerutils.NewImageUtil(),
 		fileUtils: fileio.New(),
 	}
 }
@@ -64,7 +64,7 @@ func (l *LoadImagePhase) Status(ctx context.Context, cfg config.Config) error {
 		return err
 	}
 	if !check {
-		err := l.runtime.LoadImagesFromDir(ctx, cfg.UserImagesDir, constants.K8sNamespace)
+		err := l.imageUtil.LoadImagesFromDir(ctx, cfg.UserImagesDir, constants.K8sNamespace)
 		if err != nil {
 			l.log.Error(err.Error())
 			phaseutils.SetHostStatus(l.HostPhase, constants.FailedState, err.Error())
@@ -102,7 +102,7 @@ func (l *LoadImagePhase) Start(ctx context.Context, cfg config.Config) error {
 			return err
 		}
 	}
-	err := l.runtime.LoadImagesFromDir(ctx, cfg.UserImagesDir, constants.K8sNamespace)
+	err := l.imageUtil.LoadImagesFromDir(ctx, cfg.UserImagesDir, constants.K8sNamespace)
 	if err != nil {
 		l.log.Error(err.Error())
 		phaseutils.SetHostStatus(l.HostPhase, constants.FailedState, err.Error())

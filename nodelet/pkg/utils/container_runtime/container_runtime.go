@@ -7,12 +7,12 @@ import (
 )
 
 type Runtime interface {
-	EnsureFreshContainerRunning(context.Context, config.Config, string, string, string, string) error
+	EnsureFreshContainerRunning(context.Context, config.Config, string, string) error
 	EnsureContainerDestroyed(context.Context, config.Config, string) error
 	EnsureContainerStoppedOrNonExistent(context.Context, config.Config, string) error
 }
 
-type ImageInRuntime interface {
+type ImageUtils interface {
 	LoadImagesFromDir(context.Context, string, string) error
 	LoadImagesFromFile(context.Context, string) error
 }

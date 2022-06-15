@@ -123,3 +123,31 @@ func (mr *MockNetInterfaceMockRecorder) IpForHttp(arg0 interface{}) *gomock.Call
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IpForHttp", reflect.TypeOf((*MockNetInterface)(nil).IpForHttp), arg0)
 }
+
+// SetUpVeth mocks base method.
+func (m *MockNetInterface) SetUpVeth(arg0, arg1, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetUpVeth", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetUpVeth indicates an expected call of SetUpVeth.
+func (mr *MockNetInterfaceMockRecorder) SetUpVeth(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetUpVeth", reflect.TypeOf((*MockNetInterface)(nil).SetUpVeth), arg0, arg1, arg2)
+}
+
+// TearDownVeth mocks base method.
+func (m *MockNetInterface) TearDownVeth(arg0 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "TearDownVeth", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// TearDownVeth indicates an expected call of TearDownVeth.
+func (mr *MockNetInterfaceMockRecorder) TearDownVeth(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TearDownVeth", reflect.TypeOf((*MockNetInterface)(nil).TearDownVeth), arg0)
+}

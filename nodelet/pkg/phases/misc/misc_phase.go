@@ -8,7 +8,6 @@ import (
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/kubeutils"
-	"github.com/platform9/nodelet/nodelet/pkg/utils/masterless"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/netutils"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/phaseutils"
 	sunpikev1alpha1 "github.com/platform9/pf9-qbert/sunpike/apiserver/pkg/apis/sunpike/v1alpha1"
@@ -17,11 +16,10 @@ import (
 )
 
 type MiscPhase struct {
-	HostPhase  *sunpikev1alpha1.HostPhase
-	log        *zap.SugaredLogger
-	kubeUtils  kubeutils.Utils
-	netUtils   netutils.NetInterface
-	masterless masterless.Masterless
+	HostPhase *sunpikev1alpha1.HostPhase
+	log       *zap.SugaredLogger
+	kubeUtils kubeutils.Utils
+	netUtils  netutils.NetInterface
 }
 
 func NewMiscPhase() *MiscPhase {
@@ -31,14 +29,16 @@ func NewMiscPhase() *MiscPhase {
 			Name:  "Miscellaneous scripts and checks",
 			Order: int32(constants.MiscPhaseOrder),
 		},
-		log:        log,
-		kubeUtils:  nil,
-		netUtils:   netutils.New(),
-		masterless: nil,
+		log:       log,
+		kubeUtils: nil,
+		netUtils:  netutils.New(),
 	}
 }
 
-var err error
+var (
+	err            error
+	nodeIdentifier string
+)
 
 func (m *MiscPhase) GetHostPhase() sunpikev1alpha1.HostPhase {
 	return *m.HostPhase
@@ -60,7 +60,7 @@ func (m *MiscPhase) Status(ctx context.Context, cfg config.Config) error {
 		return nil
 	}
 
-	nodeIdentifier, err := m.netUtils.GetNodeIdentifier(cfg)
+	nodeIdentifier, err = m.netUtils.GetNodeIdentifier(cfg)
 	if err != nil {
 		m.log.Errorf(err.Error())
 		phaseutils.SetHostStatus(m.HostPhase, constants.FailedState, err.Error())
@@ -80,10 +80,7 @@ func (m *MiscPhase) Status(ctx context.Context, cfg config.Config) error {
 		phaseutils.SetHostStatus(m.HostPhase, constants.FailedState, err.Error())
 		return err
 	}
-	nodeIdentifier, err = m.netUtils.GetNodeIdentifier(cfg)
-	if err != nil {
-		return err
-	}
+
 	//checking if node is Up
 	_, err = m.kubeUtils.GetNodeFromK8sApi(ctx, nodeIdentifier)
 	if err != nil {
@@ -108,14 +105,7 @@ func (m *MiscPhase) Start(ctx context.Context, cfg config.Config) error {
 			return err
 		}
 	}
-	m.masterless = masterless.New(cfg)
-	if cfg.ClusterRole == constants.RoleWorker {
-		err = m.masterless.InitMasterlessWorkerIfNecessary(ctx, cfg)
-		if err != nil {
-			m.log.Errorf("could not init masterless worker")
-			return err
-		}
-	}
+
 	err = m.kubeUtils.WriteCloudProviderConfig(cfg)
 	if err != nil {
 		m.log.Errorf("could not write cloud config file")
@@ -128,15 +118,6 @@ func (m *MiscPhase) Start(ctx context.Context, cfg config.Config) error {
 func (m *MiscPhase) Stop(ctx context.Context, cfg config.Config) error {
 
 	m.log.Infof("Running Stop of phase: %s", m.HostPhase.Name)
-
-	m.masterless = masterless.New(cfg)
-	if cfg.ClusterRole == constants.RoleWorker {
-		err = m.masterless.TearDownMasterlessWorkerIfNecessary(ctx, cfg)
-		if err != nil {
-			m.log.Errorf("could not tear down masterless worker")
-			return err
-		}
-	}
 
 	phaseutils.SetHostStatus(m.HostPhase, constants.StoppedState, "")
 	return nil

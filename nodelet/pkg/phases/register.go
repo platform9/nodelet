@@ -33,17 +33,17 @@ func GetMasterPhases() ([]PhaseInterface, error) {
 		network.NewConfigureNetworkPhase(constants.PhaseBaseDir),                   // Order 60
 		network.NewConfigureCNIPhase(constants.PhaseBaseDir),                       // Order 65
 		authwebhhook.NewAuthWebhookPhase(constants.PhaseBaseDir),                   // Order 70
-		misc.NewMiscPhase(constants.PhaseBaseDir),                                  // Order 75
-		kubelet.NewKubeletConfigureStartPhase(constants.PhaseBaseDir),              // Order 80
-		kubeproxy.NewKubeProxyStartPhase(constants.PhaseBaseDir),                   // Order 90
-		misc.NewWaitForK8sSvcPhase(constants.PhaseBaseDir),                         // Order 100
-		misc.NewLabelTaintNodePhase(),                                              // Order 110
-		kubelet.NewDynamicKubeletConfigPhase(constants.PhaseBaseDir),               // Order 120
-		misc.NewUncordonNodePhase(),                                                // Order 130
-		addons.NewDeployAppCatalogPhase(),                                          // Order 160
-		keepalived.NewConfigureStartKeepalivedPhase(constants.PhaseBaseDir),        // Order 180
-		addons.NewPF9CoreDNSPhase(),                                                // Order 206
-		cleanup.NewDrainNodePhase(),                                                // Order 210
+		misc.NewMiscPhase(), // Order 75
+		kubelet.NewKubeletConfigureStartPhase(constants.PhaseBaseDir),       // Order 80
+		kubeproxy.NewKubeProxyStartPhase(constants.PhaseBaseDir),            // Order 90
+		misc.NewWaitForK8sSvcPhase(constants.PhaseBaseDir),                  // Order 100
+		misc.NewLabelTaintNodePhase(),                                       // Order 110
+		kubelet.NewDynamicKubeletConfigPhase(constants.PhaseBaseDir),        // Order 120
+		misc.NewUncordonNodePhase(),                                         // Order 130
+		addons.NewDeployAppCatalogPhase(),                                   // Order 160
+		keepalived.NewConfigureStartKeepalivedPhase(constants.PhaseBaseDir), // Order 180
+		addons.NewPF9CoreDNSPhase(),                                         // Order 206
+		cleanup.NewDrainNodePhase(),                                         // Order 210
 	}
 	if err := validatePhaseOrdering(masterPhaseList); err != nil {
 		return []PhaseInterface{}, err
@@ -60,14 +60,14 @@ func GetWorkerPhases() ([]PhaseInterface, error) {
 		containerruntime.NewLoadImagePhase(),                                       // Order 48
 		network.NewConfigureNetworkPhase(constants.PhaseBaseDir),                   // Order 60
 		network.NewConfigureCNIPhase(constants.PhaseBaseDir),                       // Order 65
-		misc.NewMiscPhase(constants.PhaseBaseDir),                                  // Order 75
-		kubelet.NewKubeletConfigureStartPhase(constants.PhaseBaseDir),              // Order 80
-		kubeproxy.NewKubeProxyStartPhase(constants.PhaseBaseDir),                   // Order 90
-		misc.NewWaitForK8sSvcPhase(constants.PhaseBaseDir),                         // Order 100
-		misc.NewLabelTaintNodePhase(),                                              // Order 110
-		kubelet.NewDynamicKubeletConfigPhase(constants.PhaseBaseDir),               // Order 120
-		misc.NewUncordonNodePhase(),                                                // Order 130
-		cleanup.NewDrainNodePhase(),                                                // Order 210
+		misc.NewMiscPhase(), // Order 75
+		kubelet.NewKubeletConfigureStartPhase(constants.PhaseBaseDir), // Order 80
+		kubeproxy.NewKubeProxyStartPhase(constants.PhaseBaseDir),      // Order 90
+		misc.NewWaitForK8sSvcPhase(constants.PhaseBaseDir),            // Order 100
+		misc.NewLabelTaintNodePhase(),                                 // Order 110
+		kubelet.NewDynamicKubeletConfigPhase(constants.PhaseBaseDir),  // Order 120
+		misc.NewUncordonNodePhase(),                                   // Order 130
+		cleanup.NewDrainNodePhase(),                                   // Order 210
 	}
 	if err := validatePhaseOrdering(workerPhaseList); err != nil {
 		return []PhaseInterface{}, err

@@ -265,3 +265,17 @@ func (mr *MockFileInterfaceMockRecorder) WriteToFile(arg0, arg1, arg2 interface{
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WriteToFile", reflect.TypeOf((*MockFileInterface)(nil).WriteToFile), arg0, arg1, arg2)
 }
+
+// WriteToFileWithBase64Decoding mocks base method.
+func (m *MockFileInterface) WriteToFileWithBase64Decoding(arg0, arg1 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WriteToFileWithBase64Decoding", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WriteToFileWithBase64Decoding indicates an expected call of WriteToFileWithBase64Decoding.
+func (mr *MockFileInterfaceMockRecorder) WriteToFileWithBase64Decoding(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WriteToFileWithBase64Decoding", reflect.TypeOf((*MockFileInterface)(nil).WriteToFileWithBase64Decoding), arg0, arg1)
+}

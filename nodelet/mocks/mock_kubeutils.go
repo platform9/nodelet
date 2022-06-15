@@ -134,6 +134,21 @@ func (mr *MockUtilsMockRecorder) EnsureDns(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnsureDns", reflect.TypeOf((*MockUtils)(nil).EnsureDns), arg0)
 }
 
+// GetApiserverEndpointIp mocks base method.
+func (m *MockUtils) GetApiserverEndpointIp(arg0 context.Context, arg1, arg2 string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetApiserverEndpointIp", arg0, arg1, arg2)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetApiserverEndpointIp indicates an expected call of GetApiserverEndpointIp.
+func (mr *MockUtilsMockRecorder) GetApiserverEndpointIp(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetApiserverEndpointIp", reflect.TypeOf((*MockUtils)(nil).GetApiserverEndpointIp), arg0, arg1, arg2)
+}
+
 // GetNodeFromK8sApi mocks base method.
 func (m *MockUtils) GetNodeFromK8sApi(arg0 context.Context, arg1 string) (*v1.Node, error) {
 	m.ctrl.T.Helper()
@@ -217,4 +232,18 @@ func (m *MockUtils) UncordonNode(arg0 context.Context, arg1 string) error {
 func (mr *MockUtilsMockRecorder) UncordonNode(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UncordonNode", reflect.TypeOf((*MockUtils)(nil).UncordonNode), arg0, arg1)
+}
+
+// WriteCloudProviderConfig mocks base method.
+func (m *MockUtils) WriteCloudProviderConfig(arg0 config.Config) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WriteCloudProviderConfig", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WriteCloudProviderConfig indicates an expected call of WriteCloudProviderConfig.
+func (mr *MockUtilsMockRecorder) WriteCloudProviderConfig(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WriteCloudProviderConfig", reflect.TypeOf((*MockUtils)(nil).WriteCloudProviderConfig), arg0)
 }
