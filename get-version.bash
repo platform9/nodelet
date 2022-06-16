@@ -4,9 +4,9 @@
 # 2. Latest git tag using git describe --tags HEAD, if available
 # 3. Using branch name
 if [[ -n "${TAG_NAME}" ]]; then
-  TAG=$TAG_NAME
+  TAG=$( echo $TAG_NAME | sed 's/^v//')
 elif [[ $(git describe --tags HEAD > /dev/null 2>&1; echo $?) -eq 0 ]]; then
-  TAG=$(git describe --tags HEAD)
+  TAG=$(git describe --tags HEAD | sed 's/^v//')
   IFS='-'
   read -a strarr <<< "$TAG"
   TAG=${strarr[0]}
