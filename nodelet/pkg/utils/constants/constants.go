@@ -112,7 +112,7 @@ var (
 	// ContainerdSocket is default address for containerd socket
 	ContainerdSocket = "/run/containerd/containerd.sock"
 
-	DockerSocket = "/var/run/docker.sock"
+	DockerSocket = "unix:///var/run/docker.sock"
 	// DefaultSnapShotter is default snapshotter for containerd
 	DefaultSnapShotter = "overlayfs"
 	//K8sNamespace is namespace for kubernetes

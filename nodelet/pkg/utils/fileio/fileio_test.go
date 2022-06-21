@@ -498,5 +498,49 @@ var _ = Describe("Fileio", func() {
 				}
 			})
 		})
+		Context("Base64 Decode", func() {
+			var (
+				encodedFile   string
+				decodedFile   string
+				encodedData   string
+				decodedData   []string
+				actualDecoded []string
+			)
+			BeforeEach(func() {
+				fileInpOut = New()
+				cmdLine = command.New()
+				ctx = context.TODO()
+				_, _ = cmdLine.RunCommand(ctx, nil, 0, "", "mkdir", "testData")
+				encodedFile = "testData/encoded"
+				decodedFile = "testData/decoded"
+
+			})
+			AfterEach(func() {
+				_, _ = cmdLine.RunCommand(ctx, nil, 0, "", "rm", "-rf", "testData")
+				ctx.Done()
+			})
+			It("Should decode encoded data", func() {
+				encodedData = "aGVsbG8K"
+				err = fileInpOut.WriteToFile(encodedFile, encodedData, false)
+				_, decodedData, _ = cmdLine.RunCommandWithStdOut(ctx, nil, 0, "", "/usr/bin/base64", "--decode", encodedFile)
+				err := fileInpOut.WriteToFileWithBase64Decoding(decodedFile, encodedFile)
+				Expect(err).To(BeNil())
+				actualDecoded, err = fileInpOut.ReadFileByLine(decodedFile)
+				Expect(err).To(BeNil())
+				Expect(actualDecoded[0]).To(Equal(decodedData[0]))
+			})
+			It("Should fail if data isn't base64 encoded", func() {
+				encodedData = "duplicate"
+				err = fileInpOut.WriteToFile(encodedFile, encodedData, false)
+				_, _, _ = cmdLine.RunCommandWithStdOut(ctx, nil, 0, "", "/usr/bin/base64", "--decode", encodedFile)
+				err := fileInpOut.WriteToFileWithBase64Decoding(decodedFile, encodedFile)
+				Expect(err).ToNot(BeNil())
+			})
+			It("Should fail if encodedfile is absent", func() {
+				encodedFile = "testData/absent"
+				err := fileInpOut.WriteToFileWithBase64Decoding(decodedFile, encodedFile)
+				Expect(err).ToNot(BeNil())
+			})
+		})
 	})
 })

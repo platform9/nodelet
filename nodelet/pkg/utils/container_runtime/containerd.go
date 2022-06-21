@@ -2,6 +2,7 @@ package containerruntime
 
 import (
 	"context"
+	"fmt"
 	"syscall"
 
 	"github.com/containerd/containerd"
@@ -53,80 +54,125 @@ func newContainerdClient() (*containerd.Client, error) {
 }
 
 func (c *Containerd) EnsureFreshContainerRunning(ctx context.Context, cfg config.Config, containerName string, containerImage string) error {
-	err := c.EnsureContainerDestroyed(ctx, cfg, containerName)
+	err := c.EnsureContainerDestroyed(ctx, cfg, containerImage)
 	if err != nil {
 		return err
 	}
 	img, err := c.Client.GetImage(ctx, containerImage)
 	if err != nil {
-		return errors.Wrapf(err, "couldn't get %s iamge from client", containerImage)
+		return errors.Wrapf(err, "couldn't get %s iamge from client\n", containerImage)
 	}
 	container, err := c.Client.NewContainer(
 		ctx,
 		containerName,
-		containerd.WithNewSpec(oci.WithImageConfig(img)),
+		containerd.WithNewSnapshot(containerName, img),
 		containerd.WithImageName(containerImage),
+		containerd.WithNewSpec(oci.WithImageConfig(img)),
 	)
 	if err != nil {
-		return errors.Wrapf(err, "couldn't create container %s", containerName)
+		return errors.Wrapf(err, "couldn't create container %s\n", containerName)
 	}
 
 	// create a task from the container
-	task, err := container.NewTask(ctx, cio.NewCreator(cio.WithStdio))
+	task, err := container.NewTask(ctx, cio.NewCreator())
 	if err != nil {
-		return errors.Wrapf(err, "couldn't create task from container %s", containerName)
+		return errors.Wrapf(err, "couldn't create task from container %s\n", containerName)
 	}
 
+	exitStatusC, err := task.Wait(ctx)
+	if err != nil {
+		return err
+	}
 	err = task.Start(ctx)
 	if err != nil {
-		return errors.Wrapf(err, "couldn't start task from container %s", containerName)
+		return errors.Wrapf(err, "couldn't start task from container %s\n", containerName)
 	}
+
+	status := <-exitStatusC
+	code, _, err := status.Result()
+	if err != nil {
+		return err
+	}
+	if code != 0 {
+		return fmt.Errorf("task creation process exited with status code: %d", code)
+	}
+
 	return nil
 }
 
-func (c *Containerd) EnsureContainerDestroyed(ctx context.Context, cfg config.Config, containerName string) error {
+func (c *Containerd) EnsureContainerDestroyed(ctx context.Context, cfg config.Config, containerImage string) error {
 
 	containers, err := c.Client.Containers(ctx)
 	if err != nil {
-		return errors.Wrap(err, "couldn't get containers from containerd client")
+		return errors.Wrap(err, "couldn't get containers from containerd client\n")
 	}
 
 	for _, container := range containers {
-		if container.ID() == containerName {
-			err = container.Delete(ctx, containerd.WithSnapshotCleanup)
-			if err != nil {
-				return errors.Wrapf(err, "couldn't delete %s container", containerName)
-			}
-			break
+		img, err := container.Image(ctx)
+		if err != nil {
+			return err
 		}
-	}
-	return nil
-}
+		if img.Name() == containerImage {
 
-func (c *Containerd) EnsureContainerStoppedOrNonExistent(ctx context.Context, cfg config.Config, containerName string) error {
+			defer container.Delete(ctx, containerd.WithSnapshotCleanup)
 
-	c.log.Infof("Ensuring container %s is stopped or non-existent", containerName)
-	containers, err := c.Client.Containers(ctx)
-	if err != nil {
-		return errors.Wrap(err, "couldn't get containers from containerd client")
-	}
-	containerPresent := false
-	for _, container := range containers {
-		if container.ID() == containerName {
-			task, err := container.Task(ctx, cio.NewAttach())
+			task, err := container.Task(ctx, cio.Load)
 			if err != nil {
-				return errors.Wrapf(err, "couldn't get task from container %s", containerName)
+				return errors.Wrapf(err, "couldn't get task from container %s\n", containerImage)
 			}
-			task.Kill(ctx, syscall.SIGTERM)
+			defer task.Delete(ctx)
+
+			exitStatusC, err := task.Wait(ctx)
 			if err != nil {
-				return errors.Wrapf(err, "couldn't kill task from container %s", containerName)
+				return err
 			}
-			containerPresent = true
+
+			// kill the process and get the exit status
+			if err := task.Kill(ctx, syscall.SIGTERM); err != nil {
+				return err
+			}
+
+			status := <-exitStatusC
+			code, _, err := status.Result()
+			if err != nil {
+				return err
+			}
+			if code != 0 {
+				return fmt.Errorf("task deletion exited with status code: %d", code)
+			}
 			return nil
 		}
 	}
-	if !containerPresent {
-		c.log.Info("container %s not present", containerName)
+	c.log.Infof("container not present: %s\n", containerImage)
+	return nil
+}
+
+func (c *Containerd) EnsureContainerStoppedOrNonExistent(ctx context.Context, cfg config.Config, containerImage string) error {
+
+	c.log.Info("Ensuring container %s is stopped or non-existent", containerImage)
+	containers, err := c.Client.Containers(ctx)
+	if err != nil {
+		return errors.Wrap(err, "couldn't get containers from containerd client\n")
 	}
+	for _, container := range containers {
+		img, err := container.Image(ctx)
+		if err != nil {
+			return err
+		}
+		if img.Name() == containerImage {
+			task, err := container.Task(ctx, cio.Load)
+			if err != nil {
+				return errors.Wrapf(err, "couldn't get task from container %s\n", containerImage)
+			}
+
+			err = task.Pause(ctx)
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+	}
+	c.log.Infof("container %s not present\n", containerImage)
+
 	return nil
 }

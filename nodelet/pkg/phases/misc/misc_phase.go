@@ -74,6 +74,15 @@ func (m *MiscPhase) Status(ctx context.Context, cfg config.Config) error {
 		return fmt.Errorf("node interface might have lost IP address. Failing")
 	}
 
+	if m.kubeUtils == nil || m.kubeUtils.IsInterfaceNil() {
+		m.kubeUtils, err = kubeutils.NewClient()
+		if err != nil {
+			m.log.Error(errors.Wrap(err, "could not refresh k8s client"))
+			phaseutils.SetHostStatus(m.HostPhase, constants.FailedState, err.Error())
+			return err
+		}
+	}
+
 	err = m.kubeUtils.K8sApiAvailable(cfg)
 	if err != nil {
 		m.log.Error(errors.Wrapf(err, "api not available"))
