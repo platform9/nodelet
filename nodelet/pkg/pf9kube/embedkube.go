@@ -14,6 +14,9 @@ var kube embed.FS
 //go:embed etc/*
 var etc embed.FS
 
+//go:embed lib/*
+var lib embed.FS
+
 func Extract() error {
 	zap.S().Infof("Extracting pf9-kube to '%s'", "/opt/pf9/")
 	efs := &embedutil.EmbedFS{Fs: kube, Root: "pf9"}
@@ -26,6 +29,12 @@ func Extract() error {
 	err = efs.Extract("/etc")
 	if err != nil {
 		return fmt.Errorf("failed to extract pf9-kube to /etc: %s", err)
+	}
+	zap.S().Info("Extracting lib to /lib")
+	efs = &embedutil.EmbedFS{Fs: lib, Root: "lib"}
+	err = efs.Extract("/lib")
+	if err != nil {
+		return fmt.Errorf("failed to extract pf9-kube to /lib: %s", err)
 	}
 	return nil
 }

@@ -484,6 +484,7 @@ $(COMMON_SRC_ROOT): easyrsa $(AUTHBS_SRC_DIR) kubernetes nodelet cni-plugins ner
 	mkdir -p $(COMMON_SRC_ROOT)/etc/
 	cp -a $(AGENT_SRC_DIR)/nodelet/pkg/pf9kube/pf9/* $(COMMON_SRC_ROOT)/opt/pf9/
 	cp -a $(AGENT_SRC_DIR)/nodelet/pkg/pf9kube/etc/* $(COMMON_SRC_ROOT)/etc/
+	cp -ar $(AGENT_SRC_DIR)/nodelet/pkg/pf9kube/lib/ $(COMMON_SRC_ROOT)/lib/
 	sed -i s/__KUBERNETES_VERSION__/$(KUBERNETES_VERSION)/ $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/defaults.env
 	sed -i s/__FLANNEL_VERSION__/$(FLANNEL_VERSION)/ $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/defaults.env
 	mkdir -p $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/bin/
@@ -507,20 +508,22 @@ $(COMMON_SRC_ROOT): easyrsa $(AUTHBS_SRC_DIR) kubernetes nodelet cni-plugins ner
 	mv -f $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/conf/networkapps/calico.yaml $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/conf/networkapps/calico-${KUBERNETES_VERSION}.yaml
 	mv -f $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/conf/networkapps/canal.yaml $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/conf/networkapps/canal-${KUBERNETES_VERSION}.yaml
 	mv -f $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/conf/networkapps/weave.yaml $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/conf/networkapps/weave-${KUBERNETES_VERSION}.yaml
-	mkdir -p $(COMMON_SRC_ROOT)/opt/pf9/nodelet/
-	mv -f $(NODELET) $(COMMON_SRC_ROOT)/opt/pf9/nodelet/
-	cp -ar $(NODELET_SRC_DIR)/tooling/tree/* $(COMMON_SRC_ROOT)/
 	cp -a ${KUBERNETES_DIR}/${NERDCTL_DIR}/nerdctl $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}bin/
 	cp -a ${KUBERNETES_DIR}/${CRICTL_DIR}/crictl $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}bin/
 	cp -a ${KUBERNETES_DIR}/calicoctl $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/bin/
 	cp -a ${ETCD_TMP_DIR}/etcdctl $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/bin/
 	cp -a ${KUBERNETES_DIR}/jq $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}bin/
 
-$(RPM_SRC_ROOT): | $(COMMON_SRC_ROOT)
+$(RPM_SRC_ROOT): | $(COMMON_SRC_ROOT) nodelet
 	echo "make RPM_SRC_ROOT: $(RPM_SRC_ROOT)"
+	mkdir -p $(COMMON_SRC_ROOT)/opt/pf9/nodelet/
+	mv -f $(NODELET) $(COMMON_SRC_ROOT)/opt/pf9/nodelet/
 	cp -a $(COMMON_SRC_ROOT) $(RPM_SRC_ROOT)
 
-$(DEB_SRC_ROOT): | $(COMMON_SRC_ROOT)
+$(DEB_SRC_ROOT): | $(COMMON_SRC_ROOT) nodelet
+	echo "make DEB_SRC_ROOT: $(DEB_SRC_ROOT)"
+	mkdir -p $(COMMON_SRC_ROOT)/opt/pf9/nodelet/
+	mv -f $(NODELET) $(COMMON_SRC_ROOT)/opt/pf9/nodelet/
 	cp -a $(COMMON_SRC_ROOT) $(DEB_SRC_ROOT)
 
 debug:
