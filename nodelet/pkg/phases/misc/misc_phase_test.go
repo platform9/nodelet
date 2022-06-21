@@ -59,7 +59,10 @@ var _ = Describe("Test Misc phase", func() {
 	Context("Validates status command", func() {
 
 		Context("when role is master", func() {
-			fakeCfg.ClusterRole = constants.RoleMaster
+			BeforeEach(func() {
+				fakeCfg.ClusterRole = constants.RoleMaster
+			})
+
 			It("does nothing and returns nil", func() {
 				err := fakePhase.Status(ctx, *fakeCfg)
 				assert.Nil(GinkgoT(), err)
@@ -81,8 +84,7 @@ var _ = Describe("Test Misc phase", func() {
 			})
 			It("Fails when nodeIdentifier is 127.0.0.1", func() {
 				err := fmt.Errorf("node interface might have lost IP address. Failing")
-				fakeNodeIdentifier = "127.0.0.1"
-				fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
+				fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return("127.0.0.1", nil).Times(1)
 				fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
 				reterr := fakePhase.Status(ctx, *fakeCfg)
 				assert.NotNil(GinkgoT(), reterr)
@@ -91,8 +93,8 @@ var _ = Describe("Test Misc phase", func() {
 			It("Fails when k8s API server is unavailable", func() {
 				err := errors.New("fake error")
 				fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
-				fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
 				fakeKubeUtils.EXPECT().K8sApiAvailable(*fakeCfg).Return(err).Times(1)
+				fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
 
 				reterr := fakePhase.Status(ctx, *fakeCfg)
 				assert.NotNil(GinkgoT(), reterr)
@@ -102,9 +104,9 @@ var _ = Describe("Test Misc phase", func() {
 
 				err := errors.New("fake error")
 				fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
-				fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
 				fakeKubeUtils.EXPECT().K8sApiAvailable(*fakeCfg).Return(nil).Times(1)
 				fakeKubeUtils.EXPECT().GetNodeFromK8sApi(ctx, fakeNodeIdentifier).Return(fakeNode, err).Times(1)
+				fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
 				reterr := fakePhase.Status(ctx, *fakeCfg)
 				assert.NotNil(GinkgoT(), reterr)
 				assert.Equal(GinkgoT(), reterr, err)
@@ -114,14 +116,15 @@ var _ = Describe("Test Misc phase", func() {
 	})
 	Context("Validates start command", func() {
 		It("fails if could not write cloud config file", func() {
+			err := errors.New("fake error")
+			fakeKubeUtils.EXPECT().WriteCloudProviderConfig(*fakeCfg).Return(err).AnyTimes()
 			fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
-			fakeKubeUtils.EXPECT().WriteCloudProviderConfig(err).AnyTimes()
 			ret := fakePhase.Start(ctx, *fakeCfg)
 			assert.NotNil(GinkgoT(), ret)
 		})
 		It("succeds if writes cloud config file", func() {
+			fakeKubeUtils.EXPECT().WriteCloudProviderConfig(*fakeCfg).Return(nil).AnyTimes()
 			fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
-			fakeKubeUtils.EXPECT().WriteCloudProviderConfig(nil).AnyTimes()
 			ret := fakePhase.Start(ctx, *fakeCfg)
 			assert.Nil(GinkgoT(), ret)
 		})

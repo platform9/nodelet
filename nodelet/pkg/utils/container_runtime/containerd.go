@@ -112,6 +112,7 @@ func (c *Containerd) EnsureContainerDestroyed(ctx context.Context, cfg config.Co
 		if err != nil {
 			return err
 		}
+
 		if img.Name() == containerImage {
 
 			defer container.Delete(ctx, containerd.WithSnapshotCleanup)

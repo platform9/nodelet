@@ -35,11 +35,6 @@ func NewMiscPhase() *MiscPhase {
 	}
 }
 
-var (
-	err            error
-	nodeIdentifier string
-)
-
 func (m *MiscPhase) GetHostPhase() sunpikev1alpha1.HostPhase {
 	return *m.HostPhase
 }
@@ -60,7 +55,7 @@ func (m *MiscPhase) Status(ctx context.Context, cfg config.Config) error {
 		return nil
 	}
 
-	nodeIdentifier, err = m.netUtils.GetNodeIdentifier(cfg)
+	nodeIdentifier, err := m.netUtils.GetNodeIdentifier(cfg)
 	if err != nil {
 		m.log.Error(err.Error())
 		phaseutils.SetHostStatus(m.HostPhase, constants.FailedState, err.Error())
