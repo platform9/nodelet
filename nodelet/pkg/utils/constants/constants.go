@@ -74,12 +74,16 @@ const (
 	DefaultSunpikeConfigPath = "/etc/pf9/nodelet/config_sunpike.yaml"
 	// TrueString represents true as a string in nodeletd
 	TrueString = "true"
-	//LoopBackIpString represents loopback IP string also known as localhost
+	// LoopBackIpString represents loopback IP string also known as localhost
 	LoopBackIpString = "127.0.0.1"
 	// LocalHost represents localhost as a string
 	LocalHostString = "localhost"
-	//LocalCloudProvider represents cloud provider type as local
+	// LocalCloudProvider represents cloud provider type as local
 	LocalCloudProvider = "local"
+	// RuntimeContainerd represents containerd service
+	RuntimeContainerd = "containerd"
+	// RuntimeDocker represents docker service
+	RuntimeDocker = "docker"
 )
 
 var (
@@ -97,11 +101,14 @@ var (
 	// very basic replacement to sets with a constant time and simplified lookup.
 	ValidCgroupOps = map[string]struct{}{"status": {}}
 
-	// Newly added constants from env variables
-	ConfigDstDir             = "/etc/pf9/kube.d"
-	AdminCerts               = ConfigDstDir + "/certs/admin"
-	KubeConfig               = ConfigDstDir + "/kubeconfigs/admin.yaml"
-	KubectlCmd               = fmt.Sprintf("bin/kubectl -v=8 --kubeconfig=%s --context=default-context", KubeConfig)
+	ConfigDstDir = "/etc/pf9/kube.d"
+
+	AdminCerts = ConfigDstDir + "/certs/admin"
+
+	KubeConfig = ConfigDstDir + "/kubeconfigs/admin.yaml"
+
+	KubectlCmd = fmt.Sprintf("bin/kubectl -v=8 --kubeconfig=%s --context=default-context", KubeConfig)
+
 	KubeStackStartFileMarker = "var/opt/pf9/is_node_booting_up"
 	// UserImagesDir is the default directory for tar/zip archives of user images
 	UserImagesDir = "/var/opt/pf9/images"
@@ -111,22 +118,20 @@ var (
 	ChecksumFile = fmt.Sprintf("%s/sha256sums.txt", ChecksumDir)
 	// ContainerdSocket is default address for containerd socket
 	ContainerdSocket = "/run/containerd/containerd.sock"
-
+	// DockerSocket is address for docker socket
 	DockerSocket = "unix:///var/run/docker.sock"
 	// DefaultSnapShotter is default snapshotter for containerd
 	DefaultSnapShotter = "overlayfs"
-	//K8sNamespace is namespace for kubernetes
+	// K8sNamespace is namespace for kubernetes
 	K8sNamespace = "k8s.io"
-
+	// K8sRegistry represents registry for official images for kubernetes
 	K8sRegistry = "k8s.gcr.io"
 
 	ConfigSrcDir = "/opt/pf9/pf9-kube/conf"
-
+	// CoreDNSTemplate is template file for coredns
 	CoreDNSTemplate = fmt.Sprintf("%s/networkapps/coredns.yaml", ConfigSrcDir)
-
+	// CoreDNSFile is applied coredns file
 	CoreDNSFile = fmt.Sprintf("%s/networkapps/coredns-applied.yaml", ConfigSrcDir)
-
-	Pf9KubeHttpProxyConfigured = "false"
 
 	CloudConfigFile = "/etc/pf9/kube.d/cloud-config"
 

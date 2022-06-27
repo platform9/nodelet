@@ -7,14 +7,12 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/pkg/errors"
-	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 	"go.uber.org/zap"
 )
 
 type Docker struct {
 	Service string
-	Cli     string
 	Socket  string
 	Client  *client.Client
 	log     *zap.SugaredLogger
@@ -26,20 +24,19 @@ var (
 )
 
 func NewDocker() (Runtime, error) {
-	dockerClient, err = newDockerClient()
+	dockerClient, err = NewDockerClient()
 	if err != nil {
 		return nil, err
 	}
 	return &Docker{
 		Service: "docker",
-		Cli:     "/usr/bin/docker",
 		Socket:  constants.DockerSocket,
 		Client:  dockerClient,
 		log:     zap.S(),
 	}, nil
 }
 
-func newDockerClient() (*client.Client, error) {
+func NewDockerClient() (*client.Client, error) {
 	var err error
 	opts := client.WithHost(constants.DockerSocket)
 	dclient, err := client.NewClientWithOpts(opts)
@@ -50,9 +47,9 @@ func newDockerClient() (*client.Client, error) {
 	return dclient, nil
 }
 
-func (d *Docker) EnsureFreshContainerRunning(ctx context.Context, cfg config.Config, containerName string, containerImage string) error {
+func (d *Docker) EnsureFreshContainerRunning(ctx context.Context, containerName string, containerImage string) error {
 
-	err = d.EnsureContainerDestroyed(ctx, cfg, containerName)
+	err = d.EnsureContainerDestroyed(ctx, containerName, "10s")
 	if err != nil {
 		return errors.Wrapf(err, "couldn't remove container: %s", containerName)
 	}
@@ -78,7 +75,7 @@ func (d *Docker) EnsureFreshContainerRunning(ctx context.Context, cfg config.Con
 
 }
 
-func (d *Docker) EnsureContainerDestroyed(ctx context.Context, cfg config.Config, containerName string) error {
+func (d *Docker) EnsureContainerDestroyed(ctx context.Context, containerName string, timeout string) error {
 	d.log.Infof("Ensuring container %s is destroyed", containerName)
 
 	_, err := d.Client.ContainerInspect(ctx, containerName)
@@ -105,7 +102,7 @@ func (d *Docker) EnsureContainerDestroyed(ctx context.Context, cfg config.Config
 	return nil
 }
 
-func (d *Docker) EnsureContainerStoppedOrNonExistent(ctx context.Context, cfg config.Config, containerName string) error {
+func (d *Docker) EnsureContainerStoppedOrNonExistent(ctx context.Context, containerName string) error {
 	d.log.Infof("Ensuring container %s is stopped or non-existent", containerName)
 	cont, err := d.Client.ContainerInspect(ctx, containerName)
 	if err != nil {

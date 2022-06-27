@@ -51,10 +51,6 @@ func (m *MiscPhase) Status(ctx context.Context, cfg config.Config) error {
 
 	m.log.Infof("Running Status of phase: %s", m.HostPhase.Name)
 
-	if cfg.ClusterRole == constants.RoleMaster {
-		return nil
-	}
-
 	nodeIdentifier, err := m.netUtils.GetNodeIdentifier(cfg)
 	if err != nil {
 		m.log.Error(err.Error())
@@ -85,13 +81,13 @@ func (m *MiscPhase) Status(ctx context.Context, cfg config.Config) error {
 		return err
 	}
 
-	//checking if node is Up
+	// checking if node is Up
 	_, err = m.kubeUtils.GetNodeFromK8sApi(ctx, nodeIdentifier)
 	if err != nil {
 		m.log.Errorf("node %s is not up: %w", nodeIdentifier, err)
 		return err
 	}
-	//TODO: is it needed to check if node is in ready state
+	// TODO: is it needed to check if node is in ready state
 	phaseutils.SetHostStatus(m.HostPhase, constants.RunningState, "")
 	return nil
 }

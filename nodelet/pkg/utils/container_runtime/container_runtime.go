@@ -2,14 +2,12 @@ package containerruntime
 
 import (
 	"context"
-
-	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
 )
 
 type Runtime interface {
-	EnsureFreshContainerRunning(context.Context, config.Config, string, string) error
-	EnsureContainerDestroyed(context.Context, config.Config, string) error
-	EnsureContainerStoppedOrNonExistent(context.Context, config.Config, string) error
+	EnsureFreshContainerRunning(context.Context, string, string) error
+	EnsureContainerDestroyed(context.Context, string, string) error
+	EnsureContainerStoppedOrNonExistent(context.Context, string) error
 }
 
 type ImageUtils interface {

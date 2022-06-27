@@ -9,7 +9,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/platform9/nodelet/nodelet/mocks"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
-	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 )
@@ -58,59 +57,42 @@ var _ = Describe("Test Misc phase", func() {
 
 	Context("Validates status command", func() {
 
-		Context("when role is master", func() {
-			BeforeEach(func() {
-				fakeCfg.ClusterRole = constants.RoleMaster
-			})
-
-			It("does nothing and returns nil", func() {
-				err := fakePhase.Status(ctx, *fakeCfg)
-				assert.Nil(GinkgoT(), err)
-			})
-
+		It("Fails when can't get nodeIdentifier or its null", func() {
+			err := errors.New("fake error")
+			fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, err).Times(1)
+			fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
+			reterr := fakePhase.Status(ctx, *fakeCfg)
+			assert.NotNil(GinkgoT(), reterr)
+			assert.Equal(GinkgoT(), reterr, err)
 		})
-		Context("when role is worker", func() {
-			BeforeEach(func() {
-				fakeCfg.ClusterRole = constants.RoleWorker
-			})
+		It("Fails when nodeIdentifier is 127.0.0.1", func() {
+			err := fmt.Errorf("node interface might have lost IP address. Failing")
+			fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return("127.0.0.1", nil).Times(1)
+			fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
+			reterr := fakePhase.Status(ctx, *fakeCfg)
+			assert.NotNil(GinkgoT(), reterr)
+			assert.Equal(GinkgoT(), reterr, err)
+		})
+		It("Fails when k8s API server is unavailable", func() {
+			err := errors.New("fake error")
+			fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
+			fakeKubeUtils.EXPECT().K8sApiAvailable(*fakeCfg).Return(err).Times(1)
+			fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
 
-			It("Fails when can't get nodeIdentifier or its null", func() {
-				err := errors.New("fake error")
-				fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, err).Times(1)
-				fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
-				reterr := fakePhase.Status(ctx, *fakeCfg)
-				assert.NotNil(GinkgoT(), reterr)
-				assert.Equal(GinkgoT(), reterr, err)
-			})
-			It("Fails when nodeIdentifier is 127.0.0.1", func() {
-				err := fmt.Errorf("node interface might have lost IP address. Failing")
-				fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return("127.0.0.1", nil).Times(1)
-				fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
-				reterr := fakePhase.Status(ctx, *fakeCfg)
-				assert.NotNil(GinkgoT(), reterr)
-				assert.Equal(GinkgoT(), reterr, err)
-			})
-			It("Fails when k8s API server is unavailable", func() {
-				err := errors.New("fake error")
-				fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
-				fakeKubeUtils.EXPECT().K8sApiAvailable(*fakeCfg).Return(err).Times(1)
-				fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
+			reterr := fakePhase.Status(ctx, *fakeCfg)
+			assert.NotNil(GinkgoT(), reterr)
+			assert.Equal(GinkgoT(), reterr, err)
+		})
+		It("Fails when can't get node from k8s api", func() {
 
-				reterr := fakePhase.Status(ctx, *fakeCfg)
-				assert.NotNil(GinkgoT(), reterr)
-				assert.Equal(GinkgoT(), reterr, err)
-			})
-			It("Fails when can't get node from k8s api", func() {
-
-				err := errors.New("fake error")
-				fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
-				fakeKubeUtils.EXPECT().K8sApiAvailable(*fakeCfg).Return(nil).Times(1)
-				fakeKubeUtils.EXPECT().GetNodeFromK8sApi(ctx, fakeNodeIdentifier).Return(fakeNode, err).Times(1)
-				fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
-				reterr := fakePhase.Status(ctx, *fakeCfg)
-				assert.NotNil(GinkgoT(), reterr)
-				assert.Equal(GinkgoT(), reterr, err)
-			})
+			err := errors.New("fake error")
+			fakeNetUtils.EXPECT().GetNodeIdentifier(*fakeCfg).Return(fakeNodeIdentifier, nil).Times(1)
+			fakeKubeUtils.EXPECT().K8sApiAvailable(*fakeCfg).Return(nil).Times(1)
+			fakeKubeUtils.EXPECT().GetNodeFromK8sApi(ctx, fakeNodeIdentifier).Return(fakeNode, err).Times(1)
+			fakeKubeUtils.EXPECT().IsInterfaceNil().Return(false).AnyTimes()
+			reterr := fakePhase.Status(ctx, *fakeCfg)
+			assert.NotNil(GinkgoT(), reterr)
+			assert.Equal(GinkgoT(), reterr, err)
 		})
 
 	})
