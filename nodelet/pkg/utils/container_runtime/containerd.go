@@ -12,21 +12,9 @@ import (
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 	"go.uber.org/zap"
 
-	"crypto/rand"
-	"encoding/hex"
 	"time"
 
 	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/platforms"
-	refdocker "github.com/containerd/containerd/reference/docker"
-	"github.com/containerd/containerd/remotes"
-	"github.com/containerd/imgcrypt"
-	"github.com/containerd/imgcrypt/images/encryption"
-	"github.com/containerd/nerdctl/pkg/errutil"
-	"github.com/containerd/nerdctl/pkg/imgutil/dockerconfigresolver"
-	"github.com/containerd/nerdctl/pkg/imgutil/pull"
-	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
-	"github.com/opencontainers/runtime-spec/specs-go"
 )
 
 type Containerd struct {
@@ -38,11 +26,6 @@ type Containerd struct {
 
 var (
 	containerdclient *containerd.Client
-)
-
-const (
-	NameLabelForContainer = "nerdctl/name"
-	IDLength              = 64
 )
 
 func NewContainerd() (Runtime, error) {
@@ -70,27 +53,32 @@ func NewContainerdClient() (*containerd.Client, error) {
 }
 
 func (c *Containerd) EnsureFreshContainerRunning(ctx context.Context, containerName string, containerImage string) error {
+
 	err := c.EnsureContainerDestroyed(ctx, containerName, "10s")
 	if err != nil {
 		return err
 	}
-	cont, err := CreateContainer(c.Client, ctx, containerImage, containerName)
+	container, err := c.CreateContainer(ctx, containerName, containerImage)
 	if err != nil {
 		return err
 	}
-	task, err := cont.NewTask(ctx, cio.NewCreator())
-	if err != nil {
-		return errors.Wrapf(err, "couldn't create task from container %s\n", containerName)
-	}
-	statusC, err := task.Wait(ctx)
+	// create a task from the container
+	task, err := container.NewTask(ctx, cio.NewCreator())
 	if err != nil {
 		return err
 	}
-	err = task.Start(ctx)
+
+	// make sure we wait before calling start
+	exitStatusC, err := task.Wait(ctx)
 	if err != nil {
-		return errors.Wrapf(err, "couldn't start task from container %s\n", containerName)
+		fmt.Println(err)
 	}
-	status := <-statusC
+
+	if err := task.Start(ctx); err != nil {
+		return err
+	}
+
+	status := <-exitStatusC
 	code, _, err := status.Result()
 	if err != nil {
 		return err
@@ -98,163 +86,78 @@ func (c *Containerd) EnsureFreshContainerRunning(ctx context.Context, containerN
 	if code != 0 {
 		return fmt.Errorf("task creation process exited with status code: %d", code)
 	}
-
 	return nil
 }
 
 func (c *Containerd) EnsureContainerDestroyed(ctx context.Context, containerName string, timeoutStr string) error {
 
-	containers, err := GetContainersWithGivenName(c.Client, ctx, containerName)
+	container, err := c.GetContainerWithGivenName(ctx, containerName)
+	if err != nil {
+		return err
+	}
+	if container == nil {
+		fmt.Printf("container not present: %s.\n", containerName)
+		return nil
+	}
+	err = c.StopContainer(ctx, container, timeoutStr)
+	if err != nil {
+		return err
+	}
+	err = c.RemoveContainer(ctx, container, true)
 	if err != nil {
 		return err
 	}
 
-	for _, container := range containers {
-		err = StopContainer(c.Client, ctx, container, timeoutStr)
-		if err != nil {
-			return err
-		}
-		err = RemoveContainer(c.Client, ctx, container, true)
-		if err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
 func (c *Containerd) EnsureContainerStoppedOrNonExistent(ctx context.Context, containerName string) error {
 
-	fmt.Printf("Ensuring container %s is stopped or non-existent", containerName)
+	c.log.Infof("Ensuring container %s is stopped or non-existent\n", containerName)
 
-	containers, err := GetContainersWithGivenName(c.Client, ctx, containerName)
+	container, err := c.GetContainerWithGivenName(ctx, containerName)
 	if err != nil {
 		return err
 	}
-	if len(containers) == 0 {
-		fmt.Printf("container %s does not exist", containerName)
+	if container == nil {
+		c.log.Infof("container %s does not exist\n", containerName)
 		return nil
 	}
-	if len(containers) > 1 {
-		fmt.Printf("multiple containers with same name present")
-	}
-	for _, container := range containers {
-		err = StopContainer(c.Client, ctx, container, "10s")
-		if err != nil {
-			return err
-		}
+
+	err = c.StopContainer(ctx, container, "10s")
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func GetContainersWithGivenName(client *containerd.Client, ctx context.Context, containerName string) ([]containerd.Container, error) {
-
-	filters := []string{
-		fmt.Sprintf("labels.%s==%s", "nerdctl/name", containerName),
+func (c *Containerd) CreateContainer(ctx context.Context, containerName string, containerImage string) (containerd.Container, error) {
+	image, err := c.Client.GetImage(ctx, containerImage)
+	if err != nil {
+		c.log.Infof("couldn't get %s image from client, so pulling the image\n", containerImage)
+		image, err = c.Client.Pull(ctx, containerImage, containerd.WithPullUnpack)
+		if err != nil {
+			return nil, errors.Wrapf(err, "couldn't pull image", containerImage)
+		}
+		c.log.Infof("image pulled: %s\n", image.Name())
 	}
-	containers, err := client.Containers(ctx, filters...)
+	// create a container
+	container, err := c.Client.NewContainer(
+		ctx,
+		containerName,
+		containerd.WithImage(image),
+		containerd.WithNewSnapshot(containerName, image),
+		containerd.WithNewSpec(oci.WithImageConfig(image)),
+	)
 	if err != nil {
 		return nil, err
 	}
-	return containers, nil
+	return container, nil
 }
+func (c *Containerd) RemoveContainer(ctx context.Context, container containerd.Container, force bool) error {
 
-func StopContainer(client *containerd.Client, ctx context.Context, container containerd.Container, timeoutStr string) error {
-
-	timeout, err := time.ParseDuration(timeoutStr)
-	if err != nil {
-		return err
-	}
-	task, err := container.Task(ctx, cio.Load)
-	if err != nil {
-		return err
-	}
-
-	status, err := task.Status(ctx)
-	if err != nil {
-		return err
-	}
-
-	paused := false
-
-	switch status.Status {
-	case containerd.Created, containerd.Stopped:
-		return nil
-	case containerd.Paused, containerd.Pausing:
-		paused = true
-	default:
-	}
-
-	// NOTE: ctx is main context so that it's ok to use for task.Wait().
-	exitCh, err := task.Wait(ctx)
-	if err != nil {
-		return err
-	}
-
-	if timeout > 0 {
-
-		if err := task.Kill(ctx, syscall.SIGTERM); err != nil {
-			return err
-		}
-
-		// signal will be sent once resume is finished
-		if paused {
-			if err := task.Resume(ctx); err != nil {
-				fmt.Printf("Cannot unpause container %s: %s", container.ID(), err)
-			} else {
-				// no need to do it again when send sigkill signal
-				paused = false
-			}
-		}
-
-		sigtermCtx, sigtermCtxCancel := context.WithTimeout(ctx, timeout)
-		defer sigtermCtxCancel()
-
-		err = waitContainerStop(sigtermCtx, exitCh, container.ID())
-		if err == nil {
-			return nil
-		}
-
-		if ctx.Err() != nil {
-			return ctx.Err()
-		}
-	}
-
-	if err := task.Kill(ctx, syscall.SIGKILL); err != nil {
-		return err
-	}
-
-	// signal will be sent once resume is finished
-	if paused {
-		if err := task.Resume(ctx); err != nil {
-			fmt.Printf("Cannot unpause container %s: %s", container.ID(), err)
-		}
-	}
-	return waitContainerStop(ctx, exitCh, container.ID())
-}
-
-func waitContainerStop(ctx context.Context, exitCh <-chan containerd.ExitStatus, id string) error {
-	select {
-	case <-ctx.Done():
-		if err := ctx.Err(); err != nil {
-			return fmt.Errorf("wait container %v: %w", id, err)
-		}
-		return nil
-	case status := <-exitCh:
-		return status.Error()
-	}
-}
-
-func RemoveContainer(client *containerd.Client, ctx context.Context, container containerd.Container, force bool) (retErr error) {
 	id := container.ID()
-	defer func() {
-		if errdefs.IsNotFound(retErr) {
-			retErr = nil
-		} else {
-			fmt.Printf("failed to remove container %q", id)
-		}
-	}()
-
 	task, err := container.Task(ctx, cio.Load)
 	if err != nil {
 		if errdefs.IsNotFound(err) {
@@ -309,122 +212,109 @@ func RemoveContainer(client *containerd.Client, ctx context.Context, container c
 	if _, err := container.Image(ctx); err == nil {
 		delOpts = append(delOpts, containerd.WithSnapshotCleanup)
 	}
-
-	if err := container.Delete(ctx, delOpts...); err != nil {
+	err = container.Delete(ctx, delOpts...)
+	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func CreateContainer(client *containerd.Client, ctx context.Context, imgref string, name string) (containerd.Container, error) {
-	containerdImage, err := Pull(client, ctx, imgref)
-	var (
-		opts  []oci.SpecOpts
-		cOpts []containerd.NewContainerOpts
-		id    = GenerateID()
-		s     specs.Spec
-	)
+func (c *Containerd) StopContainer(ctx context.Context, container containerd.Container, timeoutStr string) error {
 
-	opts = append(opts,
-		oci.WithDefaultSpec(),
-	)
-	opts = append(opts, oci.WithImageConfig(containerdImage))
-	//imageRef = ensuredImage.Ref
-	//name = referenceutil.SuggestContainerName(imageRef, id)
-	cOpts = append(cOpts, containerd.WithNewSnapshot(id, containerdImage))
-
-	spec := containerd.WithSpec(&s, opts...)
-
-	cOpts = append(cOpts, spec)
-
-	m := make(map[string]string)
-	if name != "" {
-		m[NameLabelForContainer] = name
-	}
-	cOpts = append(cOpts, containerd.WithAdditionalContainerLabels(m))
-
-	container, err := client.NewContainer(ctx, id, cOpts...)
+	timeout, err := time.ParseDuration(timeoutStr)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return container, nil
-}
-
-func Pull(client *containerd.Client, ctx context.Context, rawRef string) (containerd.Image, error) {
-	ocispecPlatforms := []ocispec.Platform{platforms.DefaultSpec()}
-
-	named, err := refdocker.ParseDockerRef(rawRef)
+	task, err := container.Task(ctx, cio.Load)
 	if err != nil {
-		return nil, err
-	}
-	ref := named.String()
-	refDomain := refdocker.Domain(named)
-
-	var dOpts []dockerconfigresolver.Opt
-	dOpts = append(dOpts, dockerconfigresolver.WithSkipVerifyCerts(true))
-	resolver, err := dockerconfigresolver.New(ctx, refDomain, dOpts...)
-	if err != nil {
-		return nil, err
+		return err
 	}
 
-	img, err := PullImage(client, ctx, constants.DefaultSnapShotter, resolver, ref, ocispecPlatforms)
+	status, err := task.Status(ctx)
 	if err != nil {
-		// In some circumstance (e.g. people just use 80 port to support pure http), the error will contain message like "dial tcp <port>: connection refused".
-		if !errutil.IsErrHTTPResponseToHTTPSClient(err) && !errutil.IsErrConnectionRefused(err) {
-			return nil, err
+		return err
+	}
+
+	paused := false
+
+	switch status.Status {
+	case containerd.Created, containerd.Stopped:
+		return nil
+	case containerd.Paused, containerd.Pausing:
+		paused = true
+	default:
+	}
+
+	exitCh, err := task.Wait(ctx)
+	if err != nil {
+		return err
+	}
+
+	if timeout > 0 {
+
+		if err := task.Kill(ctx, syscall.SIGTERM); err != nil {
+			return err
 		}
-		fmt.Printf("server %q does not seem to support HTTPS, falling back to plain HTTP", refDomain)
-		dOpts = append(dOpts, dockerconfigresolver.WithPlainHTTP(true))
-		resolver, err = dockerconfigresolver.New(ctx, refDomain, dOpts...)
-		if err != nil {
-			return nil, err
+
+		// signal will be sent once resume is finished
+		if paused {
+			if err := task.Resume(ctx); err != nil {
+				c.log.Infof("Cannot unpause container %s: %s\n", container.ID(), err)
+			} else {
+				// no need to do it again when send sigkill signal
+				paused = false
+			}
 		}
-		return PullImage(client, ctx, constants.DefaultSnapShotter, resolver, ref, ocispecPlatforms)
 
+		sigtermCtx, sigtermCtxCancel := context.WithTimeout(ctx, timeout)
+		defer sigtermCtxCancel()
+
+		err = waitContainerStop(sigtermCtx, exitCh, container.ID())
+		if err == nil {
+			return nil
+		}
+
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
 	}
-	return img, nil
+
+	if err := task.Kill(ctx, syscall.SIGKILL); err != nil {
+		return err
+	}
+
+	// signal will be sent once resume is finished
+	if paused {
+		if err := task.Resume(ctx); err != nil {
+			c.log.Infof("Cannot unpause container %s: %s\n", container.ID(), err)
+		}
+	}
+	return waitContainerStop(ctx, exitCh, container.ID())
 }
 
-func PullImage(client *containerd.Client, ctx context.Context, snapshotter string, resolver remotes.Resolver, ref string, ocispecPlatforms []ocispec.Platform) (containerd.Image, error) {
-	ctx, done, err := client.WithLease(ctx)
+func waitContainerStop(ctx context.Context, exitCh <-chan containerd.ExitStatus, id string) error {
+	select {
+	case <-ctx.Done():
+		if err := ctx.Err(); err != nil {
+			return fmt.Errorf("wait container %v: %w", id, err)
+		}
+		return nil
+	case status := <-exitCh:
+		return status.Error()
+	}
+}
+
+func (c *Containerd) GetContainerWithGivenName(ctx context.Context, containerName string) (containerd.Container, error) {
+
+	containers, err := c.Client.Containers(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer done(ctx)
-
-	var containerdImage containerd.Image
-	config := &pull.Config{
-		Resolver:   resolver,
-		RemoteOpts: []containerd.RemoteOpt{},
-		Platforms:  ocispecPlatforms, // empty for all-platforms
+	for _, container := range containers {
+		if container.ID() == containerName {
+			return container, nil
+		}
 	}
-
-	fmt.Printf("The image will be unpacked for platform %q, snapshotter %q.", ocispecPlatforms[0], snapshotter)
-	imgcryptPayload := imgcrypt.Payload{}
-	imgcryptUnpackOpt := encryption.WithUnpackConfigApplyOpts(encryption.WithDecryptedUnpack(&imgcryptPayload))
-	config.RemoteOpts = append(config.RemoteOpts,
-		containerd.WithPullUnpack,
-		containerd.WithUnpackOpts([]containerd.UnpackOpt{imgcryptUnpackOpt}))
-	config.RemoteOpts = append(
-		config.RemoteOpts,
-		containerd.WithPullSnapshotter(snapshotter))
-	containerdImage, err = pull.Pull(ctx, client, ref, config)
-	if err != nil {
-		return nil, err
-	}
-	return containerdImage, nil
-
-}
-
-func GenerateID() string {
-	bytesLength := IDLength / 2
-	b := make([]byte, bytesLength)
-	n, err := rand.Read(b)
-	if err != nil {
-		panic(err)
-	}
-	if n != bytesLength {
-		panic(fmt.Errorf("expected %d bytes, got %d bytes", bytesLength, n))
-	}
-	return hex.EncodeToString(b)
+	c.log.Infof("container not found: %s\n", containerName)
+	return nil, nil
 }
