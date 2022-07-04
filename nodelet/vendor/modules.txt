@@ -55,9 +55,6 @@ github.com/choria-io/go-validator/ipv6
 # github.com/containerd/cgroups v1.0.4
 ## explicit; go 1.17
 github.com/containerd/cgroups/stats/v1
-# github.com/containerd/console v1.0.3
-## explicit; go 1.13
-github.com/containerd/console
 # github.com/containerd/containerd v1.6.6
 ## explicit; go 1.17
 github.com/containerd/containerd
@@ -77,8 +74,6 @@ github.com/containerd/containerd/api/types/task
 github.com/containerd/containerd/archive
 github.com/containerd/containerd/archive/compression
 github.com/containerd/containerd/cio
-github.com/containerd/containerd/cmd/ctr/commands
-github.com/containerd/containerd/cmd/ctr/commands/content
 github.com/containerd/containerd/containers
 github.com/containerd/containerd/content
 github.com/containerd/containerd/content/proxy
@@ -91,7 +86,6 @@ github.com/containerd/containerd/filters
 github.com/containerd/containerd/identifiers
 github.com/containerd/containerd/images
 github.com/containerd/containerd/images/archive
-github.com/containerd/containerd/images/converter
 github.com/containerd/containerd/labels
 github.com/containerd/containerd/leases
 github.com/containerd/containerd/leases/proxy
@@ -102,7 +96,6 @@ github.com/containerd/containerd/oci
 github.com/containerd/containerd/pkg/cap
 github.com/containerd/containerd/pkg/dialer
 github.com/containerd/containerd/pkg/kmutex
-github.com/containerd/containerd/pkg/progress
 github.com/containerd/containerd/pkg/userns
 github.com/containerd/containerd/platforms
 github.com/containerd/containerd/plugin
@@ -111,7 +104,6 @@ github.com/containerd/containerd/reference/docker
 github.com/containerd/containerd/remotes
 github.com/containerd/containerd/remotes/docker
 github.com/containerd/containerd/remotes/docker/auth
-github.com/containerd/containerd/remotes/docker/config
 github.com/containerd/containerd/remotes/docker/schema1
 github.com/containerd/containerd/remotes/errors
 github.com/containerd/containerd/rootfs
@@ -130,51 +122,15 @@ github.com/containerd/continuity/sysx
 # github.com/containerd/fifo v1.0.0
 ## explicit; go 1.13
 github.com/containerd/fifo
-# github.com/containerd/imgcrypt v1.1.5-0.20220421044638-8ba028dca028
-## explicit; go 1.16
-github.com/containerd/imgcrypt
-github.com/containerd/imgcrypt/images/encryption
-# github.com/containerd/nerdctl v0.21.0
-## explicit; go 1.17
-github.com/containerd/nerdctl/pkg/errutil
-github.com/containerd/nerdctl/pkg/imgutil/dockerconfigresolver
-github.com/containerd/nerdctl/pkg/imgutil/pull
-github.com/containerd/nerdctl/pkg/platformutil
-github.com/containerd/nerdctl/pkg/strutil
 # github.com/containerd/ttrpc v1.1.1-0.20220420014843-944ef4a40df3
 ## explicit; go 1.13
 github.com/containerd/ttrpc
 # github.com/containerd/typeurl v1.0.3-0.20220422153119-7f6e6d160d67
 ## explicit; go 1.13
 github.com/containerd/typeurl
-# github.com/containers/ocicrypt v1.1.3
-## explicit; go 1.12
-github.com/containers/ocicrypt
-github.com/containers/ocicrypt/blockcipher
-github.com/containers/ocicrypt/config
-github.com/containers/ocicrypt/config/keyprovider-config
-github.com/containers/ocicrypt/crypto/pkcs11
-github.com/containers/ocicrypt/keywrap
-github.com/containers/ocicrypt/keywrap/jwe
-github.com/containers/ocicrypt/keywrap/keyprovider
-github.com/containers/ocicrypt/keywrap/pgp
-github.com/containers/ocicrypt/keywrap/pkcs11
-github.com/containers/ocicrypt/keywrap/pkcs7
-github.com/containers/ocicrypt/spec
-github.com/containers/ocicrypt/utils
-github.com/containers/ocicrypt/utils/keyprovider
-# github.com/cpuguy83/go-md2man/v2 v2.0.1
-## explicit; go 1.11
-github.com/cpuguy83/go-md2man/v2/md2man
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
-# github.com/docker/cli v20.10.17+incompatible
-## explicit
-github.com/docker/cli/cli/config
-github.com/docker/cli/cli/config/configfile
-github.com/docker/cli/cli/config/credentials
-github.com/docker/cli/cli/config/types
 # github.com/docker/distribution v2.7.1+incompatible
 ## explicit
 github.com/docker/distribution/digestset
@@ -199,11 +155,6 @@ github.com/docker/docker/api/types/versions
 github.com/docker/docker/api/types/volume
 github.com/docker/docker/client
 github.com/docker/docker/errdefs
-github.com/docker/docker/pkg/homedir
-# github.com/docker/docker-credential-helpers v0.6.4
-## explicit; go 1.13
-github.com/docker/docker-credential-helpers/client
-github.com/docker/docker-credential-helpers/credentials
 # github.com/docker/go-connections v0.4.0
 ## explicit
 github.com/docker/go-connections/nat
@@ -358,9 +309,6 @@ github.com/mailru/easyjson/jwriter
 # github.com/mattn/go-runewidth v0.0.9
 ## explicit; go 1.9
 github.com/mattn/go-runewidth
-# github.com/miekg/pkcs11 v1.1.1
-## explicit; go 1.12
-github.com/miekg/pkcs11
 # github.com/mitchellh/go-wordwrap v1.0.0
 ## explicit
 github.com/mitchellh/go-wordwrap
@@ -480,9 +428,6 @@ github.com/pmezard/go-difflib/difflib
 # github.com/russross/blackfriday v1.6.0
 ## explicit; go 1.13
 github.com/russross/blackfriday
-# github.com/russross/blackfriday/v2 v2.1.0
-## explicit
-github.com/russross/blackfriday/v2
 # github.com/shipengqi/kube v0.1.1
 ## explicit; go 1.17
 github.com/shipengqi/kube
@@ -508,9 +453,6 @@ github.com/spf13/pflag
 # github.com/spf13/viper v1.8.1
 ## explicit; go 1.12
 github.com/spf13/viper
-# github.com/stefanberger/go-pkcs11uri v0.0.0-20201008174630-78d3cae3a980
-## explicit
-github.com/stefanberger/go-pkcs11uri
 # github.com/stretchr/testify v1.7.0
 ## explicit; go 1.13
 github.com/stretchr/testify/assert
@@ -518,15 +460,9 @@ github.com/stretchr/testify/require
 # github.com/subosito/gotenv v1.2.0
 ## explicit
 github.com/subosito/gotenv
-# github.com/urfave/cli v1.22.9
-## explicit; go 1.11
-github.com/urfave/cli
 # github.com/xlab/treeprint v0.0.0-20181112141820-a009c3971eca
 ## explicit
 github.com/xlab/treeprint
-# go.mozilla.org/pkcs7 v0.0.0-20200128120323-432b2356ecb1
-## explicit; go 1.11
-go.mozilla.org/pkcs7
 # go.opencensus.io v0.23.0
 ## explicit; go 1.13
 go.opencensus.io
@@ -556,17 +492,6 @@ go.uber.org/zap/internal/bufferpool
 go.uber.org/zap/internal/color
 go.uber.org/zap/internal/exit
 go.uber.org/zap/zapcore
-# golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
-## explicit; go 1.17
-golang.org/x/crypto/cast5
-golang.org/x/crypto/ed25519
-golang.org/x/crypto/openpgp
-golang.org/x/crypto/openpgp/armor
-golang.org/x/crypto/openpgp/elgamal
-golang.org/x/crypto/openpgp/errors
-golang.org/x/crypto/openpgp/packet
-golang.org/x/crypto/openpgp/s2k
-golang.org/x/crypto/pbkdf2
 # golang.org/x/net v0.0.0-20220615171555-694bf12d69de
 ## explicit; go 1.17
 golang.org/x/net/context
@@ -725,17 +650,14 @@ google.golang.org/protobuf/types/descriptorpb
 google.golang.org/protobuf/types/known/anypb
 google.golang.org/protobuf/types/known/durationpb
 google.golang.org/protobuf/types/known/timestamppb
+# gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c
+## explicit; go 1.11
 # gopkg.in/inf.v0 v0.9.1
 ## explicit
 gopkg.in/inf.v0
 # gopkg.in/ini.v1 v1.62.0
 ## explicit
 gopkg.in/ini.v1
-# gopkg.in/square/go-jose.v2 v2.5.1
-## explicit
-gopkg.in/square/go-jose.v2
-gopkg.in/square/go-jose.v2/cipher
-gopkg.in/square/go-jose.v2/json
 # gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7
 ## explicit
 gopkg.in/tomb.v1
@@ -745,6 +667,8 @@ gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.0
 ## explicit
 gopkg.in/yaml.v3
+# gotest.tools/v3 v3.2.0
+## explicit; go 1.13
 # k8s.io/api v0.23.5
 ## explicit; go 1.16
 k8s.io/api/admission/v1
