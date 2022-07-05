@@ -26,12 +26,12 @@ func TestCommand(t *testing.T) {
 var _ = Describe("Test Load user images to container runtime phase", func() {
 
 	var (
-		mockCtrl        *gomock.Controller
-		fakePhase       *LoadImagePhase
-		ctx             context.Context
-		fakeCfg         *config.Config
-		fakeRuntimeUtil *mocks.MockRuntime
-		fakeFileUtils   *mocks.MockFileInterface
+		mockCtrl       *gomock.Controller
+		fakePhase      *LoadImagePhase
+		ctx            context.Context
+		fakeCfg        *config.Config
+		fakeImageUtils *mocks.MockImageUtils
+		fakeFileUtils  *mocks.MockFileInterface
 	)
 
 	BeforeEach(func() {
@@ -43,9 +43,9 @@ var _ = Describe("Test Load user images to container runtime phase", func() {
 		fakeCfg, err = config.GetDefaultConfig()
 		assert.Nil(GinkgoT(), err)
 		fakeCfg.UseCgroups = false
-		fakeRuntimeUtil = mocks.NewMockRuntime(mockCtrl)
+		fakeImageUtils = mocks.NewMockImageUtils(mockCtrl)
 		fakeFileUtils = mocks.NewMockFileInterface(mockCtrl)
-		fakePhase.runtime = fakeRuntimeUtil
+		fakePhase.imageUtils = fakeImageUtils
 		fakePhase.fileUtils = fakeFileUtils
 		fakeCfg.UserImagesDir = "testdata"
 		constants.UserImagesDir = "testdata"
@@ -79,14 +79,14 @@ var _ = Describe("Test Load user images to container runtime phase", func() {
 		It("Fails if check is false but could not load images", func() {
 			err := errors.New("error")
 			fakeFileUtils.EXPECT().VerifyChecksum(fakeCfg.UserImagesDir).Return(false, nil).AnyTimes()
-			fakeRuntimeUtil.EXPECT().LoadImagesFromDir(ctx, fakeCfg.UserImagesDir, constants.K8sNamespace).Return(err).AnyTimes()
+			fakeImageUtils.EXPECT().LoadImagesFromDir(ctx, fakeCfg.UserImagesDir, constants.K8sNamespace).Return(err).AnyTimes()
 			reterr := fakePhase.Status(ctx, *fakeCfg)
 			assert.NotNil(GinkgoT(), reterr)
 			assert.Equal(GinkgoT(), err, reterr)
 		})
 		It("succeds if check is false and successfully loads images", func() {
 			fakeFileUtils.EXPECT().VerifyChecksum(fakeCfg.UserImagesDir).Return(false, nil).AnyTimes()
-			fakeRuntimeUtil.EXPECT().LoadImagesFromDir(ctx, fakeCfg.UserImagesDir, constants.K8sNamespace).Return(nil).AnyTimes()
+			fakeImageUtils.EXPECT().LoadImagesFromDir(ctx, fakeCfg.UserImagesDir, constants.K8sNamespace).Return(nil).AnyTimes()
 			reterr := fakePhase.Status(ctx, *fakeCfg)
 			assert.Nil(GinkgoT(), reterr)
 		})
@@ -111,14 +111,14 @@ var _ = Describe("Test Load user images to container runtime phase", func() {
 			It("Fails if generates checksum but could not load images", func() {
 				err := errors.New("error")
 				fakeFileUtils.EXPECT().GenerateChecksum(fakeCfg.UserImagesDir).Return(nil).AnyTimes()
-				fakeRuntimeUtil.EXPECT().LoadImagesFromDir(ctx, fakeCfg.UserImagesDir, constants.K8sNamespace).Return(err).AnyTimes()
+				fakeImageUtils.EXPECT().LoadImagesFromDir(ctx, fakeCfg.UserImagesDir, constants.K8sNamespace).Return(err).AnyTimes()
 				reterr := fakePhase.Start(ctx, *fakeCfg)
 				assert.NotNil(GinkgoT(), reterr)
 				assert.Equal(GinkgoT(), err, reterr)
 			})
 			It("Succeeds if generates checksum and loads images", func() {
 				fakeFileUtils.EXPECT().GenerateChecksum(fakeCfg.UserImagesDir).Return(nil).AnyTimes()
-				fakeRuntimeUtil.EXPECT().LoadImagesFromDir(ctx, fakeCfg.UserImagesDir, constants.K8sNamespace).Return(nil).AnyTimes()
+				fakeImageUtils.EXPECT().LoadImagesFromDir(ctx, fakeCfg.UserImagesDir, constants.K8sNamespace).Return(nil).AnyTimes()
 				reterr := fakePhase.Start(ctx, *fakeCfg)
 				assert.Nil(GinkgoT(), reterr)
 			})
@@ -138,13 +138,13 @@ var _ = Describe("Test Load user images to container runtime phase", func() {
 			})
 			It("Fails if could not load images", func() {
 				err := errors.New("error")
-				fakeRuntimeUtil.EXPECT().LoadImagesFromDir(ctx, fakeCfg.UserImagesDir, constants.K8sNamespace).Return(err).AnyTimes()
+				fakeImageUtils.EXPECT().LoadImagesFromDir(ctx, fakeCfg.UserImagesDir, constants.K8sNamespace).Return(err).AnyTimes()
 				reterr := fakePhase.Start(ctx, *fakeCfg)
 				assert.NotNil(GinkgoT(), reterr)
 				assert.Equal(GinkgoT(), err, reterr)
 			})
 			It("Succeeds if loads images", func() {
-				fakeRuntimeUtil.EXPECT().LoadImagesFromDir(ctx, fakeCfg.UserImagesDir, constants.K8sNamespace).Return(nil).AnyTimes()
+				fakeImageUtils.EXPECT().LoadImagesFromDir(ctx, fakeCfg.UserImagesDir, constants.K8sNamespace).Return(nil).AnyTimes()
 				reterr := fakePhase.Start(ctx, *fakeCfg)
 				assert.Nil(GinkgoT(), reterr)
 			})

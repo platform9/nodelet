@@ -10,16 +10,16 @@ import (
 	sunpikev1alpha1 "github.com/platform9/pf9-qbert/sunpike/apiserver/pkg/apis/sunpike/v1alpha1"
 	"go.uber.org/zap"
 
-	containerutils "github.com/platform9/nodelet/nodelet/pkg/utils/container_runtime"
+	containerRuntime "github.com/platform9/nodelet/nodelet/pkg/utils/container_runtime"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/fileio"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/phaseutils"
 )
 
 type LoadImagePhase struct {
-	HostPhase *sunpikev1alpha1.HostPhase
-	log       *zap.SugaredLogger
-	runtime   containerutils.Runtime
-	fileUtils fileio.FileInterface
+	HostPhase  *sunpikev1alpha1.HostPhase
+	log        *zap.SugaredLogger
+	imageUtils containerRuntime.ImageUtils
+	fileUtils  fileio.FileInterface
 }
 
 func NewLoadImagePhase() *LoadImagePhase {
@@ -29,9 +29,9 @@ func NewLoadImagePhase() *LoadImagePhase {
 			Name:  "Load user images to container runtime",
 			Order: int32(constants.LoadImagePhaseOrder),
 		},
-		log:       log,
-		runtime:   containerutils.New(),
-		fileUtils: fileio.New(),
+		log:        log,
+		imageUtils: containerRuntime.NewImageUtil(),
+		fileUtils:  fileio.New(),
 	}
 }
 
@@ -64,7 +64,7 @@ func (l *LoadImagePhase) Status(ctx context.Context, cfg config.Config) error {
 		return err
 	}
 	if !check {
-		err := l.runtime.LoadImagesFromDir(ctx, cfg.UserImagesDir, constants.K8sNamespace)
+		err := l.imageUtils.LoadImagesFromDir(ctx, cfg.UserImagesDir, constants.K8sNamespace)
 		if err != nil {
 			l.log.Error(err.Error())
 			phaseutils.SetHostStatus(l.HostPhase, constants.FailedState, err.Error())
@@ -102,7 +102,7 @@ func (l *LoadImagePhase) Start(ctx context.Context, cfg config.Config) error {
 			return err
 		}
 	}
-	err := l.runtime.LoadImagesFromDir(ctx, cfg.UserImagesDir, constants.K8sNamespace)
+	err := l.imageUtils.LoadImagesFromDir(ctx, cfg.UserImagesDir, constants.K8sNamespace)
 	if err != nil {
 		l.log.Error(err.Error())
 		phaseutils.SetHostStatus(l.HostPhase, constants.FailedState, err.Error())

@@ -74,12 +74,14 @@ const (
 	DefaultSunpikeConfigPath = "/etc/pf9/nodelet/config_sunpike.yaml"
 	// TrueString represents true as a string in nodeletd
 	TrueString = "true"
-	//LoopBackIpString represents loopback IP string also known as localhost
+	// LoopBackIpString represents loopback IP string also known as localhost
 	LoopBackIpString = "127.0.0.1"
 	// LocalHost represents localhost as a string
 	LocalHostString = "localhost"
-	//LocalCloudProvider represents cloud provider type as local
+	// LocalCloudProvider represents cloud provider type as local
 	LocalCloudProvider = "local"
+	// RuntimeContainerd represents containerd service
+	RuntimeContainerd = "containerd"
 )
 
 var (
