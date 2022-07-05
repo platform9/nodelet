@@ -3,6 +3,7 @@ package fileio
 import (
 	"bufio"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -46,6 +47,7 @@ type FileInterface interface {
 	GenerateHashForFile(string) (string, error)
 	NewYamlFromTemplateYaml(string, string, interface{}) error
 	ListFilesWithPatterns(string, []string) ([]string, error)
+	WriteToFileWithBase64Decoding(string, string) error
 }
 
 // TouchFile creates an empty file
@@ -392,4 +394,22 @@ func stringSlicesEqual(a, b []string) bool {
 		}
 	}
 	return true
+}
+
+// WriteToFileWithBase64Decoding writes base64 decoded data of source file to dest file
+func (f *Pf9FileIO) WriteToFileWithBase64Decoding(destFile string, srcFile string) error {
+	src, err := f.ReadFile(srcFile)
+	if err != nil {
+		return err
+	}
+	dst := make([]byte, base64.StdEncoding.DecodedLen(len(src)))
+	_, err = base64.StdEncoding.Decode(dst, src)
+	if err != nil {
+		return errors.Wrapf(err, "decode error")
+	}
+	err = f.WriteToFile(destFile, dst, false)
+	if err != nil {
+		return err
+	}
+	return nil
 }

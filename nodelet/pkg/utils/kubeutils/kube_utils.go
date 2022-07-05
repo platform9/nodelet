@@ -41,6 +41,7 @@ type Utils interface {
 	EnsureDns(config.Config) error
 	EnsureAppCatalog() error
 	ApplyYamlConfigFiles([]string) error
+	WriteCloudProviderConfig(config.Config) error
 }
 
 type UtilsImpl struct {
@@ -410,6 +411,19 @@ func (u *UtilsImpl) ApplyYamlConfigFiles(files []string) error {
 	err = cli.Apply(files)
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+func (u *UtilsImpl) WriteCloudProviderConfig(cfg config.Config) error {
+	if cfg.KubeletCloudConfig == "" {
+		zap.S().Info("KubeletCloudConfig file is empty is not writing cloud config file")
+	} else {
+		zap.S().Infof("Writing kubelet cloud-config information for CloudProviderType: %s to path %s", cfg.CloudProviderType, constants.CloudConfigFile)
+		err := file.WriteToFileWithBase64Decoding(constants.CloudConfigFile, cfg.KubeletCloudConfig)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
