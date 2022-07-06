@@ -7,18 +7,17 @@ import (
 
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
-	sunpikev1alpha1 "github.com/platform9/pf9-qbert/sunpike/apiserver/pkg/apis/sunpike/v1alpha1"
-	"go.uber.org/zap"
-
-	containerRuntime "github.com/platform9/nodelet/nodelet/pkg/utils/container_runtime"
+	runtime "github.com/platform9/nodelet/nodelet/pkg/utils/container_runtime"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/fileio"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/phaseutils"
+	sunpikev1alpha1 "github.com/platform9/pf9-qbert/sunpike/apiserver/pkg/apis/sunpike/v1alpha1"
+	"go.uber.org/zap"
 )
 
 type LoadImagePhase struct {
 	HostPhase  *sunpikev1alpha1.HostPhase
 	log        *zap.SugaredLogger
-	imageUtils containerRuntime.ImageUtils
+	imageUtils runtime.ImageUtils
 	fileUtils  fileio.FileInterface
 }
 
@@ -30,7 +29,7 @@ func NewLoadImagePhase() *LoadImagePhase {
 			Order: int32(constants.LoadImagePhaseOrder),
 		},
 		log:        log,
-		imageUtils: containerRuntime.NewImageUtil(),
+		imageUtils: runtime.NewImageUtil(),
 		fileUtils:  fileio.New(),
 	}
 }

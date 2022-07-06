@@ -4,17 +4,15 @@ import (
 	"context"
 	"fmt"
 	"syscall"
+	"time"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
+	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/oci"
 	"github.com/pkg/errors"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 	"go.uber.org/zap"
-
-	"time"
-
-	"github.com/containerd/containerd/errdefs"
 )
 
 type Containerd struct {
@@ -23,6 +21,8 @@ type Containerd struct {
 	Client  *containerd.Client
 	log     *zap.SugaredLogger
 }
+
+const timeOut = "10s"
 
 func NewContainerd() (ContainerUtils, error) {
 
@@ -50,13 +50,13 @@ func NewContainerdClient() (*containerd.Client, error) {
 
 func (c *Containerd) EnsureFreshContainerRunning(ctx context.Context, containerName string, containerImage string) error {
 
-	err := c.EnsureContainerDestroyed(ctx, containerName, "10s")
+	err := c.EnsureContainerDestroyed(ctx, containerName, timeOut)
 	if err != nil {
 		return err
 	}
 	container, err := c.CreateContainer(ctx, containerName, containerImage)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to create container:%s", containerName)
 	}
 	// create a task from the container
 	task, err := container.NewTask(ctx, cio.NewCreator())
@@ -67,7 +67,7 @@ func (c *Containerd) EnsureFreshContainerRunning(ctx context.Context, containerN
 	// make sure we wait before calling start
 	exitStatusC, err := task.Wait(ctx)
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
 
 	if err := task.Start(ctx); err != nil {
@@ -92,16 +92,16 @@ func (c *Containerd) EnsureContainerDestroyed(ctx context.Context, containerName
 		return err
 	}
 	if container == nil {
-		fmt.Printf("container not present: %s.\n", containerName)
+		c.log.Infof("container not present: %s.\n", containerName)
 		return nil
 	}
 	err = c.StopContainer(ctx, container, timeoutStr)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "couldn't stop the container: %s", container.ID())
 	}
 	err = c.RemoveContainer(ctx, container, true)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "couldn't remove the container: %s", container.ID())
 	}
 
 	return nil
@@ -122,7 +122,7 @@ func (c *Containerd) EnsureContainerStoppedOrNonExistent(ctx context.Context, co
 
 	err = c.StopContainer(ctx, container, "10s")
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "couldn't stop the container: %s", container.ID())
 	}
 
 	return nil
@@ -134,7 +134,7 @@ func (c *Containerd) CreateContainer(ctx context.Context, containerName string, 
 		c.log.Infof("couldn't get %s image from client, so pulling the image\n", containerImage)
 		image, err = c.Client.Pull(ctx, containerImage, containerd.WithPullUnpack)
 		if err != nil {
-			return nil, errors.Wrapf(err, "couldn't pull image", containerImage)
+			return nil, errors.Wrapf(err, "couldn't pull image:%s", containerImage)
 		}
 		c.log.Infof("image pulled: %s\n", image.Name())
 	}
@@ -175,7 +175,7 @@ func (c *Containerd) RemoveContainer(ctx context.Context, container containerd.C
 	switch status.Status {
 	case containerd.Created, containerd.Stopped:
 		if _, err := task.Delete(ctx); err != nil && !errdefs.IsNotFound(err) {
-			return fmt.Errorf("failed to delete task %v: %w", id, err)
+			return errors.Wrapf(err, "failed to delete task %v", id)
 		}
 	case containerd.Paused:
 		if !force {
@@ -184,7 +184,7 @@ func (c *Containerd) RemoveContainer(ctx context.Context, container containerd.C
 		}
 		_, err := task.Delete(ctx, containerd.WithProcessKill)
 		if err != nil && !errdefs.IsNotFound(err) {
-			return fmt.Errorf("failed to delete task %v: %w", id, err)
+			return errors.Wrapf(err, "failed to delete task %v", id)
 		}
 	// default is the case, when status.Status = containerd.Running
 	default:
@@ -201,7 +201,7 @@ func (c *Containerd) RemoveContainer(ctx context.Context, container containerd.C
 		}
 		_, err = task.Delete(ctx, containerd.WithProcessKill)
 		if err != nil && !errdefs.IsNotFound(err) {
-			return fmt.Errorf("failed to delete task %v", id)
+			return errors.Wrapf(err, "failed to delete task %v", id)
 		}
 	}
 	var delOpts []containerd.DeleteOpts
@@ -292,7 +292,7 @@ func waitContainerStop(ctx context.Context, exitCh <-chan containerd.ExitStatus,
 	select {
 	case <-ctx.Done():
 		if err := ctx.Err(); err != nil {
-			return fmt.Errorf("wait container %v: %w", id, err)
+			return errors.Wrapf(err, "wait container %v", id)
 		}
 		return nil
 	case status := <-exitCh:
@@ -301,7 +301,7 @@ func waitContainerStop(ctx context.Context, exitCh <-chan containerd.ExitStatus,
 }
 
 func (c *Containerd) GetContainerWithGivenName(ctx context.Context, containerName string) (containerd.Container, error) {
-
+	// TODO: investigate use of filters to below function from containerd
 	containers, err := c.Client.Containers(ctx)
 	if err != nil {
 		return nil, err
