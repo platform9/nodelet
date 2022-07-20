@@ -80,6 +80,8 @@ const (
 	LocalHostString = "localhost"
 	// LocalCloudProvider represents cloud provider type as local
 	LocalCloudProvider = "local"
+	// RuntimeContainerd represents containerd service
+	RuntimeContainerd = "containerd"
 )
 
 var (

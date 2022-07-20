@@ -3,7 +3,7 @@
 //go:generate go run -mod=mod github.com/golang/mock/mockgen -package mocks -destination=./mock_extension.go -source=../pkg/utils/extensionfile/extension.go -build_flags=-mod=mod
 //go:generate go run -mod=mod github.com/golang/mock/mockgen -package mocks -destination=./mock_fileio.go -source=../pkg/utils/fileio/fileio.go -build_flags=-mod=mod
 //go:generate go run -mod=mod github.com/golang/mock/mockgen -package mocks -destination=./mock_kubeutils.go -source=../pkg/utils/kubeutils/kube_utils.go -build_flags=-mod=mod
-//go:generate go run -mod=mod github.com/golang/mock/mockgen -package mocks -destination=./mock_runtime_utils.go -source=../pkg/utils/container_runtime/utils.go -build_flags=-mod=mod
+//go:generate go run -mod=mod github.com/golang/mock/mockgen -package mocks -destination=./mock_container_runtime.go -source=../pkg/utils/container_runtime/container_runtime.go -build_flags=-mod=mod
 //go:generate go run -mod=mod github.com/golang/mock/mockgen -package mocks -destination=./mock_netutils.go -source=../pkg/utils/netutils/net_utils.go -build_flags=-mod=mod
 package mocks
 

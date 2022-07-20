@@ -17,19 +17,14 @@ import (
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 )
 
-type Runtime interface {
-	LoadImagesFromDir(context.Context, string, string) error
-	LoadImagesFromFile(context.Context, string) error
-}
+type ImageUtility struct{}
 
-type RuntimeUtil struct{}
-
-func New() Runtime {
-	return &RuntimeUtil{}
+func NewImageUtil() ImageUtils {
+	return &ImageUtility{}
 }
 
 // LoadImagesFromDir loads images from all tar files in the given directory to container runtime with given namespace
-func (r *RuntimeUtil) LoadImagesFromDir(ctx context.Context, imageDir string, namespace string) error {
+func (i *ImageUtility) LoadImagesFromDir(ctx context.Context, imageDir string, namespace string) error {
 	items, _ := ioutil.ReadDir(imageDir)
 	for _, item := range items {
 		if item.IsDir() {
@@ -37,7 +32,7 @@ func (r *RuntimeUtil) LoadImagesFromDir(ctx context.Context, imageDir string, na
 		} else {
 			imageFile := fmt.Sprintf("%s/%s", imageDir, item.Name())
 			ctx = namespaces.WithNamespace(ctx, namespace)
-			err := r.LoadImagesFromFile(ctx, imageFile)
+			err := i.LoadImagesFromFile(ctx, imageFile)
 			if err != nil {
 				return errors.Wrapf(err, "could not load images from : %s", imageFile)
 			}
@@ -47,7 +42,7 @@ func (r *RuntimeUtil) LoadImagesFromDir(ctx context.Context, imageDir string, na
 }
 
 // LoadImagesFromFile loads images from given tar file to container runtime
-func (r *RuntimeUtil) LoadImagesFromFile(ctx context.Context, fileName string) error {
+func (i *ImageUtility) LoadImagesFromFile(ctx context.Context, fileName string) error {
 
 	f, err := os.Open(fileName)
 	if err != nil {
