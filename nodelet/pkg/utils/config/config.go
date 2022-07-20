@@ -85,6 +85,7 @@ type Config struct {
 	K8sPrivateRegistry        string  `mapstructure:"K8S_PRIVATE_REGISTRY"`
 	ServicesCIDR              string  `mapstructure:"SERVICES_CIDR"`
 	AppCatalogEnabled         bool    `mapstructure:"APP_CATALOG_ENABLED"`
+	KubeletCloudConfig        string  `mapstructure:"KUBELET_CLOUD_CONFIG"`
 }
 
 // ToStringMap converts the Config struct to a map of strings

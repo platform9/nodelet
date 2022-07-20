@@ -74,11 +74,11 @@ const (
 	DefaultSunpikeConfigPath = "/etc/pf9/nodelet/config_sunpike.yaml"
 	// TrueString represents true as a string in nodeletd
 	TrueString = "true"
-	//LoopBackIpString represents loopback IP string also known as localhost
+	// LoopBackIpString represents loopback IP string also known as localhost
 	LoopBackIpString = "127.0.0.1"
 	// LocalHost represents localhost as a string
 	LocalHostString = "localhost"
-	//LocalCloudProvider represents cloud provider type as local
+	// LocalCloudProvider represents cloud provider type as local
 	LocalCloudProvider = "local"
 )
 
@@ -113,16 +113,18 @@ var (
 	ContainerdSocket = "/run/containerd/containerd.sock"
 	// DefaultSnapShotter is default snapshotter for containerd
 	DefaultSnapShotter = "overlayfs"
-	//K8sNamespace is namespace for kubernetes
+	// K8sNamespace is namespace for kubernetes
 	K8sNamespace = "k8s.io"
-
+	// K8sRegistry represents registry for official images for kubernetes
 	K8sRegistry = "k8s.gcr.io"
 
 	ConfigSrcDir = "/opt/pf9/pf9-kube/conf"
-
+	// CoreDNSTemplate is template file for coredns
 	CoreDNSTemplate = fmt.Sprintf("%s/networkapps/coredns.yaml", ConfigSrcDir)
-
+	// CoreDNSFile is applied coredns file
 	CoreDNSFile = fmt.Sprintf("%s/networkapps/coredns-applied.yaml", ConfigSrcDir)
+
+	CloudConfigFile = "/etc/pf9/kube.d/cloud-config"
 
 	// Phase orders of all the phases
 	NoRolePhaseOrder                   = 10
