@@ -2,37 +2,30 @@ package containerruntime
 
 import (
 	"context"
-	"embed"
 	"fmt"
-	"os"
-
-	"path"
-	"path/filepath"
 
 	"github.com/coreos/go-systemd/dbus"
-	"github.com/platform9/nodelet/nodelet/pkg/untar"
 
-	"github.com/platform9/nodelet/nodelet/pkg/embedutil"
-	"github.com/platform9/nodelet/nodelet/pkg/utils/command"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
-	"github.com/platform9/nodelet/nodelet/pkg/utils/fileio"
+	cr "github.com/platform9/nodelet/nodelet/pkg/utils/container_runtime"
 	sunpikev1alpha1 "github.com/platform9/pf9-qbert/sunpike/apiserver/pkg/apis/sunpike/v1alpha1"
 	"go.uber.org/zap"
 )
 
-//go:embed containerd/containerd.tar.gz
-var containerdZip embed.FS
-var (
-	cmdLine = command.New()
-	f       = fileio.New()
-)
+/*//go:embed containerd/containerd.tar.gz
+//var containerdZip embed.FS
+
+//go:embed runc_bin/runc
+//var runcBin embed.FS*/
 
 type ContainerdConfigPhase struct {
-	hostPhase          *sunpikev1alpha1.HostPhase
-	embedFs            *embedutil.EmbedFS
+	hostPhase *sunpikev1alpha1.HostPhase
+	//embedFsContainerd  *embedutil.EmbedFS
+	//embedFsRunc        *embedutil.EmbedFS
 	conn               *dbus.Conn
 	containerdRunPhase *ContainerdRunPhase
+	containerdInstall  *cr.ContainerdInstall
 }
 
 // Extract containerd zip to the specified directory
@@ -43,10 +36,14 @@ func NewContainerdConfigPhase() *ContainerdConfigPhase {
 		zap.S().Errorf("error connecting to dbus: %v", err)
 	}
 
-	embedFs := embedutil.EmbedFS{
-		Fs:   containerdZip,
-		Root: "containerd",
-	}
+	// embedFsContainerd := embedutil.EmbedFS{
+	// 	Fs:   containerdZip,
+	// 	Root: "containerd",
+	// }
+	// embedFsRunc := embedutil.EmbedFS{
+	// 	Fs:   runcBin,
+	// 	Root: "runc_binary",
+	// }
 	containerdRunPhase := newContainerdRunPhaseInternal(conn)
 	if err != nil {
 		zap.S().Errorf("error creating containerd run phase: %v", err)
@@ -56,7 +53,8 @@ func NewContainerdConfigPhase() *ContainerdConfigPhase {
 			Name:  "Configure Container Runtime",
 			Order: int32(constants.ConfigureRuntimePhaseOrder),
 		},
-		embedFs:            &embedFs,
+		// embedFsContainerd:  &embedFsContainerd,
+		// embedFsRunc:        &embedFsRunc,
 		conn:               conn,
 		containerdRunPhase: containerdRunPhase,
 	}
@@ -87,64 +85,15 @@ func (cp *ContainerdConfigPhase) Start(ctx context.Context, cfg config.Config) e
 		zap.S().Infof("Error while stopping containerd: %v", err)
 		//return fmt.Errorf("error stopping containerd: %v", err)
 	}
-
-	zap.S().Infof("Extracting containerd zip to %s", constants.PhaseBaseDir)
-	err = cp.embedFs.Extract(constants.PhaseBaseDir)
+	err = cp.containerdInstall.EnsureContainerdInstalled(ctx)
 	if err != nil {
-		zap.S().Infof("error extracting containerd zip: to baseDir %s,  %v", constants.PhaseBaseDir, err)
-		return fmt.Errorf("error extracting containerd zip: to baseDir %s,  %v", constants.PhaseBaseDir, err)
-	}
-
-	// now extract the tar files
-	zap.S().Infof("Untarring containerd zip to %s", constants.UsrLocalDir)
-
-	matches, err := filepath.Glob(path.Join(constants.PhaseBaseDir, "containerd*.tar.gz"))
-	if err != nil {
-		zap.S().Infof("error finding containerd tar files: %v", err)
-		return fmt.Errorf("error finding containerd tar files: %v", err)
-	}
-
-	for _, match := range matches {
-		zap.S().Infof("Untarring %s", match)
-		err = untar.Extract(match, constants.UsrLocalDir)
-		if err != nil {
-			zap.S().Infof("error untarring containerd tar file: %v", err)
-			return fmt.Errorf("error untarring containerd tar file: %v", err)
-		}
-	}
-	zap.S().Infof("generating containerd.service unit file")
-	err = containerdUnit()
-	if err != nil {
-		zap.S().Infof("error generating containerd.service unit file: %v", err)
 		return err
 	}
 
-	zap.S().Infof("loading kernel modules")
-	modules := []string{"overlay", "br_netfilter"}
-	err = loadKernelModules(ctx, modules)
+	err = cp.containerdInstall.EnsureRuncInstalled()
 	if err != nil {
-		zap.S().Infof("error loading kernel modules: %v", err)
 		return err
 	}
-	zap.S().Infof("setting containerd sysctl params")
-	err = setContainerdSysctlParams(ctx)
-	if err != nil {
-		zap.S().Infof("error setting containerd sysctl params: %v", err)
-		return err
-	}
-	zap.S().Infof("generating config.toml")
-	err = containerdConfig()
-	if err != nil {
-		zap.S().Infof("error generating config.toml: %v", err)
-		return err
-	}
-	//TODO CHECK IF CONTAINERD IS ACTIVE AND STOP SERVICE
-	err = cp.containerdRunPhase.Stop(context.Background(), config.Config{})
-	if err != nil {
-		zap.S().Infof("Error while stopping containerd: %v", err)
-		//return fmt.Errorf("error stopping containerd: %v", err)
-	}
-	// now reload the dbus daemon and start the service
 
 	// Reload dbus daemon to load new services
 	zap.S().Infof("Reloading dbus")
@@ -162,6 +111,128 @@ func (cp *ContainerdConfigPhase) Stop(context.Context, config.Config) error {
 }
 
 func (cp *ContainerdConfigPhase) Status(context.Context, config.Config) error {
+	return nil
+}
+
+/*func ensureContainerdInstalled(cp *ContainerdConfigPhase, ctx context.Context) error {
+
+	var version []byte
+	var err error
+
+	containerdInstalled := true
+
+	if _, err := os.Stat(constants.ContainerdMarker); errors.Is(err, os.ErrNotExist) {
+		containerdInstalled = false
+	} else {
+		version, err = f.ReadFile(constants.ContainerdVersion)
+		if err != nil {
+			return err
+		}
+	}
+
+	installedVersion := string(version)
+
+	if !containerdInstalled || constants.ContainerdVersion != installedVersion {
+
+		zap.S().Infof("Extracting containerd zip to %s", constants.PhaseBaseDir)
+		err = cp.embedFsContainerd.Extract(constants.PhaseBaseDir)
+		if err != nil {
+			zap.S().Infof("error extracting containerd zip: to baseDir %s,  %v", constants.PhaseBaseDir, err)
+			return fmt.Errorf("error extracting containerd zip: to baseDir %s,  %v", constants.PhaseBaseDir, err)
+		}
+
+		// now extract the tar files
+		zap.S().Infof("Untarring containerd zip to %s", constants.UsrLocalDir)
+
+		matches, err := filepath.Glob(path.Join(constants.PhaseBaseDir, "containerd*.tar.gz"))
+		if err != nil {
+			zap.S().Infof("error finding containerd tar files: %v", err)
+			return fmt.Errorf("error finding containerd tar files: %v", err)
+		}
+
+		for _, match := range matches {
+			zap.S().Infof("Untarring %s", match)
+			err = untar.Extract(match, constants.UsrLocalDir)
+			if err != nil {
+				zap.S().Infof("error untarring containerd tar file: %v", err)
+				return fmt.Errorf("error untarring containerd tar file: %v", err)
+			}
+		}
+
+		zap.S().Infof("generating containerd.service unit file")
+		err = containerdUnit()
+		if err != nil {
+			zap.S().Infof("error generating containerd.service unit file: %v", err)
+			return err
+		}
+
+		zap.S().Infof("generating config.toml")
+		err = containerdConfig()
+		if err != nil {
+			zap.S().Infof("error generating config.toml: %v", err)
+			return err
+		}
+
+		zap.S().Infof("setting containerd sysctl params")
+		err = setContainerdSysctlParams(ctx)
+		if err != nil {
+			zap.S().Infof("error setting containerd sysctl params: %v", err)
+			return err
+		}
+
+		zap.S().Infof("loading kernel modules")
+		modules := []string{"overlay", "br_netfilter"}
+		err = loadKernelModules(ctx, modules)
+		if err != nil {
+			zap.S().Infof("error loading kernel modules: %v", err)
+			return err
+		}
+
+		err = f.WriteToFile(constants.ContainerdMarker, constants.ContainerdVersion, false)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func ensureRuncInstalled(cp *ContainerdConfigPhase) error {
+	var err error
+	var version []byte
+	runcInstalled := true
+
+	if _, err = os.Stat(constants.RuncMarker); errors.Is(err, os.ErrNotExist) {
+		runcInstalled = false
+	} else {
+		version, err = f.ReadFile(constants.RuncVersion)
+		if err != nil {
+			return err
+		}
+	}
+
+	installedVersion := string(version)
+
+	if !runcInstalled || constants.RuncVersion != installedVersion {
+
+		zap.S().Infof("Extracting Runc to %s", constants.UsrLocalSbinDir)
+		err = cp.embedFsRunc.Extract(constants.UsrLocalSbinDir)
+		if err != nil {
+			zap.S().Infof("error extracting containerd zip: to baseDir %s,  %v", constants.UsrLocalSbinDir, err)
+			return fmt.Errorf("error extracting containerd zip: to baseDir %s,  %v", constants.UsrLocalSbinDir, err)
+		}
+
+		zap.S().Infof("giving execute permmission to runc")
+		err = os.Chmod(constants.RuncBin, 0755)
+		if err != nil {
+			zap.S().Infof("error giving exec perm to  %s,  %v", constants.RuncBin, err)
+			return fmt.Errorf("error giving exec perm to  %s,  %v", constants.RuncBin, err)
+		}
+
+		err = f.WriteToFile(constants.RuncMarker, constants.RuncVersion, false)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -219,11 +290,11 @@ func containerdUnit() error {
 	Description=containerd container runtime
 	Documentation=https://containerd.io
 	After=network.target local-fs.target
-	
+
 	[Service]
 	ExecStartPre=-/sbin/modprobe overlay
 	ExecStart=/usr/local/bin/containerd
-	
+
 	Type=notify
 	Delegate=yes
 	KillMode=process
@@ -238,7 +309,7 @@ func containerdUnit() error {
 	# Only systemd 226 and above support this version.
 	TasksMax=infinity
 	OOMScoreAdjust=-999
-	
+
 	[Install]
 	WantedBy=multi-user.target`
 	err = f.WriteToFile(file, data, false)
@@ -299,3 +370,4 @@ func containerdConfig() error {
 	}
 	return nil
 }
+*/

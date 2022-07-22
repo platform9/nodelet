@@ -130,6 +130,20 @@ var (
 
 	CloudConfigFile = "/etc/pf9/kube.d/cloud-config"
 
+	UsrLocalDir = "/usr/local"
+
+	UsrLocalSbinDir = "/usr/local/sbin"
+
+	RuncBin = fmt.Sprintf("%s/%s", UsrLocalSbinDir, "runc")
+
+	ContainerdMarker = "var/opt/pf9/installed_containerd_version"
+
+	RuncMarker = "var/opt/pf9/installed_runc_version"
+
+	ContainerdVersion = "1.6.6"
+
+	RuncVersion = "1.1.3"
+
 	// Phase orders of all the phases
 	NoRolePhaseOrder                   = 10
 	GenCertsPhaseOrder                 = 20
@@ -158,5 +172,5 @@ var (
 	// PhaseBaseDir is the base directory in which all bash-based phase scripts are located
 	PhaseBaseDir = "/opt/pf9/pf9-kube/phases"
 	// LocalDir is the local directory used here for containerd binaries.
-	UsrLocalDir = "/usr/local"
+
 )

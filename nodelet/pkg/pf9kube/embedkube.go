@@ -4,7 +4,7 @@ import (
 	"embed"
 	"fmt"
 
-	"github.com/platform9/nodelet/nodelet/pkg/embedutil"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/embedutil"
 	"go.uber.org/zap"
 )
 
