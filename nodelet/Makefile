@@ -14,13 +14,8 @@ DOCKER_BUILD_CMD=${DOCKER} build
 DOCKER_RMI_CMD=${DOCKER} rmi
 RM=rm
 REPEAT_TESTS ?= "1"
-<<<<<<< HEAD
-GITBRANCH=$(shell git symbolic-ref --short HEAD)
-GITCOMMIT=$(shell git rev-parse HEAD)
-=======
 WGET_CMD ?= "wget"
 
->>>>>>> embed containerd and extract to  specific directory
 
 # Using PWD is not guaranteed to be the directory of the Makefile. Use these instead:
 MAKE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
@@ -52,7 +47,7 @@ GOLANG_DOCKER_MARKER := ${NODELET_BUILD_DIR}/${COMPILE_IMAGE}.marker
 
 # Download containerd
 CONTAINERD_VERSION := 1.6.1
-CONTAINERD_BASE_DIR := $(NODELET_SRC_DIR)/pkg/phases/container_runtime/containerd
+CONTAINERD_BASE_DIR := $(NODELET_SRC_DIR)/pkg/utils/container_runtime/src/containerd
 CONTAINERD_FILE_NAME := containerd-${CONTAINERD_VERSION}-linux-amd64.tar.gz
 CONTAINERD_FILE := $(CONTAINERD_BASE_DIR)/containerd.tar.gz
 CONTAINERD_URL := https://github.com/containerd/containerd/releases/download/v${CONTAINERD_VERSION}/${CONTAINERD_FILE_NAME}
@@ -65,9 +60,23 @@ $(CONTAINERD_FILE): | $(CONTAINERD_BASE_DIR)
 	echo "make CONTAINERD_FILE: $(CONTAINERD_FILE)"
 	${WGET_CMD} ${CONTAINERD_URL}  -O ${CONTAINERD_FILE}
 
+# Download runc
+RUNC_VERSION := 1.1.3
+RUNC_BASE_DIR := $(NODELET_SRC_DIR)/pkg/utils/container_runtime/src/runc_bin
+RUNC_FILE_NAME := runc.amd64
+RUNC_FILE := $(RUNC_BASE_DIR)/runc
+RUNC_URL := https://github.com/opencontainers/runc/releases/download/v${RUNC_VERSION}/${RUNC_FILE_NAME}
+
+$(RUNC_BASE_DIR):
+	echo "make RUNC_BASE_DIR: $(RUNC_BASE_DIR)"
+	mkdir -p $@
+
+$(RUNC_FILE): | $(RUNC_BASE_DIR)
+	echo "make RUNC_FILE: $(RUNC_FILE)"
+	${WGET_CMD} ${RUNC_URL}  -O ${RUNC_FILE}
 
 # Download/create build envs
-nodelet-setup: ${NODELET_BIN_DIR} ${GOLANG_DOCKER_MARKER} $(CONTAINERD_FILE)
+nodelet-setup: ${NODELET_BIN_DIR} ${GOLANG_DOCKER_MARKER} $(CONTAINERD_FILE) $(RUNC_FILE)
 	echo "setting up env for nodeletd"
 	cd ${NODELET_SRC_DIR} && go mod vendor || true
 

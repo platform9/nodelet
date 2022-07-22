@@ -8,6 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	containerd "github.com/containerd/containerd"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -32,6 +33,21 @@ func NewMockContainerUtils(ctrl *gomock.Controller) *MockContainerUtils {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockContainerUtils) EXPECT() *MockContainerUtilsMockRecorder {
 	return m.recorder
+}
+
+// CreateContainer mocks base method.
+func (m *MockContainerUtils) CreateContainer(ctx context.Context, containerName, containerImage string) (containerd.Container, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateContainer", ctx, containerName, containerImage)
+	ret0, _ := ret[0].(containerd.Container)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateContainer indicates an expected call of CreateContainer.
+func (mr *MockContainerUtilsMockRecorder) CreateContainer(ctx, containerName, containerImage interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateContainer", reflect.TypeOf((*MockContainerUtils)(nil).CreateContainer), ctx, containerName, containerImage)
 }
 
 // EnsureContainerDestroyed mocks base method.
@@ -62,6 +78,20 @@ func (mr *MockContainerUtilsMockRecorder) EnsureContainerStoppedOrNonExistent(ar
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnsureContainerStoppedOrNonExistent", reflect.TypeOf((*MockContainerUtils)(nil).EnsureContainerStoppedOrNonExistent), arg0, arg1)
 }
 
+// EnsureContainersDestroyed mocks base method.
+func (m *MockContainerUtils) EnsureContainersDestroyed(ctx context.Context, containers []containerd.Container, timeoutStr string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EnsureContainersDestroyed", ctx, containers, timeoutStr)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// EnsureContainersDestroyed indicates an expected call of EnsureContainersDestroyed.
+func (mr *MockContainerUtilsMockRecorder) EnsureContainersDestroyed(ctx, containers, timeoutStr interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnsureContainersDestroyed", reflect.TypeOf((*MockContainerUtils)(nil).EnsureContainersDestroyed), ctx, containers, timeoutStr)
+}
+
 // EnsureFreshContainerRunning mocks base method.
 func (m *MockContainerUtils) EnsureFreshContainerRunning(arg0 context.Context, arg1, arg2 string) error {
 	m.ctrl.T.Helper()
@@ -74,6 +104,64 @@ func (m *MockContainerUtils) EnsureFreshContainerRunning(arg0 context.Context, a
 func (mr *MockContainerUtilsMockRecorder) EnsureFreshContainerRunning(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnsureFreshContainerRunning", reflect.TypeOf((*MockContainerUtils)(nil).EnsureFreshContainerRunning), arg0, arg1, arg2)
+}
+
+// GetContainerWithGivenName mocks base method.
+func (m *MockContainerUtils) GetContainerWithGivenName(ctx context.Context, containerName string) (containerd.Container, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetContainerWithGivenName", ctx, containerName)
+	ret0, _ := ret[0].(containerd.Container)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetContainerWithGivenName indicates an expected call of GetContainerWithGivenName.
+func (mr *MockContainerUtilsMockRecorder) GetContainerWithGivenName(ctx, containerName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContainerWithGivenName", reflect.TypeOf((*MockContainerUtils)(nil).GetContainerWithGivenName), ctx, containerName)
+}
+
+// GetContainersInNamespace mocks base method.
+func (m *MockContainerUtils) GetContainersInNamespace(ctx context.Context, namespace string) ([]containerd.Container, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetContainersInNamespace", ctx, namespace)
+	ret0, _ := ret[0].([]containerd.Container)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetContainersInNamespace indicates an expected call of GetContainersInNamespace.
+func (mr *MockContainerUtilsMockRecorder) GetContainersInNamespace(ctx, namespace interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContainersInNamespace", reflect.TypeOf((*MockContainerUtils)(nil).GetContainersInNamespace), ctx, namespace)
+}
+
+// RemoveContainer mocks base method.
+func (m *MockContainerUtils) RemoveContainer(ctx context.Context, container containerd.Container, force bool) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveContainer", ctx, container, force)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveContainer indicates an expected call of RemoveContainer.
+func (mr *MockContainerUtilsMockRecorder) RemoveContainer(ctx, container, force interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveContainer", reflect.TypeOf((*MockContainerUtils)(nil).RemoveContainer), ctx, container, force)
+}
+
+// StopContainer mocks base method.
+func (m *MockContainerUtils) StopContainer(ctx context.Context, container containerd.Container, timeoutStr string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "StopContainer", ctx, container, timeoutStr)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// StopContainer indicates an expected call of StopContainer.
+func (mr *MockContainerUtilsMockRecorder) StopContainer(ctx, container, timeoutStr interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StopContainer", reflect.TypeOf((*MockContainerUtils)(nil).StopContainer), ctx, container, timeoutStr)
 }
 
 // MockImageUtils is a mock of ImageUtils interface.
@@ -125,4 +213,111 @@ func (m *MockImageUtils) LoadImagesFromFile(arg0 context.Context, arg1 string) e
 func (mr *MockImageUtilsMockRecorder) LoadImagesFromFile(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadImagesFromFile", reflect.TypeOf((*MockImageUtils)(nil).LoadImagesFromFile), arg0, arg1)
+}
+
+// MockInstallRuntime is a mock of InstallRuntime interface.
+type MockInstallRuntime struct {
+	ctrl     *gomock.Controller
+	recorder *MockInstallRuntimeMockRecorder
+}
+
+// MockInstallRuntimeMockRecorder is the mock recorder for MockInstallRuntime.
+type MockInstallRuntimeMockRecorder struct {
+	mock *MockInstallRuntime
+}
+
+// NewMockInstallRuntime creates a new mock instance.
+func NewMockInstallRuntime(ctrl *gomock.Controller) *MockInstallRuntime {
+	mock := &MockInstallRuntime{ctrl: ctrl}
+	mock.recorder = &MockInstallRuntimeMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockInstallRuntime) EXPECT() *MockInstallRuntimeMockRecorder {
+	return m.recorder
+}
+
+// EnsureContainerdInstalled mocks base method.
+func (m *MockInstallRuntime) EnsureContainerdInstalled(ctx context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EnsureContainerdInstalled", ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// EnsureContainerdInstalled indicates an expected call of EnsureContainerdInstalled.
+func (mr *MockInstallRuntimeMockRecorder) EnsureContainerdInstalled(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnsureContainerdInstalled", reflect.TypeOf((*MockInstallRuntime)(nil).EnsureContainerdInstalled), ctx)
+}
+
+// EnsureRuncInstalled mocks base method.
+func (m *MockInstallRuntime) EnsureRuncInstalled() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EnsureRuncInstalled")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// EnsureRuncInstalled indicates an expected call of EnsureRuncInstalled.
+func (mr *MockInstallRuntimeMockRecorder) EnsureRuncInstalled() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnsureRuncInstalled", reflect.TypeOf((*MockInstallRuntime)(nil).EnsureRuncInstalled))
+}
+
+// GenerateContainerdConfig mocks base method.
+func (m *MockInstallRuntime) GenerateContainerdConfig() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GenerateContainerdConfig")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// GenerateContainerdConfig indicates an expected call of GenerateContainerdConfig.
+func (mr *MockInstallRuntimeMockRecorder) GenerateContainerdConfig() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateContainerdConfig", reflect.TypeOf((*MockInstallRuntime)(nil).GenerateContainerdConfig))
+}
+
+// GenerateContainerdUnit mocks base method.
+func (m *MockInstallRuntime) GenerateContainerdUnit() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GenerateContainerdUnit")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// GenerateContainerdUnit indicates an expected call of GenerateContainerdUnit.
+func (mr *MockInstallRuntimeMockRecorder) GenerateContainerdUnit() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateContainerdUnit", reflect.TypeOf((*MockInstallRuntime)(nil).GenerateContainerdUnit))
+}
+
+// LoadKernelModules mocks base method.
+func (m *MockInstallRuntime) LoadKernelModules(ctx context.Context, modules []string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LoadKernelModules", ctx, modules)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// LoadKernelModules indicates an expected call of LoadKernelModules.
+func (mr *MockInstallRuntimeMockRecorder) LoadKernelModules(ctx, modules interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadKernelModules", reflect.TypeOf((*MockInstallRuntime)(nil).LoadKernelModules), ctx, modules)
+}
+
+// SetContainerdSysctlParams mocks base method.
+func (m *MockInstallRuntime) SetContainerdSysctlParams(ctx context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetContainerdSysctlParams", ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetContainerdSysctlParams indicates an expected call of SetContainerdSysctlParams.
+func (mr *MockInstallRuntimeMockRecorder) SetContainerdSysctlParams(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetContainerdSysctlParams", reflect.TypeOf((*MockInstallRuntime)(nil).SetContainerdSysctlParams), ctx)
 }

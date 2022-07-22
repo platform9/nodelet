@@ -1,3 +1,5 @@
 .ci/build/
 build/
 /nodeletd
+/src/containerd
+/src/runc_bin

@@ -4,17 +4,22 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/containerd/containerd/namespaces"
 	"github.com/coreos/go-systemd/dbus"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
+	cr "github.com/platform9/nodelet/nodelet/pkg/utils/container_runtime"
 	sunpikev1alpha1 "github.com/platform9/pf9-qbert/sunpike/apiserver/pkg/apis/sunpike/v1alpha1"
 	"go.uber.org/zap"
 )
 
 type ContainerdRunPhase struct {
-	hostPhase *sunpikev1alpha1.HostPhase
-	conn      *dbus.Conn
+	hostPhase      *sunpikev1alpha1.HostPhase
+	conn           *dbus.Conn
+	containerUtils cr.ContainerUtils
 }
+
+const timeOut = "10s"
 
 // Extract containerd zip to the specified directory
 func NewContainerdRunPhase() *ContainerdRunPhase {
@@ -29,12 +34,17 @@ func NewContainerdRunPhase() *ContainerdRunPhase {
 
 func newContainerdRunPhaseInternal(conn *dbus.Conn) *ContainerdRunPhase {
 
+	crUtils, err := cr.NewContainerUtil()
+	if err != nil {
+		zap.S().Errorf("couldn't create containerd client connection")
+	}
 	runtimeStartPhase := &ContainerdRunPhase{
 		hostPhase: &sunpikev1alpha1.HostPhase{
 			Name:  "Start Container Runtime",
 			Order: int32(constants.StartRuntimePhaseOrder),
 		},
-		conn: conn,
+		conn:           conn,
+		containerUtils: crUtils,
 	}
 	return runtimeStartPhase
 }
@@ -70,11 +80,22 @@ func (cp *ContainerdRunPhase) Start(context.Context, config.Config) error {
 	return nil
 }
 
-func (cp *ContainerdRunPhase) Stop(context.Context, config.Config) error {
+func (cp *ContainerdRunPhase) Stop(ctx context.Context, cfg config.Config) error {
 	//TODO: destroy all k8s containers.
+	containers, err := cp.containerUtils.GetContainersInNamespace(ctx, constants.K8sNamespace)
+	if err != nil {
+		zap.S().Infof("error getting containers in namespace: %s :%v", constants.K8sNamespace, err)
+		return err
+	}
+	ctx = namespaces.WithNamespace(ctx, constants.K8sNamespace)
+	err = cp.containerUtils.EnsureContainersDestroyed(ctx, containers, timeOut)
+	if err != nil {
+		zap.S().Infof("error destroying containers in namespace: %s :%v", constants.K8sNamespace, err)
+		return err
+	}
 	// Stop the containerd service
 	zap.S().Infof("Stopping containerd")
-	_, err := cp.conn.StopUnit("containerd.service", "replace", nil)
+	_, err = cp.conn.StopUnit("containerd.service", "replace", nil)
 	if err != nil {
 		zap.S().Infof("error stopping containerd: %v", err)
 		return fmt.Errorf("error stopping containerd: %v", err)
