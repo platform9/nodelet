@@ -286,15 +286,24 @@ func (nd *NodeletDeployer) CreatePf9User() error {
 		zap.S().Infof("User name already exist")
 		return nil
 	}
-	var cmdList []string
 	zap.S().Infof("Creating pf9 user")
-	cmdList = append(cmdList, "mkdir -p /opt/pf9/home")
-	cmdList = append(cmdList, "groupadd -f pf9group")
-	cmdList = append(cmdList, "id -u pf9 &>/dev/null || useradd -d /opt/pf9/home -G pf9group pf9")
 
-	for _, cmd := range cmdList {
-		if _, _, err := nd.client.RunCommand(cmd); err != nil {
-			return fmt.Errorf("createPf9User: %s: %s", cmd, err)
+	_, _, err = nd.client.RunCommand("mkdir -p /opt/pf9/home")
+	if err != nil {
+		return fmt.Errorf("failed to create home dir: %s", err)
+	}
+
+	_, _, err = nd.client.RunCommand("groupadd -f pf9group")
+	if err != nil {
+		return fmt.Errorf("failed to add pf9group: %s", err)
+	}
+
+	_, _, err = nd.client.RunCommand("id -u pf9")
+	if err != nil {
+		zap.S().Infof("check for id pf9: %s", err)
+		_, _, err = nd.client.RunCommand("useradd -d /opt/pf9/home -G pf9group pf9")
+		if err != nil {
+			return fmt.Errorf("createPf9User: %s", err)
 		}
 	}
 	return nil
