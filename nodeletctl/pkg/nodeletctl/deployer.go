@@ -206,6 +206,9 @@ func (nd *NodeletDeployer) DeployNodelet() error {
 	if err := nd.UploadUserImages(); err != nil {
 		return fmt.Errorf("failed to upload user container images: %s", err)
 	}
+	if err := nd.UploadCoreDNSHostsFile(); err != nil {
+		return fmt.Errorf("failed to upload custom coreDNS hosts file: %s", err)
+	}
 	if err := nd.CopyNodeletConfig(); err != nil {
 		return fmt.Errorf("failed to copy nodelet config: %s", err)
 	}
@@ -595,6 +598,19 @@ func (nd *NodeletDeployer) UploadUserImages() error {
 		if err != nil {
 			return fmt.Errorf("Failed to upload user images: %s", err)
 		}
+	}
+	return nil
+}
+
+func (nd *NodeletDeployer) UploadCoreDNSHostsFile() error {
+	if nd.nodeletCfg.CoreDNSHostsFile != "" {
+		zap.S().Infof("No custom hosts file specified, skipping upload")
+		return nil
+	}
+
+	err := UploadFileWrapper(nd.nodeletCfg.CoreDNSHostsFile, "hosts", "/etc/pf9/", nd.client)
+	if err != nil {
+		return fmt.Errorf("Failed to upload custom hosts file: %s", err)
 	}
 	return nil
 }

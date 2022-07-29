@@ -124,7 +124,8 @@ var (
 	// CoreDNSTemplate is template file for coredns
 	CoreDNSTemplate = fmt.Sprintf("%s/networkapps/coredns.yaml", ConfigSrcDir)
 	// CoreDNSFile is applied coredns file
-	CoreDNSFile = fmt.Sprintf("%s/networkapps/coredns-applied.yaml", ConfigSrcDir)
+	CoreDNSFile      = fmt.Sprintf("%s/networkapps/coredns-applied.yaml", ConfigSrcDir)
+	CoreDNSHostsFile = "/etc/hosts"
 
 	CloudConfigFile = "/etc/pf9/kube.d/cloud-config"
 

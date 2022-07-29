@@ -15,6 +15,7 @@ import (
 	"github.com/containerd/containerd/platforms"
 	"github.com/pkg/errors"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
+	"go.uber.org/zap"
 )
 
 type ImageUtility struct{}
@@ -43,7 +44,7 @@ func (i *ImageUtility) LoadImagesFromDir(ctx context.Context, imageDir string, n
 
 // LoadImagesFromFile loads images from given tar file to container runtime
 func (i *ImageUtility) LoadImagesFromFile(ctx context.Context, fileName string) error {
-
+	zap.S().Infof("Loading images from file: %s", fileName)
 	f, err := os.Open(fileName)
 	if err != nil {
 		return err
@@ -52,7 +53,6 @@ func (i *ImageUtility) LoadImagesFromFile(ctx context.Context, fileName string) 
 	if err != nil {
 		return err
 	}
-
 	platform := platforms.DefaultStrict()
 
 	client, err := containerd.New(constants.ContainerdSocket, containerd.WithDefaultPlatform(platform))
@@ -66,6 +66,7 @@ func (i *ImageUtility) LoadImagesFromFile(ctx context.Context, fileName string) 
 	}
 	for _, img := range imgs {
 		image := containerd.NewImageWithPlatform(client, img, platform)
+		zap.S().Infof("Unpacking image: %s", image.Name())
 		err = image.Unpack(ctx, constants.DefaultSnapShotter)
 		if err != nil {
 			return errors.Wrapf(err, "failed to unpack image: %s", image.Name())

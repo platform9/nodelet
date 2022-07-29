@@ -103,6 +103,11 @@ STANDALONE: "true"
 DOCKER_ROOT: /var/lib/docker
 {{if .UserImages -}}
 USER_IMAGES_DIR: "/var/opt/pf9/images"
+{{ end -}}
+{{ if .CoreDNSHostsFile -}}
+COREDNS_HOSTS_FILE: "/etc/pf9/hosts"
+{{ else -}
+COREDNS_HOSTS_FILE = "/etc/hosts"
 {{ end }}
 `
 
@@ -184,6 +189,11 @@ STANDALONE: "true"
 DOCKER_ROOT: /var/lib/docker
 {{if .UserImages -}}
 USER_IMAGES_DIR: "/var/opt/pf9/images"
+{{ end -}}
+{{ if .CoreDNSHostsFile -}}
+COREDNS_HOSTS_FILE: "/etc/pf9/hosts"
+{{ else -}
+COREDNS_HOSTS_FILE = "/etc/hosts"
 {{ end }}
 `
 const adminKubeconfigTemplate = `

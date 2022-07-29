@@ -6,9 +6,11 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"os"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
@@ -356,12 +358,34 @@ func (u *UtilsImpl) EnsureDns(cfg config.Config) error {
 	type dataToAdd struct {
 		DnsIP       string
 		K8sRegistry string
+		DnsEntries  map[string]string
 	}
+
+	hostFileLines, err := file.ReadFileByLine(cfg.CoreDNSHostsFile)
+	hostEntries := make(map[string]string)
+	for _, entry := range hostFileLines {
+		if strings.HasPrefix(entry, "#") {
+			// Is a comment, not a host entry
+			continue
+		}
+		fields := strings.SplitN(entry, " ", 2)
+		if len(fields) <= 1 {
+			continue
+		}
+		ip := net.ParseIP(fields[0])
+		if ip == nil {
+			// Not a valid IP, and not a #comment - violates /etc/hosts format, error out or ignore?
+			continue
+		}
+		hostEntries[fields[0]] = fields[1]
+	}
+
 	data := dataToAdd{
 		DnsIP:       dnsIP,
 		K8sRegistry: k8sRegistry,
+		DnsEntries:  hostEntries,
 	}
-	err := file.NewYamlFromTemplateYaml(constants.CoreDNSTemplate, constants.CoreDNSFile, data)
+	err = file.NewYamlFromTemplateYaml(constants.CoreDNSTemplate, constants.CoreDNSFile, data)
 	if err != nil {
 		return errors.Wrap(err, "could not create Coredns yaml")
 	}
@@ -373,6 +397,18 @@ func (u *UtilsImpl) EnsureDns(cfg config.Config) error {
 		err = os.Remove(constants.CoreDNSFile)
 		if err != nil {
 			return err
+		}
+	}
+
+	pods, err := u.Clientset.CoreV1().Pods("kube-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "k8s-app=kube-dns"})
+	if err != nil {
+		return errors.Wrap(err, "Failed to list coredns Pods")
+	}
+	for _, pod := range pods.Items {
+		zap.S().Infof("Deleting coreDNS Pod: %s", pod.Name)
+		err = u.Clientset.CoreV1().Pods("kube-system").Delete(context.TODO(), pod.Name, metav1.DeleteOptions{})
+		if err != nil {
+			return errors.Wrapf(err, "Failed to delete CoreDNS replica %v", pod.Name)
 		}
 	}
 	return nil
