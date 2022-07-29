@@ -78,6 +78,12 @@ data:
         loop
         reload
         loadbalance
+        {{ if .DnsEntries -}} hosts {
+        {{- range $ip, $hostname := .DnsEntries}}
+            {{ $ip }} {{ $hostname -}}
+        {{end}}
+            fallthrough
+        {{end -}}
     }
 ---
 apiVersion: apps/v1

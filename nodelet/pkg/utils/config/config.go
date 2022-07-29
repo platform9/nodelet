@@ -44,6 +44,7 @@ var DefaultConfig = Config{
 	GRPCRetryTimeoutSeconds: 5,
 	NumCmdOutputLinesToLog:  10, // 0 indicates no command lines to be logged
 	UserImagesDir:           constants.UserImagesDir,
+	CoreDNSHostsFile:        "/etc/hosts",
 }
 
 // Config a struct to load the values from viper for future use.
@@ -86,6 +87,7 @@ type Config struct {
 	ServicesCIDR              string  `mapstructure:"SERVICES_CIDR"`
 	AppCatalogEnabled         bool    `mapstructure:"APP_CATALOG_ENABLED"`
 	KubeletCloudConfig        string  `mapstructure:"KUBELET_CLOUD_CONFIG"`
+	CoreDNSHostsFile          string  `mapstructure:"COREDNS_HOSTS_FILE"`
 }
 
 // ToStringMap converts the Config struct to a map of strings

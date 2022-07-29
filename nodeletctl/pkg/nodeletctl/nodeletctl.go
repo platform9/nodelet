@@ -32,8 +32,14 @@ type BootstrapConfig struct {
 	Privileged             string                 `json:"privileged,omitempty"`
 	ContainerRuntime       ContainerRuntimeConfig `json:"containerRuntime,omitempty"`
 	UserImages             []string               `json:"userImages,omitempty"`
+	DNS                    CoreDNSConfig          `json:"dns,omitempty"`
 	MasterNodes            []HostConfig           `json:"masterNodes"`
 	WorkerNodes            []HostConfig           `json:"workerNodes"`
+}
+
+type CoreDNSConfig struct {
+	HostsFile   string   `json:"hostsFile,omitempty"`
+	InlineHosts []string `json:"corednsHosts,omitempty"`
 }
 
 type ContainerRuntimeConfig struct {
@@ -67,6 +73,7 @@ type NodeletConfig struct {
 	Privileged             string
 	NodeletRole            string
 	UserImages             []string
+	CoreDNSHostsFile       string
 }
 
 type ClusterStatus struct {
@@ -383,6 +390,7 @@ func setNodeletClusterCfg(cfg *BootstrapConfig, nodelet *NodeletConfig) {
 	nodelet.Mtu = cfg.MTU
 	nodelet.Privileged = cfg.Privileged
 	nodelet.UserImages = cfg.UserImages
+	nodelet.CoreDNSHostsFile = cfg.DNS.HostsFile
 }
 
 func GenNodeletConfigLocal(host *NodeletConfig, templateName string) (string, error) {
@@ -786,6 +794,49 @@ func regenCertsForHosts(clusterCfg *BootstrapConfig, nodes []HostConfig) error {
 	wg.Wait()
 	if err := SyncNodes(clusterCfg, &nodes); err != nil {
 		return err
+	}
+	return nil
+}
+
+func ConfigClusterDNS(cfgPath string) error {
+	clusterCfg, err := ParseBootstrapConfig(cfgPath)
+	if err != nil {
+		zap.S().Infof("Failed to Parse Cluster Config: %s", err)
+		return fmt.Errorf("Failed to Parse Cluster Config: %s", err)
+	}
+
+	if err := UploadHostsFile(clusterCfg); err != nil {
+		zap.S().Infof("Cluster failed: %s\n", err)
+		return fmt.Errorf("Cluster failed: %s", err)
+	}
+
+	return nil
+}
+
+func UploadHostsFile(clusterCfg *BootstrapConfig) error {
+	allNodes := append(clusterCfg.WorkerNodes, clusterCfg.MasterNodes...)
+	failed := false
+	for _, host := range allNodes {
+		deployer, err := GetNodeletDeployer(clusterCfg, nil, nil, host.NodeName, "")
+		if err != nil {
+			zap.S().Errorf("failed to get nodelet deployer: %v", err)
+			return fmt.Errorf("failed to get nodelet deployer: %v", err)
+		}
+		zap.S().Infof("Cleaning up node %s", host.NodeName)
+		err = deployer.UploadCoreDNSHostsFile()
+		if err != nil {
+			zap.S().Warnf("Failed to upload custom hosts file on %s: %s\n", host.NodeName, err)
+			failed = false
+		}
+
+		err = deployer.RestartNodelet()
+		if err != nil {
+			zap.S().Warnf("Failed to restart pf9-nodeletd service on %s: %s\n", host.NodeName, err)
+			failed = true
+		}
+	}
+	if failed {
+		return fmt.Errorf("Failed to upload custom hosts file or restart nodelet. Check node for details")
 	}
 	return nil
 }
