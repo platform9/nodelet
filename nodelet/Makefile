@@ -46,7 +46,7 @@ GOLANG_DOCKER_MARKER := ${NODELET_BUILD_DIR}/${COMPILE_IMAGE}.marker
 .DEFAULT_GOAL:= nodelet
 
 # Download containerd
-CONTAINERD_VERSION := 1.6.1
+CONTAINERD_VERSION := 1.6.6
 CONTAINERD_BASE_DIR := $(NODELET_SRC_DIR)/pkg/utils/container_runtime/src/containerd
 CONTAINERD_FILE_NAME := containerd-${CONTAINERD_VERSION}-linux-amd64.tar.gz
 CONTAINERD_FILE := $(CONTAINERD_BASE_DIR)/containerd.tar.gz
@@ -75,8 +75,23 @@ $(RUNC_FILE): | $(RUNC_BASE_DIR)
 	echo "make RUNC_FILE: $(RUNC_FILE)"
 	${WGET_CMD} ${RUNC_URL}  -O ${RUNC_FILE}
 
+# Download CNI plugins
+CNI_PLUGINS_VERSION := v1.1.1
+CNI_PLUGINS_BASE_DIR := $(NODELET_SRC_DIR)/pkg/utils/container_runtime/src/cni_plugins
+CNI_PLUGINS_FILE_NAME := cni-plugins-linux-amd64-${CNI_PLUGINS_VERSION}.tgz
+CNI_PLUGINS_FILE := $(CNI_PLUGINS_BASE_DIR)/cni-plugins.tgz
+CNI_PLUGINS_URL := https://github.com/containernetworking/plugins/releases/download/${CNI_PLUGINS_VERSION}/${CNI_PLUGINS_FILE_NAME}
+#https://github.com/containernetworking/plugins/releases/download/v1.1.1/cni-plugins-linux-amd64-v1.1.1.tgz
+$(CNI_PLUGINS_BASE_DIR):
+	echo "make CNI_PLUGINS_BASE_DIR: $(CNI_PLUGINS_BASE_DIR)"
+	mkdir -p $@
+
+$(CNI_PLUGINS_FILE): | $(CNI_PLUGINS_BASE_DIR)
+	echo "make CNI_PLUGINS_FILE: $(CNI_PLUGINS_FILE)"
+	${WGET_CMD} ${CNI_PLUGINS_URL}  -O ${CNI_PLUGINS_FILE}
+
 # Download/create build envs
-nodelet-setup: ${NODELET_BIN_DIR} ${GOLANG_DOCKER_MARKER} $(CONTAINERD_FILE) $(RUNC_FILE)
+nodelet-setup: ${NODELET_BIN_DIR} ${GOLANG_DOCKER_MARKER} $(CONTAINERD_FILE) $(RUNC_FILE) $(CNI_PLUGINS_FILE)
 	echo "setting up env for nodeletd"
 	cd ${NODELET_SRC_DIR} && go mod vendor || true
 

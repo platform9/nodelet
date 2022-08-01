@@ -26,6 +26,7 @@ type ImageUtils interface {
 type InstallRuntime interface {
 	EnsureContainerdInstalled(ctx context.Context) error
 	EnsureRuncInstalled() error
+	EnsureCNIPluginsInstalled() error
 	LoadKernelModules(ctx context.Context, modules []string) error
 	SetContainerdSysctlParams(ctx context.Context) error
 	GenerateContainerdUnit() error

@@ -134,15 +134,13 @@ var (
 
 	UsrLocalSbinDir = "/usr/local/sbin"
 
-	RuncBin = fmt.Sprintf("%s/%s", UsrLocalSbinDir, "runc")
+	CniDir = "/opt/cni/bin"
 
-	ContainerdMarker = "var/opt/pf9/installed_containerd_version"
+	RuncBin = "/usr/local/sbin/runc"
 
-	RuncMarker = "var/opt/pf9/installed_runc_version"
+	ContainerdVersion = "v1.6.6"
 
-	ContainerdVersion = "1.6.6"
-
-	RuncVersion = "1.1.3"
+	ContainerdUnitFile = "/usr/local/lib/systemd/system/containerd.service"
 
 	// Phase orders of all the phases
 	NoRolePhaseOrder                   = 10
@@ -172,5 +170,5 @@ var (
 	// PhaseBaseDir is the base directory in which all bash-based phase scripts are located
 	PhaseBaseDir = "/opt/pf9/pf9-kube/phases"
 	// LocalDir is the local directory used here for containerd binaries.
-
+	ContainerdBaseDir = "/opt/pf9/pf9-kube/containerd"
 )

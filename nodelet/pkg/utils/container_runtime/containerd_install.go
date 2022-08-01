@@ -7,8 +7,9 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 
-	"github.com/pkg/errors"
+	"github.com/coreos/go-systemd/dbus"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/command"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/embedutil"
@@ -17,10 +18,16 @@ import (
 	"go.uber.org/zap"
 )
 
-var (
-	err     error
-	version []byte
-)
+var err error
+
+//go:embed src/containerd/containerd.tar.gz
+var containerdZip embed.FS
+
+//go:embed src/runc_bin/runc
+var runcBin embed.FS
+
+//go:embed src/cni_plugins/cni-plugins.tgz
+var cniPlugins embed.FS
 
 type ContainerdInstall struct {
 	embedFs *embedutil.EmbedFS
@@ -29,6 +36,7 @@ type ContainerdInstall struct {
 }
 
 func NewContainerd() InstallRuntime {
+
 	return &ContainerdInstall{
 		embedFs: nil,
 		cmd:     command.New(),
@@ -38,40 +46,36 @@ func NewContainerd() InstallRuntime {
 
 func (ci *ContainerdInstall) EnsureContainerdInstalled(ctx context.Context) error {
 
-	//go:embed src/containerd/containerd.tar.gz
-	var containerdZip embed.FS
-
 	ci.embedFs = &embedutil.EmbedFS{
 		Fs:   containerdZip,
-		Root: "containerd",
+		Root: "src/containerd",
 	}
+	var installedVersion string
+	containerdInstalled := false
 
-	containerdInstalled := true
+	exitCode, output, err := ci.cmd.RunCommandWithStdOut(ctx, nil, 0, "", "containerd", "--version")
 
-	if _, err := os.Stat(constants.ContainerdMarker); errors.Is(err, os.ErrNotExist) {
-		containerdInstalled = false
-	} else {
-		version, err = ci.file.ReadFile(constants.ContainerdVersion)
-		if err != nil {
-			return err
+	if err == nil && output != nil && exitCode == 0 {
+		r := regexp.MustCompile(`v*\d.\d.\d`)
+		installedVersion = r.FindString(output[0])
+		if constants.ContainerdVersion == installedVersion {
+			containerdInstalled = true
 		}
 	}
 
-	installedVersion := string(version)
+	if !containerdInstalled {
 
-	if !containerdInstalled || constants.ContainerdVersion != installedVersion {
-
-		zap.S().Infof("Extracting containerd zip to %s", constants.PhaseBaseDir)
-		err = ci.embedFs.Extract(constants.PhaseBaseDir)
+		zap.S().Infof("Extracting containerd zip to %s", constants.ContainerdBaseDir)
+		err = ci.embedFs.Extract(constants.ContainerdBaseDir)
 		if err != nil {
-			zap.S().Infof("error extracting containerd zip: to baseDir %s,  %v", constants.PhaseBaseDir, err)
-			return fmt.Errorf("error extracting containerd zip: to baseDir %s,  %v", constants.PhaseBaseDir, err)
+			zap.S().Infof("error extracting containerd zip: to baseDir %s,  %v", constants.ContainerdBaseDir, err)
+			return fmt.Errorf("error extracting containerd zip: to baseDir %s,  %v", constants.ContainerdBaseDir, err)
 		}
 
 		// now extract the tar files
 		zap.S().Infof("Untarring containerd zip to %s", constants.UsrLocalDir)
 
-		matches, err := filepath.Glob(path.Join(constants.PhaseBaseDir, "containerd*.tar.gz"))
+		matches, err := filepath.Glob(path.Join(constants.ContainerdBaseDir, "containerd*.tar.gz"))
 		if err != nil {
 			zap.S().Infof("error finding containerd tar files: %v", err)
 			return fmt.Errorf("error finding containerd tar files: %v", err)
@@ -115,57 +119,129 @@ func (ci *ContainerdInstall) EnsureContainerdInstalled(ctx context.Context) erro
 			return err
 		}
 
-		err = ci.file.WriteToFile(constants.ContainerdMarker, constants.ContainerdVersion, false)
+		zap.S().Infof("installing runc required for containerd")
+		err = ci.EnsureRuncInstalled()
 		if err != nil {
+			zap.S().Infof("Error installing runc: %v", err)
 			return err
 		}
+
+		zap.S().Infof("installing cni plugins required for containerd")
+		err = ci.EnsureCNIPluginsInstalled()
+		if err != nil {
+			zap.S().Infof("Error installing cni-plugins: %v", err)
+			return err
+		}
+
+		conn, err := dbus.NewSystemConnection()
+		if err != nil {
+			zap.S().Errorf("error connecting to dbus: %v", err)
+		}
+		defer conn.Close()
+
+		// Reload dbus daemon to load new containerd service
+		zap.S().Infof("Reloading dbus")
+		err = conn.Reload()
+		if err != nil {
+			zap.S().Infof("error reloading dbus: %v", err)
+			return fmt.Errorf("error reloading dbus: %v", err)
+		}
+
+		// systemctl enable --now containerd
+		zap.S().Infof("Enabling containerd")
+		unitfiles := []string{constants.ContainerdUnitFile}
+
+		/*
+
+			TODO: crosscheck 2nd and 3rd arg of below function
+			2nd arg: runtime: controls whether the unit shall be enabled for runtime only (true, /run), or persistently (false, /etc)
+			3rd arg: force: controls whether symlinks pointing to other units shall be replaced if necessary
+
+		*/
+
+		enablement, changes, err := conn.EnableUnitFiles(unitfiles, false, false)
+		if err != nil {
+			zap.S().Infof("error enabling containerd: %v", err)
+			return fmt.Errorf("error enabling containerd: %v", err)
+		}
+
+		//TODO: check how to use above enablement boolean.
+		//enablement : The boolean signals whether the unit files contained any enablement information (i.e. an [Install]) section
+
+		zap.S().Info("just printing this to avoid var unused error. will remove it %v", enablement)
+
+		if len(changes) > 0 {
+			zap.S().Infof("%sed %s to %s", changes[0].Type, changes[0].Filename, changes[0].Destination)
+		}
+
+		zap.S().Infof("Restarting containerd")
+		jobId, err := conn.RestartUnit("containerd.service", "replace", nil)
+		if err != nil {
+			zap.S().Infof("error reloading dbus: %v", err)
+			return err
+		}
+		zap.S().Infof("containerd started with job id: %v", jobId)
+
 	}
 	return nil
 }
 
 func (ci *ContainerdInstall) EnsureRuncInstalled() error {
 
-	//go:embed src/runc_bin/runc
-	var runcBin embed.FS
-
 	ci.embedFs = &embedutil.EmbedFS{
 		Fs:   runcBin,
-		Root: "runc_binary",
-	}
-	runcInstalled := true
-
-	if _, err := os.Stat(constants.RuncMarker); errors.Is(err, os.ErrNotExist) {
-		runcInstalled = false
-	} else {
-		version, err = ci.file.ReadFile(constants.RuncVersion)
-		if err != nil {
-			return err
-		}
+		Root: "src/runc_bin",
 	}
 
-	installedVersion := string(version)
+	zap.S().Infof("Extracting Runc to %s", constants.UsrLocalSbinDir)
+	err = ci.embedFs.Extract(constants.UsrLocalSbinDir)
+	if err != nil {
+		zap.S().Infof("error extracting containerd zip: to baseDir %s,  %v", constants.UsrLocalSbinDir, err)
+		return fmt.Errorf("error extracting containerd zip: to baseDir %s,  %v", constants.UsrLocalSbinDir, err)
+	}
 
-	if !runcInstalled || constants.RuncVersion != installedVersion {
+	zap.S().Infof("giving execute permmission to runc")
+	err = os.Chmod(constants.RuncBin, 0755)
+	if err != nil {
+		zap.S().Infof("error giving exec perm to  %s,  %v", constants.RuncBin, err)
+		return fmt.Errorf("error giving exec perm to  %s,  %v", constants.RuncBin, err)
+	}
 
-		zap.S().Infof("Extracting Runc to %s", constants.UsrLocalSbinDir)
-		err = ci.embedFs.Extract(constants.UsrLocalSbinDir)
+	return nil
+}
+
+func (ci *ContainerdInstall) EnsureCNIPluginsInstalled() error {
+
+	ci.embedFs = &embedutil.EmbedFS{
+		Fs:   cniPlugins,
+		Root: "src/cni_plugins",
+	}
+
+	zap.S().Infof("Extracting cni-plugins zip to %s", constants.ContainerdBaseDir)
+	err = ci.embedFs.Extract(constants.ContainerdBaseDir)
+	if err != nil {
+		zap.S().Infof("error extracting cni-plugins zip: to baseDir %s,  %v", constants.ContainerdBaseDir, err)
+		return fmt.Errorf("error extracting cni-plugins zip: to baseDir %s,  %v", constants.ContainerdBaseDir, err)
+	}
+
+	// now extract the tar files
+	zap.S().Infof("Untarring cni-plugins zip to %s", constants.CniDir)
+
+	matches, err := filepath.Glob(path.Join(constants.ContainerdBaseDir, "cni-plugins*.tgz"))
+	if err != nil {
+		zap.S().Infof("error finding cni-plugins tar files: %v", err)
+		return fmt.Errorf("error finding cni-plugins tar files: %v", err)
+	}
+
+	for _, match := range matches {
+		zap.S().Infof("Untarring %s", match)
+		err = untar.Extract(match, constants.CniDir)
 		if err != nil {
-			zap.S().Infof("error extracting containerd zip: to baseDir %s,  %v", constants.UsrLocalSbinDir, err)
-			return fmt.Errorf("error extracting containerd zip: to baseDir %s,  %v", constants.UsrLocalSbinDir, err)
-		}
-
-		zap.S().Infof("giving execute permmission to runc")
-		err = os.Chmod(constants.RuncBin, 0755)
-		if err != nil {
-			zap.S().Infof("error giving exec perm to  %s,  %v", constants.RuncBin, err)
-			return fmt.Errorf("error giving exec perm to  %s,  %v", constants.RuncBin, err)
-		}
-
-		err = ci.file.WriteToFile(constants.RuncMarker, constants.RuncVersion, false)
-		if err != nil {
-			return err
+			zap.S().Infof("error untarring cni-plugins tar file: %v", err)
+			return fmt.Errorf("error untarring cni-plugins tar file: %v", err)
 		}
 	}
+
 	return nil
 }
 
@@ -190,6 +266,7 @@ func (ci *ContainerdInstall) LoadKernelModules(ctx context.Context, modules []st
 	}
 	return nil
 }
+
 func (ci *ContainerdInstall) SetContainerdSysctlParams(ctx context.Context) error {
 	err := os.MkdirAll("/etc/sysctl.d/", 0770)
 	if err != nil {
@@ -213,11 +290,14 @@ func (ci *ContainerdInstall) SetContainerdSysctlParams(ctx context.Context) erro
 }
 
 func (ci *ContainerdInstall) GenerateContainerdUnit() error {
+
 	err := os.MkdirAll("/usr/local/lib/systemd/system", 0770)
 	if err != nil {
 		return err
 	}
+
 	file := "/usr/local/lib/systemd/system/containerd.service"
+
 	data :=
 		`[Unit]
 	Description=containerd container runtime
@@ -245,6 +325,7 @@ func (ci *ContainerdInstall) GenerateContainerdUnit() error {
 	
 	[Install]
 	WantedBy=multi-user.target`
+
 	err = ci.file.WriteToFile(file, data, false)
 	if err != nil {
 		return err
@@ -257,7 +338,7 @@ func (ci *ContainerdInstall) GenerateContainerdConfig() error {
 	if err != nil {
 		return err
 	}
-	file := "/etc/containerd" + "config.toml"
+	file := "/etc/containerd/" + "config.toml"
 	data :=
 		`version = 2
 		root = "/var/lib/containerd"

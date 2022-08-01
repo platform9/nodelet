@@ -17,6 +17,10 @@ mkdir -p /etc/pf9/kube.d
 mkdir -p /etc/cni/net.d
 mkdir -p /var/log/pf9/kubelet
 mkdir -p /var/opt/pf9/kube/apiserver-config
+
+# to store containerd installation tar/zip files
+mkdir -p /opt/pf9/pf9-kube/containerd
+
 # Enable calling iptables for packets ingress/egress'ing bridges
 # See IAAS-7747
 sysctl net/bridge/bridge-nf-call-iptables > /etc/pf9/kube.d/bridge-nf-call-iptables.old
@@ -31,6 +35,8 @@ chown -R pf9:pf9group /opt/pf9/hostagent/extensions/fetch_pf9_kube_status.py
 chown -R pf9:pf9group /opt/pf9/hostagent/extensions/fetch_pod_info.py
 chown -R pf9:pf9group /var/opt/pf9
 chown -R pf9:pf9group /etc/pf9
+chown -R pf9:pf9group /usr/local
+chown -R pf9:pf9group /opt
 
 # Clear any docker network configuration before installation of
 # any network plugin.
@@ -76,3 +82,5 @@ chown -R root:pf9group /opt/pf9/pf9-kube || true
 chmod -w -R /opt/pf9/pf9-kube || true
 # Add write and execute permissions /opt/pf9/pf9-kube/conf to allow templates to be rendered
 chmod 0770 -R /opt/pf9/pf9-kube/conf/
+# Add write and execute permissions /opt/pf9/pf9-kube/containerd to allow installation tar/zips to be stored and extracted.
+chmod 0770 -R /opt/pf9/pf9-kube/containerd

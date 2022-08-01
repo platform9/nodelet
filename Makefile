@@ -275,29 +275,31 @@ DEB_SRC_ROOT := $(PF9_KUBE_SRCDIR)/debsrc
 
 
 ############################
+# CNI plugins is moved to nodelet makefile and the tar file is embeded into nodelet binary
+
 # Kubernetes CNI and Networking
 
 # CNI
-.PHONY: cni-plugins
-ARCH := linux-amd64
+#.PHONY: cni-plugins
+#ARCH := linux-amd64
 
 # To pull new cni plugin binaries, update the CNI_PLUGINS_VERSION tag to the reqired version
-CNI_PLUGINS_BASE_DIR := $(BUILD_DIR)/cni-plugins
-CNI_PLUGINS_DIR := $(CNI_PLUGINS_BASE_DIR)/$(CNI_PLUGINS_VERSION)
-CNI_PLUGINS_FILE := cni-plugins-${ARCH}-${CNI_PLUGINS_VERSION}.tgz
-CNI_PLUGINS_URL := https://github.com/containernetworking/plugins/releases/download/${CNI_PLUGINS_VERSION}/${CNI_PLUGINS_FILE}
+# CNI_PLUGINS_BASE_DIR := $(BUILD_DIR)/cni-plugins
+# CNI_PLUGINS_DIR := $(CNI_PLUGINS_BASE_DIR)/$(CNI_PLUGINS_VERSION)
+# CNI_PLUGINS_FILE := cni-plugins-${ARCH}-${CNI_PLUGINS_VERSION}.tgz
+# CNI_PLUGINS_URL := https://github.com/containernetworking/plugins/releases/download/${CNI_PLUGINS_VERSION}/${CNI_PLUGINS_FILE}
 
-$(CNI_PLUGINS_BASE_DIR):
-	echo "make CNI_PLUGINS_BASE_DIR: $(CNI_PLUGINS_BASE_DIR)"
-	mkdir -p $@
+# $(CNI_PLUGINS_BASE_DIR):
+# 	echo "make CNI_PLUGINS_BASE_DIR: $(CNI_PLUGINS_BASE_DIR)"
+# 	mkdir -p $@
 
-$(CNI_PLUGINS_DIR): | $(CNI_PLUGINS_BASE_DIR)
-	echo "make CNI_PLUGINS_DIR: $(CNI_PLUGINS_DIR)"
-	mkdir -p $@
-	cd $@ && \
-	${WGET_CMD} ${CNI_PLUGINS_URL}  -qO- | tar -zx
+# $(CNI_PLUGINS_DIR): | $(CNI_PLUGINS_BASE_DIR)
+# 	echo "make CNI_PLUGINS_DIR: $(CNI_PLUGINS_DIR)"
+# 	mkdir -p $@
+# 	cd $@ && \
+# 	${WGET_CMD} ${CNI_PLUGINS_URL}  -qO- | tar -zx
 
-cni-plugins: $(CNI_PLUGINS_DIR)
+# cni-plugins: $(CNI_PLUGINS_DIR)
 
 
 # CONTAINERD CLI
@@ -479,7 +481,7 @@ jq:
 	${WGET_CMD} -O jq -L https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 && \
 	chmod u=rwx,og=rx jq
 
-$(COMMON_SRC_ROOT): easyrsa $(AUTHBS_SRC_DIR) bouncer-docker-image kubernetes nodelet cni-plugins nerdctl crictl calicoctl etcdctl etcd_raft_checker pf9kube-addr-conv pf9kube-ip_type virtctl jq
+$(COMMON_SRC_ROOT): easyrsa $(AUTHBS_SRC_DIR) bouncer-docker-image kubernetes nodelet nerdctl crictl calicoctl etcdctl etcd_raft_checker pf9kube-addr-conv pf9kube-ip_type virtctl jq
 	echo "make COMMON_SRC_ROOT $(COMMON_SRC_ROOT)"
 	echo "COMMON_SRC_ROOT is $(COMMON_SRC_ROOT)" # i.e. /vagrant/build/pf9-kube/pf9-kube-src/common
 	echo "AGENT_SRC_DIR is $(AGENT_SRC_DIR)" # cp -a /vagrant/agent/root/* /vagrant/build/pf9-kube/pf9-kube-src/common/
@@ -506,8 +508,6 @@ $(COMMON_SRC_ROOT): easyrsa $(AUTHBS_SRC_DIR) bouncer-docker-image kubernetes no
 	cp -a $(EASYRSA_TARBALL) $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/bin/requester
 	mkdir -p $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/images
 	cp -a $(BOUNCER_IMAGE_TARBALL) $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/images/
-	mkdir -p $(COMMON_SRC_ROOT)/opt/cni/bin
-	cp -a $(CNI_PLUGINS_DIR)/* $(COMMON_SRC_ROOT)/opt/cni/bin/
 	mkdir -p $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/conf/networkapps
 	mv -f $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/conf/networkapps/calico.yaml $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/conf/networkapps/calico-${KUBERNETES_VERSION}.yaml
 	mv -f $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/conf/networkapps/canal.yaml $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/conf/networkapps/canal-${KUBERNETES_VERSION}.yaml

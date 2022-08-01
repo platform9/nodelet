@@ -1,5 +1,4 @@
 .ci/build/
 build/
 /nodeletd
-/src/containerd
-/src/runc_bin
+pkg/utils/container_runtime/src/
