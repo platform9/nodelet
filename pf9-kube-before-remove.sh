@@ -33,9 +33,5 @@ rm -f /usr/local/bin/containerd*
 rm -f /usr/local/sbin/runc*
 rm -rf /opt/cni/bin
 
-rm -f /var/opt/pf9/installed_containerd_version
-rm -f /var/opt/pf9/installed_runc_version
-rm -f /var/opt/pf9/installed_cni_plugins_version
-
 rm -f /usr/local/lib/systemd/system/containerd.service
 rm -f /etc/containerd/config.toml
