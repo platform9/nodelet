@@ -96,7 +96,7 @@ func (cp *ContainerdRunPhase) Stop(ctx context.Context, cfg config.Config) error
 	if err != nil {
 		cp.log.Errorf("error getting containers in namespace: %s :%v", constants.K8sNamespace, err)
 		phaseutils.SetHostStatus(cp.hostPhase, constants.FailedState, err.Error())
-		return errors.Wrapf(err, "error getting containers in namespace: %s ")
+		return errors.Wrapf(err, "error getting containers in namespace: %s ", constants.K8sNamespace)
 	}
 
 	ctx = namespaces.WithNamespace(ctx, constants.K8sNamespace)
