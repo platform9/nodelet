@@ -188,21 +188,29 @@ func (c *ContainerUtility) RemoveContainer(ctx context.Context, container contai
 	id := container.ID()
 	task, err := container.Task(ctx, cio.Load)
 	if err != nil {
+
 		if errdefs.IsNotFound(err) {
+			zap.S().Infof("task not found so deleting directly with snapshot cleanup")
 			if container.Delete(ctx, containerd.WithSnapshotCleanup) != nil {
+				zap.S().Infof("failed to delete with snapshot")
 				if err = container.Delete(ctx); errdefs.IsNotFound(err) {
 					zap.S().Infof("container not found on store so skipping delete")
 					return nil
 				}
+				zap.S().Infof("container delete failed:%v", err)
 				return err
 			}
+			zap.S().Infof("container deleted with snapshot successfully: %v", id)
+			return nil
 		}
 		return err
 	}
 
 	status, err := task.Status(ctx)
 	if err != nil {
+		zap.S().Infof("task.status gave err:%v", err)
 		if errdefs.IsNotFound(err) {
+
 			return nil
 		}
 		return err
@@ -311,9 +319,7 @@ func (c *ContainerUtility) StopContainer(ctx context.Context, container containe
 
 		err = waitContainerStop(sigtermCtx, exitCh, container.ID())
 		if err == nil {
-			zap.S().Info("err from waitcontainerstop in timeout", err)
 			return nil
-
 		}
 
 		if ctx.Err() != nil {

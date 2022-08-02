@@ -30,8 +30,9 @@ rm -rf /usr/local/bin/kubectl || true
 
 # Uninstall/remove containerd and runc installed by nodeletd
 rm -f /usr/local/bin/containerd*
+rm -f /usr/local/bin/ctr
 rm -f /usr/local/sbin/runc*
 rm -rf /opt/cni/bin
 
 rm -f /usr/local/lib/systemd/system/containerd.service
-rm -f /etc/containerd/config.toml
+rm -rf /etc/containerd

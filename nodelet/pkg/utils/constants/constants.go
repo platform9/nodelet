@@ -140,7 +140,22 @@ var (
 
 	ContainerdVersion = "v1.6.6"
 
-	ContainerdUnitFile = "/usr/local/lib/systemd/system/containerd.service"
+	EtcModulesDir = "/etc/modules-load.d"
+
+	EtcSysctlDir = "/etc/sysctl.d"
+
+	UsrLocalLibSytemdDir = "/usr/local/lib/systemd/system"
+
+	EtcContainerdDir = "/etc/containerd"
+
+	ContainerdUnitFile = fmt.Sprintf("%s/containerd.service", UsrLocalLibSytemdDir)
+
+	ContainerdConfigFile = fmt.Sprintf("%s/config.toml", EtcContainerdDir)
+
+	//TODO: give proper names to files
+	EtcModulesContainerdConfFile = fmt.Sprintf("%s/containerd.conf", EtcModulesDir)
+
+	SysctlPf9CriConfFile = fmt.Sprintf("%s/pf9-kubernetes-cri.conf", EtcSysctlDir)
 
 	// Phase orders of all the phases
 	NoRolePhaseOrder                   = 10
