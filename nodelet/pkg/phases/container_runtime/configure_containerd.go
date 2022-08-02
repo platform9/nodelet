@@ -9,6 +9,7 @@ import (
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 	cr "github.com/platform9/nodelet/nodelet/pkg/utils/container_runtime"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/phaseutils"
 	sunpikev1alpha1 "github.com/platform9/pf9-qbert/sunpike/apiserver/pkg/apis/sunpike/v1alpha1"
 	"go.uber.org/zap"
 )
@@ -68,6 +69,7 @@ func (cp *ContainerdConfigPhase) Start(ctx context.Context, cfg config.Config) e
 		conn, err := dbus.NewSystemConnection()
 		if err != nil {
 			cp.log.Errorf("error connecting to dbus:%v", err)
+			phaseutils.SetHostStatus(cp.hostPhase, constants.FailedState, err.Error())
 			return errors.Wrap(err, "error connecting to dbus")
 		}
 		defer conn.Close()
@@ -77,6 +79,7 @@ func (cp *ContainerdConfigPhase) Start(ctx context.Context, cfg config.Config) e
 		_, err = conn.StopUnit("containerd.service", "replace", nil)
 		if err != nil {
 			cp.log.Errorf("error stopping containerd: %v", err)
+			phaseutils.SetHostStatus(cp.hostPhase, constants.FailedState, err.Error())
 			return errors.Wrap(err, "error stopping containerd")
 		}
 	}
@@ -85,18 +88,22 @@ func (cp *ContainerdConfigPhase) Start(ctx context.Context, cfg config.Config) e
 	err = cp.containerdInstall.EnsureContainerdInstalled(ctx)
 	if err != nil {
 		cp.log.Errorf("error installing containerd: %v", err)
+		phaseutils.SetHostStatus(cp.hostPhase, constants.FailedState, err.Error())
 		return errors.Wrap(err, "error installing containerd")
 	}
 
+	phaseutils.SetHostStatus(cp.hostPhase, constants.RunningState, "")
 	return nil
 }
 
 func (cp *ContainerdConfigPhase) Stop(context.Context, config.Config) error {
 	cp.log.Infof("Running Stop of phase: %s", cp.hostPhase.Name)
+	phaseutils.SetHostStatus(cp.hostPhase, constants.StoppedState, "")
 	return nil
 }
 
 func (cp *ContainerdConfigPhase) Status(context.Context, config.Config) error {
 	cp.log.Infof("Running Status of phase: %s", cp.hostPhase.Name)
+	phaseutils.SetHostStatus(cp.hostPhase, constants.RunningState, "")
 	return nil
 }
