@@ -45,19 +45,19 @@ func Extract(tgzFile string, destDir string) error {
 		mode := fi.Mode()
 		switch {
 		case mode.IsDir():
-			err = os.MkdirAll(fpath, 0755)
+			err = os.MkdirAll(fpath, 0770)
 			if err != nil {
 				zap.S().Infof("error creating directory: %s %v", fpath, err)
 				return fmt.Errorf("error creating directory: %s %v", fpath, err)
 			}
 		case mode.IsRegular():
 			// this is redundant
-			err = os.MkdirAll(filepath.Dir(fpath), 0755)
+			err = os.MkdirAll(filepath.Dir(fpath), 0770)
 			if err != nil {
 				zap.S().Infof("error creating directory: %s %v", filepath.Dir(fpath), err)
 				return fmt.Errorf("error creating directory: %s %v", filepath.Dir(fpath), err)
 			}
-			destFile, err := os.OpenFile(fpath, os.O_CREATE|os.O_RDWR, 0755)
+			destFile, err := os.OpenFile(fpath, os.O_CREATE|os.O_RDWR, 0770)
 			defer destFile.Close()
 			if err != nil {
 				zap.S().Infof("error creating file: %s %v", fpath, err)

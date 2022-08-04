@@ -35,8 +35,6 @@ chown -R pf9:pf9group /opt/pf9/hostagent/extensions/fetch_pf9_kube_status.py
 chown -R pf9:pf9group /opt/pf9/hostagent/extensions/fetch_pod_info.py
 chown -R pf9:pf9group /var/opt/pf9
 chown -R pf9:pf9group /etc/pf9
-chown -R pf9:pf9group /usr/local
-chown -R pf9:pf9group /opt
 
 # Clear any docker network configuration before installation of
 # any network plugin.
@@ -75,6 +73,42 @@ if [ -f /var/opt/pf9/kube_interface ]; then
     rm -f /var/opt/pf9/kube_interface || true
 fi
 
+# Writing polkit rules to allow pf9 service to manage units. 
+# e.g. containerd (required to get authentication to connect to system-dbus for operations like start/stop/status/enable ) 
+echo "Generating polkit rules"
+mkdir -p /etc/polkit-1/rules.d
+cat > "/etc/polkit-1/rules.d/48-pf9-allow-service-mgmt.rules" <<EOF
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.freedesktop.systemd1.reload-daemon" &&
+        subject.user == "pf9")
+    {
+        return polkit.Result.YES;
+    }
+})
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.freedesktop.systemd1.manage-units" &&
+        subject.user == "pf9")
+    {
+        return polkit.Result.YES;
+    }
+})
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.freedesktop.systemd1.manage-unit-files" &&
+        subject.user == "pf9")
+    {
+        return polkit.Result.YES;
+    }
+})
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.freedesktop.udisks2.filesystem-take-ownership" &&
+        subject.user == "pf9")
+    {
+        return polkit.Result.YES;
+    }
+})
+EOF
+
+
 # Make all pf9-kube files non-writable by pf9 user
 # To prevent files from being written using vim + :wq! make the root user owner of all files
 chown -R root:pf9group /opt/pf9/pf9-kube || true
@@ -84,3 +118,4 @@ chmod -w -R /opt/pf9/pf9-kube || true
 chmod 0770 -R /opt/pf9/pf9-kube/conf/
 # Add write and execute permissions /opt/pf9/pf9-kube/containerd to allow installation tar/zips to be stored and extracted.
 chmod 0770 -R /opt/pf9/pf9-kube/containerd
+

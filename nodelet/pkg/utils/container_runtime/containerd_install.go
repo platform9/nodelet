@@ -178,7 +178,7 @@ func (ci *ContainerdInstall) EnsureRuncInstalled() error {
 	}
 
 	ci.log.Infof("Giving execute permmission to runc")
-	err = os.Chmod(constants.RuncBin, 0755)
+	err = os.Chmod(constants.RuncBin, 0775)
 	if err != nil {
 		return errors.Wrapf(err, "error giving exec perm to  %s", constants.RuncBin)
 	}
@@ -219,7 +219,7 @@ func (ci *ContainerdInstall) EnsureCNIPluginsInstalled() error {
 
 func (ci *ContainerdInstall) LoadKernelModules(ctx context.Context, modules []string) error {
 
-	err := os.MkdirAll(constants.EtcModulesDir, 0666)
+	err := os.Mkdir(constants.EtcModulesDir, 0770)
 	if err != nil {
 		return errors.Wrap(err, "error creating etc modules directory")
 	}
@@ -244,11 +244,6 @@ func (ci *ContainerdInstall) LoadKernelModules(ctx context.Context, modules []st
 
 func (ci *ContainerdInstall) SetContainerdSysctlParams(ctx context.Context) error {
 
-	err := os.MkdirAll(constants.EtcSysctlDir, 0666)
-	if err != nil {
-		return err
-	}
-
 	data := []string{
 		"net.bridge.bridge-nf-call-iptables  = 1",
 		"net.ipv4.ip_forward  = 1",
@@ -270,7 +265,7 @@ func (ci *ContainerdInstall) SetContainerdSysctlParams(ctx context.Context) erro
 
 func (ci *ContainerdInstall) GenerateContainerdUnit() error {
 
-	err := os.MkdirAll(constants.UsrLocalLibSytemdDir, 0666)
+	err := os.MkdirAll(constants.UsrLocalLibSytemdDir, 0770)
 	if err != nil {
 		return errors.Wrap(err, "error creating local lib systemd directory")
 	}
@@ -314,9 +309,9 @@ func (ci *ContainerdInstall) GenerateContainerdUnit() error {
 
 func (ci *ContainerdInstall) GenerateContainerdConfig() error {
 
-	err := os.MkdirAll(constants.EtcContainerdDir, 0666)
+	err := os.Mkdir(constants.EtcContainerdDir, 0770)
 	if err != nil {
-		return errors.Wrapf(err, "failed to write containerd unit file:%s", constants.ContainerdConfigFile)
+		return errors.Wrapf(err, "failed to write containerd config file:%s", constants.ContainerdConfigFile)
 	}
 
 	data :=
@@ -343,12 +338,12 @@ func (ci *ContainerdInstall) GenerateContainerdConfig() error {
 
 	err = ci.file.WriteToFile(constants.ContainerdConfigFile, data, false)
 	if err != nil {
-		return errors.Wrapf(err, "failed to write containerd unit file:%s", constants.ContainerdConfigFile)
+		return errors.Wrapf(err, "failed to write containerd config file:%s", constants.ContainerdConfigFile)
 	}
 
 	err = ci.file.WriteToFile(constants.ContainerdConfigFile, "\n", true)
 	if err != nil {
-		return errors.Wrapf(err, "failed to write containerd unit file:%s", constants.ContainerdConfigFile)
+		return errors.Wrapf(err, "failed to write containerd config file:%s", constants.ContainerdConfigFile)
 	}
 
 	if constants.ContainerdCgroup == "systemd" {
@@ -359,7 +354,7 @@ func (ci *ContainerdInstall) GenerateContainerdConfig() error {
 
 		ci.file.WriteToFile(constants.ContainerdConfigFile, appendata, true)
 		if err != nil {
-			return errors.Wrapf(err, "failed to write containerd unit file:%s", constants.ContainerdConfigFile)
+			return errors.Wrapf(err, "failed to write containerd config file:%s", constants.ContainerdConfigFile)
 		}
 
 	} else {
@@ -370,7 +365,7 @@ func (ci *ContainerdInstall) GenerateContainerdConfig() error {
 
 		ci.file.WriteToFile(constants.ContainerdConfigFile, appendata, true)
 		if err != nil {
-			return errors.Wrapf(err, "failed to write containerd unit file:%s", constants.ContainerdConfigFile)
+			return errors.Wrapf(err, "failed to write containerd config file:%s", constants.ContainerdConfigFile)
 		}
 
 	}
