@@ -59,6 +59,11 @@ rm -rf $RPM_BUILD_ROOT
 %dir /etc/cni/net.d/
 %dir /opt/cni/bin
 
+%pre
+mkdir -p /opt/pf9/home
+groupadd pf9group || true
+useradd -d /opt/pf9/home -G pf9group pf9 || true
+
 %post
 ## Adding ownership tweak (PMK-4129) to %post section instead of %files section since it's not sure if this file exists or not.
 ## Check for existence of file is NOT appropriate in %files section.
