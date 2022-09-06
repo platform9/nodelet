@@ -120,6 +120,43 @@ var (
 	// K8sRegistry represents registry for official images for kubernetes
 	K8sRegistry = "k8s.gcr.io"
 
+	// Kubelet related variables from defaults.env
+	KubeletDataDir          = "/var/lib/kubelet"
+	CNIConfigDir            = "/etc/cni/net.d"
+	CNIBinDir               = "/opt/cni/bin"
+	KubeletConfigDir        = "/var/opt/pf9/kube/kubelet-config"
+	KubeletDynamicConfigDir = KubeletConfigDir + "/dynamic-config"
+	KubeletBootstrapConfig  = KubeletConfigDir + "/bootstrap-config.yaml"
+	// AWSMetadataIp # 169.254.169.254 belongs to the 169.254/16 range of IPv4 Link-Local addresses (https://tools.ietf.org/html/rfc3927).
+	//# This IP address in particular is significant because Amazon Web Services uses this IP address
+	//# for instance metadata (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html)
+	AWSMetadataIp        = "169.254.169.254"
+	OpenstackMetadataIp  = "169.254.169.254"
+	Runtime              = "containerd"
+	ContainerdCgroup     = "systemd"
+	UseHostname          = "false"
+	DockerLogMaxFile     = "10"
+	ContainerLogMaxFiles = DockerLogMaxFile
+	// ContainerLogMaxSize
+	// Why not use DOCKER_LOG_MAX_SIZE variable?
+	// The formatting for docker config is 10m while kubelet expects 10Mi. To avoid implement string manipulation in bash just hardcoding
+	// the same default as docker config for now.
+	ContainerLogMaxSize           = "10Mi"
+	EnableCAS                     = false
+	AllowSwap                     = false
+	KubeletBin                    = "`pwd`/bin/kubelet"
+	Pf9KubeletSystemdUnitTemplate = "/opt/pf9/pf9-kube/pf9-kubelet.service.template"
+	SystemdRuntimeUnitDir         = "/run/systemd/system"
+	Pf9User                       = "pf9"
+	Pf9Group                      = "pf9group"
+	DnsDomain                     = "cluster.local"
+	KubeletEnvPath                = "/etc/pf9/kubelet.env"
+	KubeletStaticPodPath          = "/etc/pf9/kube.d/master.yaml"
+	KubeletClientCaFile           = "/etc/pf9/kube.d/certs/kubelet/server/ca.crt"
+	KubeletTlsCertFile            = "/etc/pf9/kube.d/certs/kubelet/server/request.crt"
+	KubeletTlsPrivateKeyFile      = "/etc/pf9/kube.d/certs/kubelet/server/request.key"
+	KubeletTlsCipherSuites        = "[TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256]"
+
 	ConfigSrcDir = "/opt/pf9/pf9-kube/conf"
 	// CoreDNSTemplate is template file for coredns
 	CoreDNSTemplate = fmt.Sprintf("%s/networkapps/coredns.yaml", ConfigSrcDir)
@@ -130,29 +167,29 @@ var (
 	CloudConfigFile = "/etc/pf9/kube.d/cloud-config"
 
 	// Phase orders of all the phases
-	NoRolePhaseOrder                   = 10
-	GenCertsPhaseOrder                 = 20
-	KubeconfigPhaseOrder               = 30
-	ConfigureRuntimePhaseOrder         = 40
-	StartRuntimePhaseOrder             = 45
-	LoadImagePhaseOrder                = 48
-	ConfigureEtcdPhaseOrder            = 50
-	StartEtcdPhaseOrder                = 55
-	ConfigureNetworkPhaseOrder         = 60
-	ConfigureCNIPhaseOrder             = 65
-	AuthWebHookPhaseOrder              = 70
-	MiscPhaseOrder                     = 75
-	ConfigureKubeletPhaseOrder         = 80
-	KubeProxyPhaseOrder                = 90
-	WaitForK8sSvcPhaseOrder            = 100
-	LabelTaintNodePhaseOrder           = 110
-	DynamicKubeletConfigPhaseOrder     = 120
-	UncordonNodePhaseOrder             = 130
-	DeployAppCatalogPhaseOrder         = 160
-	ConfigureStartKeepalivedPhaseOrder = 180
-	PF9SentryPhaseOrder                = 205
-	PF9CoreDNSPhaseOrder               = 206
-	DrainPodsPhaseOrder                = 210
+	NoRolePhaseOrder                         = 10
+	GenCertsPhaseOrder                       = 20
+	KubeconfigPhaseOrder                     = 30
+	ConfigureRuntimePhaseOrder               = 40
+	StartRuntimePhaseOrder                   = 45
+	LoadImagePhaseOrder                      = 48
+	ConfigureEtcdPhaseOrder                  = 50
+	StartEtcdPhaseOrder                      = 55
+	ConfigureNetworkPhaseOrder               = 60
+	ConfigureCNIPhaseOrder                   = 65
+	AuthWebHookPhaseOrder                    = 70
+	MiscPhaseOrder                           = 75
+	ConfigureKubeletPhaseOrder         int32 = 80
+	KubeProxyPhaseOrder                      = 90
+	WaitForK8sSvcPhaseOrder                  = 100
+	LabelTaintNodePhaseOrder                 = 110
+	DynamicKubeletConfigPhaseOrder           = 120
+	UncordonNodePhaseOrder                   = 130
+	DeployAppCatalogPhaseOrder               = 160
+	ConfigureStartKeepalivedPhaseOrder       = 180
+	PF9SentryPhaseOrder                      = 205
+	PF9CoreDNSPhaseOrder                     = 206
+	DrainPodsPhaseOrder                      = 210
 
 	// PhaseBaseDir is the base directory in which all bash-based phase scripts are located
 	PhaseBaseDir = "/opt/pf9/pf9-kube/phases"
