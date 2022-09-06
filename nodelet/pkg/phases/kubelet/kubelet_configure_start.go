@@ -1,6 +1,7 @@
 package kubelet
 
 import (
+	"context"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/kubeletutils"
@@ -37,11 +38,11 @@ func (k *KubeletConfigureStartPhase) GetPhaseName() string {
 	return k.HostPhase.Name
 }
 
-func (k *KubeletConfigureStartPhase) GetOrder() int32 {
-	return k.HostPhase.Order
+func (k *KubeletConfigureStartPhase) GetOrder() int {
+	return int(k.HostPhase.Order)
 }
 
-func (k *KubeletConfigureStartPhase) Status() error {
+func (k *KubeletConfigureStartPhase) Status(ctx context.Context, cfg config.Config) error {
 
 	k.log.Infof("Running Status of phase: %s", k.HostPhase.Name)
 	if !k.kubeletUtils.IsKubeletRunning() {
@@ -53,7 +54,7 @@ func (k *KubeletConfigureStartPhase) Status() error {
 	return nil
 }
 
-func (k *KubeletConfigureStartPhase) Start(cfg config.Config) error {
+func (k *KubeletConfigureStartPhase) Start(ctx context.Context, cfg config.Config) error {
 	k.log.Infof("Running Status of phase: %s", k.HostPhase.Name)
 	err := k.kubeletUtils.EnsureKubeletRunning(cfg)
 	if err != nil {
@@ -64,7 +65,7 @@ func (k *KubeletConfigureStartPhase) Start(cfg config.Config) error {
 	return nil
 }
 
-func (k *KubeletConfigureStartPhase) Stop() error {
+func (k *KubeletConfigureStartPhase) Stop(ctx context.Context, cfg config.Config) error {
 	k.log.Infof("Running Status of phase: %s", k.HostPhase.Name)
 	err := k.kubeletUtils.EnsureKubeletStopped()
 	if err != nil {
