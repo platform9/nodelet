@@ -106,7 +106,7 @@ USER_IMAGES_DIR: "/var/opt/pf9/images"
 {{ end -}}
 {{ if .CoreDNSHostsFile -}}
 COREDNS_HOSTS_FILE: "/etc/pf9/hosts"
-{{ else -}
+{{ else -}}
 COREDNS_HOSTS_FILE = "/etc/hosts"
 {{ end }}
 `
@@ -192,7 +192,7 @@ USER_IMAGES_DIR: "/var/opt/pf9/images"
 {{ end -}}
 {{ if .CoreDNSHostsFile -}}
 COREDNS_HOSTS_FILE: "/etc/pf9/hosts"
-{{ else -}
+{{ else -}}
 COREDNS_HOSTS_FILE = "/etc/hosts"
 {{ end }}
 `

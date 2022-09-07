@@ -603,7 +603,7 @@ func (nd *NodeletDeployer) UploadUserImages() error {
 }
 
 func (nd *NodeletDeployer) UploadCoreDNSHostsFile() error {
-	if nd.nodeletCfg.CoreDNSHostsFile != "" {
+	if nd.nodeletCfg.CoreDNSHostsFile == "" {
 		zap.S().Infof("No custom hosts file specified, skipping upload")
 		return nil
 	}
