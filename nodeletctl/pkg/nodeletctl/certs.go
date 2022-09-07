@@ -44,9 +44,13 @@ func GenCALocal(clusterName string) (string, error) {
 }
 
 func genCA(certsDir string) error {
+	serialNumber, err := getPseudoRandomSerial()
+	if err != nil {
+		return nil
+	}
+
 	ca := &x509.Certificate{
-		// TODO: What is SerialNumber, does this need to be unique, randomized?
-		SerialNumber: big.NewInt(2022),
+		SerialNumber: serialNumber,
 		Subject: pkix.Name{
 			Organization: []string{"Platform9."},
 			Country:      []string{"USA"},
@@ -152,9 +156,14 @@ func GenKubeconfig(cfg *BootstrapConfig) error {
 		Bytes: x509.MarshalPKCS1PrivateKey(adminPrivKey),
 	})
 
+	serialNumber, err := getPseudoRandomSerial()
+	if err != nil {
+		return err
+	}
+
 	clientCert := &x509.Certificate{
 		// TODO: What is SerialNumber, does this need to be unique, randomized?
-		SerialNumber: big.NewInt(2022),
+		SerialNumber: serialNumber,
 		Subject: pkix.Name{
 			CommonName:   "admin",
 			Organization: []string{"system:masters"},
@@ -231,6 +240,10 @@ func writeKubeconfigFile(args *KubeConfigData) error {
 		return fmt.Errorf("template.Execute failed for file: %s err: %s\n", kubeconfigFile, err)
 	}
 
+	if err = os.Chmod(kubeconfigFile, 0600); err != nil {
+		return fmt.Errorf("Failed to chmod 600 kubeconfig: %s", err)
+	}
+
 	zap.S().Infof("Wrote kubeconfig to %s\n", kubeconfigFile)
 	return nil
 }
@@ -277,4 +290,13 @@ func RegenCA(cfg *BootstrapConfig) error {
 		return fmt.Errorf("Failed to regen kubeconfig with new CA: %s", err)
 	}
 	return nil
+}
+
+func getPseudoRandomSerial() (*big.Int, error) {
+	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 2048)
+	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to generate random serial number: %s", err)
+	}
+	return serialNumber, err
 }

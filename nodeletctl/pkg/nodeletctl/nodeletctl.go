@@ -397,7 +397,9 @@ func GenNodeletConfigLocal(host *NodeletConfig, templateName string) (string, er
 	nodeStateDir := filepath.Join(ClusterStateDir, host.ClusterId, host.HostId)
 	if _, err := os.Stat(nodeStateDir); os.IsNotExist(err) {
 		zap.S().Infof("Creating node state dir: %s\n", nodeStateDir)
-		os.MkdirAll(nodeStateDir, 0777)
+		if err := os.MkdirAll(nodeStateDir, 0777); err != nil {
+			return "", fmt.Errorf("Failed to create node state dir for host %s: %s", host.HostId, err)
+		}
 	}
 
 	nodeletCfgFile := filepath.Join(nodeStateDir, NodeletConfigFile)
