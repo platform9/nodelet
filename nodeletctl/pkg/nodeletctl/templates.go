@@ -107,7 +107,7 @@ USER_IMAGES_DIR: "/var/opt/pf9/images"
 {{ if .CoreDNSHostsFile -}}
 COREDNS_HOSTS_FILE: "/etc/pf9/hosts"
 {{ else -}}
-COREDNS_HOSTS_FILE = "/etc/hosts"
+COREDNS_HOSTS_FILE: "/etc/hosts"
 {{ end }}
 `
 
@@ -193,7 +193,7 @@ USER_IMAGES_DIR: "/var/opt/pf9/images"
 {{ if .CoreDNSHostsFile -}}
 COREDNS_HOSTS_FILE: "/etc/pf9/hosts"
 {{ else -}}
-COREDNS_HOSTS_FILE = "/etc/hosts"
+COREDNS_HOSTS_FILE: "/etc/hosts"
 {{ end }}
 `
 const adminKubeconfigTemplate = `
