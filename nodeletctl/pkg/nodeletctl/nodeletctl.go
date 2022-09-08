@@ -1,6 +1,7 @@
 package nodeletctl
 
 import (
+	"bufio"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -146,7 +147,7 @@ func UpgradeCluster(cfgPath string) error {
 	}
 
 	if len(clusterCfg.MasterNodes) != len(masters) {
-		return fmt.Errorf("Masters in the cluster and Bootstrap config doesnt match", err)
+		return fmt.Errorf("Masters in the cluster and Bootstrap config doesnt match")
 	}
 	newMasters, oldMasters, _ := getDiffNodes(clusterCfg.MasterNodes, masters)
 	if len(newMasters) != 0 || len(oldMasters) != 0 {
@@ -154,7 +155,7 @@ func UpgradeCluster(cfgPath string) error {
 	}
 
 	if len(clusterCfg.WorkerNodes) != len(workers) {
-		return fmt.Errorf("Workers in the cluster and Bootstrap config doesnt match", err)
+		return fmt.Errorf("Workers in the cluster and Bootstrap config doesnt match")
 	}
 	newWorkers, oldWorkers, _ := getDiffNodes(clusterCfg.WorkerNodes, workers)
 	if len(newWorkers) != 0 || len(oldWorkers) != 0 {
@@ -270,6 +271,13 @@ func ParseBootstrapConfig(cfgPath string) (*BootstrapConfig, error) {
 
 	if err := isClusterCfgValid(bootstrapConfig); err != nil {
 		return nil, fmt.Errorf("Invalid cluster config: %s", err)
+	}
+
+	if len(bootstrapConfig.DNS.InlineHosts) > 0 {
+		bootstrapConfig.DNS.HostsFile, err = WriteHostsFileForEntries(bootstrapConfig.ClusterId, bootstrapConfig.DNS.InlineHosts)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to generate custom hosts file: %s", err)
+		}
 	}
 
 	return bootstrapConfig, nil
@@ -816,9 +824,8 @@ func ConfigClusterDNS(cfgPath string) error {
 }
 
 func UploadHostsFile(clusterCfg *BootstrapConfig) error {
-	allNodes := append(clusterCfg.WorkerNodes, clusterCfg.MasterNodes...)
 	failed := false
-	for _, host := range allNodes {
+	for _, host := range clusterCfg.MasterNodes {
 		deployer, err := GetNodeletDeployer(clusterCfg, nil, nil, host.NodeName, "")
 		if err != nil {
 			zap.S().Errorf("failed to get nodelet deployer: %v", err)
@@ -841,6 +848,26 @@ func UploadHostsFile(clusterCfg *BootstrapConfig) error {
 		return fmt.Errorf("Failed to upload custom hosts file or restart nodelet. Check node for details")
 	}
 	return nil
+}
+
+func WriteHostsFileForEntries(clusterName string, entries []string) (string, error) {
+	hostsFile := filepath.Join(ClusterStateDir, clusterName, "hosts")
+	fd, err := os.OpenFile(hostsFile, os.O_TRUNC|os.O_CREATE|os.O_RDWR, 0644)
+	if err != nil {
+		zap.S().Errorf("Failed to open hosts file %s for writing: %s", hostsFile, err)
+		return "", err
+	}
+
+	writer := bufio.NewWriter(fd)
+	for _, line := range entries {
+		_, err := writer.WriteString(line + "\n")
+		if err != nil {
+			fmt.Printf("Failed to write line %s\n", line)
+			return "", err
+		}
+	}
+	writer.Flush()
+	return hostsFile, nil
 }
 
 func SyncNodes(clusterCfg *BootstrapConfig, nodes *[]HostConfig) error {
