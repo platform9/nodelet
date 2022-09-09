@@ -11,6 +11,8 @@ import (
 	"io"
 	"net/http"
 	"os"
+	osuser "os/user"
+	"strconv"
 	"strings"
 )
 
@@ -265,9 +267,22 @@ func (k *KubeletImpl) PrepareKubeletBootstrapConfig(cfg config.Config) error {
 	return nil
 }
 
-// EnsureDirReadableByPf9 fixme who executes this if the user is pf9 then this will work
 func (k *KubeletImpl) EnsureDirReadableByPf9(dir string) error {
-	err := os.Chown(dir, os.Getuid(), os.Getgid())
+	user, err := osuser.Lookup(constants.Pf9User)
+	if err != nil {
+		return err
+	}
+
+	uid, err := strconv.Atoi(user.Uid)
+	if err != nil {
+		return err
+	}
+	gid, err := strconv.Atoi(user.Gid)
+	if err != nil {
+		return err
+	}
+
+	err = os.Chown(dir, uid, gid)
 	if err != nil {
 		zap.S().Errorf("failed to change file permissions. %s", err)
 		return err
