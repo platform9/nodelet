@@ -54,6 +54,9 @@ var DefaultConfig = Config{
 	EnableCAS:               constants.EnableCAS,
 	ContainerdCgroup:        constants.ContainerdCgroup,
 	AllowSwap:               constants.AllowSwap,
+	CPUManagerPolicy:        constants.CPUManagerPolicy,
+	TopologyManagerPolicy:   constants.TopologyManagerPolicy,
+	ReservedCPUs:            constants.ReservedCPUs,
 }
 
 // Config a struct to load the values from viper for future use.
