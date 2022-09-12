@@ -179,7 +179,6 @@ func (k *KubeletImpl) FetchAwsInstanceId() (string, error) {
 	return string(instanceId), nil
 }
 
-// TODO do a cross check
 func (k *KubeletImpl) FetchAwsAz() (string, error) {
 	url := "http://" + constants.AWSMetadataIp + "/latest/meta-data/placement/availability-zone"
 	resp, err := http.Get(url)
@@ -382,7 +381,7 @@ func (k *KubeletImpl) KubeletStop() error {
 		zap.S().Panicf("failed to stop pf9-kubelet. %s, %s\n", err, stdErr[0])
 		return err
 	}
-	zap.S().Debugf("pf9-kubelet stopped:\n%s\n")
+	zap.S().Debugf("pf9-kubelet stopped\n")
 	return nil
 }
 

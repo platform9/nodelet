@@ -22,7 +22,7 @@ func NewKubeletConfigureStartPhase() *KubeletConfigureStartPhase {
 	return &KubeletConfigureStartPhase{
 		HostPhase: &sunpikev1alpha1.HostPhase{
 			Name:  "Configure and Start kubelet",
-			Order: constants.ConfigureKubeletPhaseOrder,
+			Order: int32(constants.ConfigureKubeletPhaseOrder),
 		},
 		log:          zap.S(),
 		kubeletUtils: kubeletutils.New(),

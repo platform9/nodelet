@@ -171,29 +171,29 @@ var (
 	CloudConfigFile = "/etc/pf9/kube.d/cloud-config"
 
 	// Phase orders of all the phases
-	NoRolePhaseOrder                         = 10
-	GenCertsPhaseOrder                       = 20
-	KubeconfigPhaseOrder                     = 30
-	ConfigureRuntimePhaseOrder               = 40
-	StartRuntimePhaseOrder                   = 45
-	LoadImagePhaseOrder                      = 48
-	ConfigureEtcdPhaseOrder                  = 50
-	StartEtcdPhaseOrder                      = 55
-	ConfigureNetworkPhaseOrder               = 60
-	ConfigureCNIPhaseOrder                   = 65
-	AuthWebHookPhaseOrder                    = 70
-	MiscPhaseOrder                           = 75
-	ConfigureKubeletPhaseOrder         int32 = 80
-	KubeProxyPhaseOrder                      = 90
-	WaitForK8sSvcPhaseOrder                  = 100
-	LabelTaintNodePhaseOrder                 = 110
-	DynamicKubeletConfigPhaseOrder           = 120
-	UncordonNodePhaseOrder                   = 130
-	DeployAppCatalogPhaseOrder               = 160
-	ConfigureStartKeepalivedPhaseOrder       = 180
-	PF9SentryPhaseOrder                      = 205
-	PF9CoreDNSPhaseOrder                     = 206
-	DrainPodsPhaseOrder                      = 210
+	NoRolePhaseOrder                   = 10
+	GenCertsPhaseOrder                 = 20
+	KubeconfigPhaseOrder               = 30
+	ConfigureRuntimePhaseOrder         = 40
+	StartRuntimePhaseOrder             = 45
+	LoadImagePhaseOrder                = 48
+	ConfigureEtcdPhaseOrder            = 50
+	StartEtcdPhaseOrder                = 55
+	ConfigureNetworkPhaseOrder         = 60
+	ConfigureCNIPhaseOrder             = 65
+	AuthWebHookPhaseOrder              = 70
+	MiscPhaseOrder                     = 75
+	ConfigureKubeletPhaseOrder         = 80
+	KubeProxyPhaseOrder                = 90
+	WaitForK8sSvcPhaseOrder            = 100
+	LabelTaintNodePhaseOrder           = 110
+	DynamicKubeletConfigPhaseOrder     = 120
+	UncordonNodePhaseOrder             = 130
+	DeployAppCatalogPhaseOrder         = 160
+	ConfigureStartKeepalivedPhaseOrder = 180
+	PF9SentryPhaseOrder                = 205
+	PF9CoreDNSPhaseOrder               = 206
+	DrainPodsPhaseOrder                = 210
 
 	// PhaseBaseDir is the base directory in which all bash-based phase scripts are located
 	PhaseBaseDir = "/opt/pf9/pf9-kube/phases"
