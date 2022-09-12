@@ -52,6 +52,19 @@ func (d *ConfigureEtcdPhase) Start(context.Context, config.Config) error {
 
 	d.log.Infof("Running Start of phase: %s", d.HostPhase.Name)
 
+	EnsureEtcdDataStoredOnHost()
+	// check if etcd backup and raft index check is required
+	// Performed once during
+	// 1. new cluster
+	// 2. cluster upgrade
+	etcdUpgrade, err := IsEligibleForEtcdBackup()
+	if err != nil {
+		return err
+	}
+	if etcdUpgrade {
+		d.log.Infof("etcd to be upgraded. performing etcd data backup")
+		EnsureEtcdDataBackup()
+	}
 	phaseutils.SetHostStatus(d.HostPhase, constants.RunningState, "")
 	return nil
 }
