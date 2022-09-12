@@ -236,7 +236,6 @@ func (k *KubeletImpl) PrepareKubeletBootstrapConfig(cfg config.Config) error {
 		"clusterDNS:\n" +
 		"- " + dnsIp + "\n" +
 		"clusterDomain: " + constants.DnsDomain + "\n" +
-		// Fixme what to put in defaults for this or should I delete it when empty
 		"cpuManagerPolicy:" + cfg.CPUManagerPolicy + "\n" +
 		"topologyManagerPolicy:" + cfg.TopologyManagerPolicy + "\n" +
 		"reservedSystemCPUs:" + cfg.ReservedCPUs + "\n" +

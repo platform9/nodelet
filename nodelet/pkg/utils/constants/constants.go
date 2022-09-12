@@ -159,6 +159,7 @@ var (
 	KubeletTlsCertFile            = "/etc/pf9/kube.d/certs/kubelet/server/request.crt"
 	KubeletTlsPrivateKeyFile      = "/etc/pf9/kube.d/certs/kubelet/server/request.key"
 	KubeletTlsCipherSuites        = "[TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256]"
+	KubeletCloudConfig            = ""
 
 	ConfigSrcDir = "/opt/pf9/pf9-kube/conf"
 	// CoreDNSTemplate is template file for coredns
