@@ -89,6 +89,7 @@ Nodeletctl takes in a --config file that will be Unmarshall'd into the following
 
 Here is the full set of configuration options:
 ```
+
 type BootstrapConfig struct {
 	SSHUser                string                 `json:"sshUser,omitempty"`
 	SSHPrivateKeyFile      string                 `json:"sshPrivateKeyFile,omitempty"`
@@ -107,8 +108,15 @@ type BootstrapConfig struct {
 	MTU                    string                 `json:"mtu,omitempty"`
 	Privileged             string                 `json:"privileged,omitempty"`
 	ContainerRuntime       ContainerRuntimeConfig `json:"containerRuntime,omitempty"`
+	UserImages             []string               `json:"userImages,omitempty"`
+	DNS                    CoreDNSConfig          `json:"dns,omitempty"`
 	MasterNodes            []HostConfig           `json:"masterNodes"`
 	WorkerNodes            []HostConfig           `json:"workerNodes"`
+}
+
+type CoreDNSConfig struct {
+	HostsFile   string   `json:"hostsFile,omitempty"`
+	InlineHosts []string `json:"corednsHosts,omitempty"`
 }
 
 type ContainerRuntimeConfig struct {
@@ -125,21 +133,66 @@ type HostConfig struct {
 ```
 
 ### Default values
+```
+clusterId:              "airctl-mgmt",
+// Every node must have SSH pub key authorized and SSH enabled for this user
+sshUser:                "root",
+sshPrivateKeyFile:      "/root/.ssh/id_rsa",
+nodeletPkg:             /opt/pf9/airctl/nodelet/nodelet.tar.gz,
+privileged:             "true",
+k8sApiPort:             "443",
+masterVipEnabled:       false,
+masterVipInterface:     "", // Not used if MasterVipEnabled is false
+masterVipVrouterId:     [pseudo-random-number], // Not used if MasterVipEnabled is false
+allowWorkloadsOnMaster: false,
+containerRuntime:       ContainerRuntimeConfig{"containerd", "systemd"},
 
-**AllowWorkloadsOnMaster**: false,
-**CalicoV4Interface**:      "first-found",
-**CalicoV6Interface**:      "first-found",
-**ClusterName**:              "airctl-mgmt",
-**ContainerRuntime**:       "containerd",
-**SSHUser**:                "root",
-**SSHPrivateKeyFile**:      "/root/.ssh/id_rsa",
-**Pf9KubePkg**:             /opt/pf9/airctl/nodelet/nodelet.tar.gz,
-**Privileged**:             "true",
-**K8sApiPort**:             "443",
-**MasterVipEnabled**:       false,
-**MTU**:                    "1440",
+// For more info please see Manifest configuration of IP_AUTODETECTION_METHOD:
+// https://projectcalico.docs.tigera.io/networking/ip-autodetection#change-the-autodetection-method
+calicoV4Interface:      "first-found",
+calicoV6Interface:      "first-found",
+MTU:                    "1440",
+```
 
 Only the Calico CNI is supported. For more information on configuring the Calico options, please see: https://projectcalico.docs.tigera.io/networking/ip-autodetection
+
+### Airgapped User Image bundles
+If the setup is airgapped, nodeletctl also takes in a list of gzip'd and tarball image bundles to upload and import into the container runtime of every node in the cluster. This will be required if public image repositories are not available. As an example, if I had two image bundles:
+
+```
+userImages:
+  - /root/kubedu-imgs-v-5.6.0-2161634.tar.gz
+  - /root/docker-imgs-v-5.6.0-2161634.tar.gz
+```
+
+### DNS
+This in in addition to standard DNS resolution for K8S.  Allows populating CoreDNS with custom static host entries via the CoreDNS ConfigMap. Otherwise, default behavior is to load in all host entries found on the master node's /etc/hosts. It can take in either 1. a path to a local file in the format of /etc/hosts or 2. An inline list of hosts to populate in CoreDNS. **But not both**
+
+```
+dns:
+  corednsHosts:
+      - 10.21.3.45 vault.pf9.localnet
+      - 10.21.2.141 airctl7-kplane.pf9.localnet
+      - 10.21.2.141 airctl7.pf9.localnet
+```
+
+```
+dns:
+  hostsFile: /etc/pf9/custsomHosts
+```
+
+### Master and Worker Nodes (HostConfig)
+
+Takes in a list of nodes specified by nodename. It is recommended to use the node's primary IP itself as the nodeName. Otherwise, a node IP can be overridden, as can the Calico interfaces use for routing the K8s traffic.
+
+```
+masterNodes:
+- nodeName: 10.128.145.17
+workerNodes:
+- nodeName: 10.128.144.151
+- nodeName: 10.128.145.202
+- nodeName: 10.128.145.63
+```
 
 ## How to use
 It is best to show by example:
