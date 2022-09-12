@@ -299,7 +299,7 @@ func (k *KubeletImpl) KubeletSetup(kubeletArgs string) error {
 	}
 
 	cmd := command.New()
-	_, stdErr, err := cmd.RunCommandWithStdErr(context.Background(), nil, 0, "", "sudo", "/usr/bin/systemctl", "daemon-reload")
+	_, stdErr, err := cmd.RunCommandWithStdErr(context.Background(), nil, 0, "", "/usr/bin/sudo", "/usr/bin/systemctl", "daemon-reload")
 	if err != nil {
 		zap.S().Panicf("failed to reload daemon. %s %s\n", stdErr[0], err)
 		return err
@@ -366,7 +366,7 @@ func (k *KubeletImpl) ConfigureKubeletHttpProxy() {
 
 func (k *KubeletImpl) KubeletStart() error {
 	cmd := command.New()
-	_, stdErr, err := cmd.RunCommandWithStdErr(context.Background(), nil, 0, "", "sudo", "/usr/bin/systemctl", "start", "pf9-kubelet")
+	_, stdErr, err := cmd.RunCommandWithStdErr(context.Background(), nil, 0, "", "/usr/bin/sudo", "/usr/bin/systemctl", "start", "pf9-kubelet")
 	if err != nil {
 		zap.S().Panicf("failed to start pf9-kubelet. %s, %s\n", err, stdErr[0])
 		return err
@@ -377,7 +377,7 @@ func (k *KubeletImpl) KubeletStart() error {
 
 func (k *KubeletImpl) KubeletStop() error {
 	cmd := command.New()
-	_, stdErr, err := cmd.RunCommandWithStdErr(context.Background(), nil, 0, "", "sudo", "/usr/bin/systemctl", "stop", "pf9-kubelet")
+	_, stdErr, err := cmd.RunCommandWithStdErr(context.Background(), nil, 0, "", "/usr/bin/sudo", "/usr/bin/systemctl", "stop", "pf9-kubelet")
 	if err != nil {
 		zap.S().Panicf("failed to stop pf9-kubelet. %s, %s\n", err, stdErr[0])
 		return err
@@ -388,7 +388,7 @@ func (k *KubeletImpl) KubeletStop() error {
 
 func (k *KubeletImpl) IsKubeletRunning() bool {
 	cmd := command.New()
-	_, stdOut, stdErr, err := cmd.RunCommandWithStdOutStdErr(context.Background(), nil, 0, "", "sudo", "/usr/bin/systemctl", "is-active", "pf9-kubelet")
+	_, stdOut, stdErr, err := cmd.RunCommandWithStdOutStdErr(context.Background(), nil, 0, "", "/usr/bin/sudo", "/usr/bin/systemctl", "is-active", "pf9-kubelet")
 	if err != nil {
 		zap.S().Debugf("pf9-kubelet is not active.%s, %s\n", err, stdErr[0])
 		return false
