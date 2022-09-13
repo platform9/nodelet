@@ -304,7 +304,7 @@ cni-plugins: $(CNI_PLUGINS_DIR)
 # NERDCTL install
 .PHONY: nerdctl
 NERDCTL_CLI := "nerdctl"
-NERDCTL_CLI_VERSION := "0.10.0"
+NERDCTL_CLI_VERSION := "0.22.0"
 NERDCTL_URL := https://github.com/containerd/nerdctl/releases/download/v${NERDCTL_CLI_VERSION}/nerdctl-${NERDCTL_CLI_VERSION}-linux-amd64.tar.gz
 NERDCTL_DIR := "nerdctl"
 

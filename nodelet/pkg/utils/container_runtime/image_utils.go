@@ -45,6 +45,10 @@ func (i *ImageUtility) LoadImagesFromDir(ctx context.Context, imageDir string, n
 // LoadImagesFromFile loads images from given tar file to container runtime
 func (i *ImageUtility) LoadImagesFromFile(ctx context.Context, fileName string) error {
 	zap.S().Infof("Loading images from file: %s", fileName)
+
+	// Commenting out below until we can better understand containerd Golang client or there is some documentation
+	// seeing inconsistencies with importing images (as well as pushing/pulling)
+
 	f, err := os.Open(fileName)
 	if err != nil {
 		return err
@@ -66,11 +70,18 @@ func (i *ImageUtility) LoadImagesFromFile(ctx context.Context, fileName string) 
 	}
 	for _, img := range imgs {
 		image := containerd.NewImageWithPlatform(client, img, platform)
-		zap.S().Infof("Unpacking image: %s", image.Name())
-		err = image.Unpack(ctx, constants.DefaultSnapShotter)
-		if err != nil {
-			return errors.Wrapf(err, "failed to unpack image: %s", image.Name())
-		}
+		zap.S().Infof("not Unpacking image: %s", image.Name())
+
+		/* Unpacking and snapshotting may not be needed. They also consume double the disk space
+		 * as it makes a copy of each layer and repliates the filesystem then differs next layer, so forth
+		 * it also adds time to unpack and snapshot each image.
+		 * It does not appear to be necessary, k8s runtime seems to do this when it createsa new container
+		 * leaving commented out for now
+		 */
+		//err = image.Unpack(ctx, constants.DefaultSnapShotter)
+		//if err != nil {
+		//return errors.Wrapf(err, "failed to unpack image: %s", image.Name())
+		//}
 	}
 	return nil
 }

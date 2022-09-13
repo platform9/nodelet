@@ -453,6 +453,14 @@ staticPodPath: "${STATIC_POD_PATH}"
 tlsCertFile: "${TLS_CERT_FILE}"
 tlsPrivateKeyFile: "${TLS_PRIVATE_KEY_FILE}"
 tlsCipherSuites: ${TLS_CIPHER_SUITES}
+imageMinimumGCAge: 24h
+imageGCHighThresholdPercent: 99
+imageGCLowThresholdPercent: 95
+evictionHard:
+  nodefs.available: "0%"
+  nodefs.inodesFree: "0%"
+  imagefs.available: "0%"
+  imagefs.inodesFree: "0%"
 EOF
 
     if [ "$CONTAINERD_CGROUP" = "systemd" ]; then
