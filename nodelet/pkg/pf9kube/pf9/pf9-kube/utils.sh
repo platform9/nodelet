@@ -454,8 +454,8 @@ tlsCertFile: "${TLS_CERT_FILE}"
 tlsPrivateKeyFile: "${TLS_PRIVATE_KEY_FILE}"
 tlsCipherSuites: ${TLS_CIPHER_SUITES}
 imageMinimumGCAge: 24h
-imageGCHighThresholdPercent: 95
-imageGCLowThresholdPercent: 90
+imageGCHighThresholdPercent: 99
+imageGCLowThresholdPercent: 95
 EOF
 
     if [ "$CONTAINERD_CGROUP" = "systemd" ]; then
