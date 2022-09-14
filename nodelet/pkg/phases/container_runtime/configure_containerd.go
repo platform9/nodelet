@@ -53,23 +53,20 @@ func (cp *ContainerdConfigPhase) Start(ctx context.Context, cfg config.Config) e
 
 	cp.log.Infof("Running Start of phase: %s", cp.hostPhase.Name)
 
-	exitCode, output, err := cp.cmd.RunCommandWithStdOut(ctx, nil, 0, "", "containerd", "--version")
-	if exitCode != 0 {
+	exitCode, output, err := cp.cmd.RunCommandWithStdOut(ctx, nil, 0, "", constants.ContainerdBinPath, "--version")
+	if err != nil || exitCode != 0 {
 		cp.log.Errorf("containerd not installed command containerd --version exited with code:%v", exitCode)
 		phaseutils.SetHostStatus(cp.hostPhase, constants.FailedState, fmt.Sprintf("containerd not installed command containerd --version exited with code:%v", exitCode))
 		return errors.Wrapf(err, "containerd not installed command containerd --version exited with code:%v", exitCode)
 	}
 
-	if err == nil && output != nil && exitCode == 0 {
-
+	if output != nil {
 		r := regexp.MustCompile(`v*\d.\d.\d`)
 		installedVersion := r.FindString(output[0])
-
 		cp.log.Infof("installed containerd version:%v", installedVersion)
 	}
 
 	file := fileio.New()
-
 	b, err := ioutil.ReadFile(constants.ContainerdConfigFile)
 	if err != nil {
 		phaseutils.SetHostStatus(cp.hostPhase, constants.FailedState, fmt.Sprintf("couldn't read containerd config file:%s :%v", constants.ContainerdConfigFile, err))
@@ -82,7 +79,6 @@ func (cp *ContainerdConfigPhase) Start(ctx context.Context, cfg config.Config) e
 
 	// checking containerd Cgroup configured
 	if !strings.Contains(fileContent, constants.CgroupSystemd) {
-
 		appendata := "\n\t[plugins.\"io.containerd.grpc.v1.cri\".containerd.runtimes.runc.options]\n\t\tSystemdCgroup = false"
 		if constants.ContainerdCgroup == "systemd" {
 			appendata = "\n\t[plugins.\"io.containerd.grpc.v1.cri\".containerd.runtimes.runc.options]\n\t\tSystemdCgroup = true"

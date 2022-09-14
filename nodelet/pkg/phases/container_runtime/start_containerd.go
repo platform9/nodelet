@@ -2,6 +2,7 @@ package containerruntime
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/command"
@@ -58,6 +59,15 @@ func (cp *ContainerdRunPhase) Start(ctx context.Context, cfg config.Config) erro
 		phaseutils.SetHostStatus(cp.hostPhase, constants.FailedState, err.Error())
 		return err
 	}
+
+	// chown "/run/containerd/containerd.sock" to pf9 user
+	user := fmt.Sprintf("%s:%s", constants.Pf9User, constants.Pf9Group)
+	exitCode, err := cp.cmd.RunCommand(ctx, nil, 0, "", "/usr/bin/sudo", "/usr/bin/chown", user, constants.ContainerdSocket)
+	if err != nil || exitCode != 0 {
+		phaseutils.SetHostStatus(cp.hostPhase, constants.FailedState, fmt.Sprintf("couldn't own containerd socket:%s to pf9 user: %v", constants.ContainerdSocket, err))
+		return errors.Wrapf(err, "couldn't own containerd socket:%s to pf9", constants.ContainerdSocket)
+	}
+
 	//TODO: login to Dockerhub(if necessary)
 	phaseutils.SetHostStatus(cp.hostPhase, constants.RunningState, "")
 	return nil
@@ -67,7 +77,7 @@ func (cp *ContainerdRunPhase) Stop(ctx context.Context, cfg config.Config) error
 
 	cp.log.Infof("Running Stop of phase: %s", cp.hostPhase.Name)
 
-	exitCode, err := cp.cmd.RunCommand(ctx, nil, 0, "", constants.RuntimeContainerd, "--version")
+	exitCode, err := cp.cmd.RunCommand(ctx, nil, 0, "", constants.ContainerdBinPath, "--version")
 
 	if exitCode != 0 {
 		cp.log.Warn("containerd not present so cant destroy containers: %v, exited with exitcode:%d", err, exitCode)
@@ -88,6 +98,18 @@ func (cp *ContainerdRunPhase) Stop(ctx context.Context, cfg config.Config) error
 		cp.log.Errorf("could not destroy containers :%v", err)
 		phaseutils.SetHostStatus(cp.hostPhase, constants.FailedState, err.Error())
 		return err
+	}
+
+	/* deleting /var/lib/nerdctl because, some of the containers are created using nerdctl cli like 'proxy container'
+	and some will be created using go-client and we are deleting containers here with go-client.
+	so the /var/lib/nerdctl will consist names for ones which are created using nerdctl and deleted using go-client
+	and it will give error when created container in next iterarion saying this name is being used by some id. so cleaning this dir.
+	TODO: remove this when all phases are converted and using go-client for container creation. */
+
+	exitCode, err = cp.cmd.RunCommand(ctx, nil, 0, "", "/usr/bin/sudo", "/usr/bin/rm", "-rf", constants.NerdctlDir)
+	if err != nil || exitCode != 0 {
+		phaseutils.SetHostStatus(cp.hostPhase, constants.FailedState, fmt.Sprintf("couldn't delete %s: %v", constants.NerdctlDir, err))
+		return errors.Wrapf(err, "couldn't delete %s", constants.NerdctlDir)
 	}
 
 	// Stop the containerd service
