@@ -121,6 +121,10 @@ var (
 	ContainerdSocket = "/run/containerd/containerd.sock"
 	// DefaultSnapShotter is default snapshotter for containerd
 	DefaultSnapShotter = "overlayfs"
+	// Containerd binary path
+	ContainerdBinPath = "/usr/local/bin/containerd"
+	// Nerdctl directory path
+	NerdctlDir = "/var/lib/nerdctl"
 	// K8sNamespace is namespace for kubernetes
 	K8sNamespace = "k8s.io"
 	// MobyNamespace is namespace for docker
@@ -142,6 +146,10 @@ var (
 	ContainerdConfigFile = fmt.Sprintf("%s/config.toml", EtcContainerdDir)
 
 	ContainerdCgroup = "systemd"
+
+	Pf9User = "pf9"
+
+	Pf9Group = "pf9group"
 
 	// Phase orders of all the phases
 	NoRolePhaseOrder                   = 10

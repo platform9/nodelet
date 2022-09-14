@@ -27,7 +27,7 @@ func NewServiceUtil(name string) ServiceUtil {
 func (su *ServiceUtility) RunAction(ctx context.Context, action string) ([]string, error) {
 
 	su.log.Infof("Running %s %s", su.ServiceName, action)
-	exitCode, output, err := su.cmd.RunCommandWithStdOut(ctx, nil, 0, "", "/bin/sudo", "/usr/bin/systemctl", action, su.ServiceName)
+	exitCode, output, err := su.cmd.RunCommandWithStdOut(ctx, nil, 0, "", "/usr/bin/sudo", "/usr/bin/systemctl", action, su.ServiceName)
 	if exitCode != 0 || err != nil {
 		return nil, errors.Wrapf(err, "could not %s %s. exitcode:%v", action, su.ServiceName, exitCode)
 	}
