@@ -78,18 +78,18 @@ var _ = Describe("Test Configure Containerd phase", func() {
 		It("fails if containerd is not installed ", func() {
 			err := errors.New("fake error")
 			exitcode := 1
-			fakecmd.EXPECT().RunCommandWithStdOut(ctx, nil, 0, "", "containerd", "--version").Return(exitcode, nil, err).AnyTimes()
+			fakecmd.EXPECT().RunCommandWithStdOut(ctx, nil, 0, "", constants.ContainerdBinPath, "--version").Return(exitcode, nil, err).AnyTimes()
 			reterr := fakePhase.Start(ctx, *fakeCfg)
 			assert.NotNil(GinkgoT(), reterr)
 		})
 		It("fails if containerd config file is absent ", func() {
-			fakecmd.EXPECT().RunCommandWithStdOut(ctx, nil, 0, "", "containerd", "--version").Return(0, nil, nil).AnyTimes()
+			fakecmd.EXPECT().RunCommandWithStdOut(ctx, nil, 0, "", constants.ContainerdBinPath, "--version").Return(0, nil, nil).AnyTimes()
 			constants.ContainerdConfigFile = "testdata/abc.toml"
 			reterr := fakePhase.Start(ctx, *fakeCfg)
 			assert.NotNil(GinkgoT(), reterr)
 		})
 		It("should write systemd cgroup as true in config if containerd cgroup is systemd", func() {
-			fakecmd.EXPECT().RunCommandWithStdOut(ctx, nil, 0, "", "containerd", "--version").Return(0, nil, nil).AnyTimes()
+			fakecmd.EXPECT().RunCommandWithStdOut(ctx, nil, 0, "", constants.ContainerdBinPath, "--version").Return(0, nil, nil).AnyTimes()
 			fakeFileUtils.EXPECT().WriteToFile("", "", true).Return(nil).AnyTimes()
 			reterr := fakePhase.Start(ctx, *fakeCfg)
 			assert.Nil(GinkgoT(), reterr)
@@ -99,7 +99,7 @@ var _ = Describe("Test Configure Containerd phase", func() {
 			assert.Equal(GinkgoT(), data, written)
 		})
 		It("should write systemd cgroup as false in config if containerd cgroup is not systemd", func() {
-			fakecmd.EXPECT().RunCommandWithStdOut(ctx, nil, 0, "", "containerd", "--version").Return(0, nil, nil).AnyTimes()
+			fakecmd.EXPECT().RunCommandWithStdOut(ctx, nil, 0, "", constants.ContainerdBinPath, "--version").Return(0, nil, nil).AnyTimes()
 			fakeFileUtils.EXPECT().WriteToFile("", "", true).Return(nil).AnyTimes()
 			constants.ContainerdCgroup = ""
 			reterr := fakePhase.Start(ctx, *fakeCfg)

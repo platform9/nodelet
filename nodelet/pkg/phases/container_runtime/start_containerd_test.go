@@ -2,6 +2,7 @@ package containerruntime
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
@@ -12,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var _ = Describe("Test Configure Containerd phase", func() {
+var _ = Describe("Test Start Containerd phase", func() {
 
 	var (
 		mockCtrl         *gomock.Controller
@@ -50,8 +51,18 @@ var _ = Describe("Test Configure Containerd phase", func() {
 			assert.NotNil(GinkgoT(), reterr)
 			assert.Equal(GinkgoT(), reterr, err)
 		})
-		It("succeds if service starts", func() {
+		It("fails if could not own containerd socket file", func() {
+			err := errors.New("fake")
 			fakeServiceUtils.EXPECT().RunAction(ctx, constants.StartOp).Return(nil, nil).AnyTimes()
+			user := fmt.Sprintf("%s:%s", constants.Pf9User, constants.Pf9Group)
+			fakecmd.EXPECT().RunCommand(ctx, nil, 0, "", "/usr/bin/sudo", "/usr/bin/chown", user, constants.ContainerdSocket).Return(1, err).AnyTimes()
+			reterr := fakePhase.Start(ctx, *fakeCfg)
+			assert.NotNil(GinkgoT(), reterr)
+		})
+		It("succeds if service starts and owns socket", func() {
+			fakeServiceUtils.EXPECT().RunAction(ctx, constants.StartOp).Return(nil, nil).AnyTimes()
+			user := fmt.Sprintf("%s:%s", constants.Pf9User, constants.Pf9Group)
+			fakecmd.EXPECT().RunCommand(ctx, nil, 0, "", "/usr/bin/sudo", "/usr/bin/chown", user, constants.ContainerdSocket).Return(0, nil).AnyTimes()
 			reterr := fakePhase.Start(ctx, *fakeCfg)
 			assert.Nil(GinkgoT(), reterr)
 		})
@@ -78,7 +89,7 @@ var _ = Describe("Test Configure Containerd phase", func() {
 	Context("Validates stop command", func() {
 		It("suceeds if containerd is not present and ignores deleting containers as service not present", func() {
 			err := errors.New("fake")
-			fakecmd.EXPECT().RunCommand(ctx, nil, 0, "", constants.RuntimeContainerd, "--version").Return(1, err).AnyTimes()
+			fakecmd.EXPECT().RunCommand(ctx, nil, 0, "", constants.ContainerdBinPath, "--version").Return(1, err).AnyTimes()
 			reterr := fakePhase.Stop(ctx, *fakeCfg)
 			assert.Nil(GinkgoT(), reterr)
 		})
