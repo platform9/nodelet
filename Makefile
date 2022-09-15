@@ -315,6 +315,22 @@ nerdctl:
     curl --output ${NERDCTL_DIR}/nerdctl-${NERDCTL_CLI_VERSION}-linux-amd64.tar.gz -L ${NERDCTL_URL} && \
     tar -C ${NERDCTL_DIR} -xvf ${NERDCTL_DIR}/nerdctl-${NERDCTL_CLI_VERSION}-linux-amd64.tar.gz
 
+# Keealived packages download
+.PHONY: keepalived
+KEEPALIVED_DEB_U20 := https://github.com/hnakamur/keepalived-deb/releases/download/debian%2F1%252.1.3-1ubuntu1ppa1-focal/keepalived_2.1.3-1ubuntu1ppa1.focal_amd64.deb
+KEEPALIVED_DEB_U18 := https://github.com/hnakamur/keepalived-deb/releases/download/debian%2F1%252.1.3-1ubuntu1ppa1-bionic/keepalived_2.1.3-1ubuntu1ppa1.bionic_amd64.deb
+KEEPALIVED_RPM_CENTOS7 := https://github.com/hnakamur/keepalived-rpm/releases/download/2.1.3-1/keepalived-2.1.3-1.el7.x86_64.rpm
+
+keepalived:
+	echo "Downloading Keepalived packages"
+	mkdir -p $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/keepalived_packages/
+	curl --output $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/keepalived_packages/keepalived_2.1.3-1ubuntu1ppa1.focal_amd64.deb -L ${KEEPALIVED_DEB_U20}
+	curl --output $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/keepalived_packages/keepalived_2.1.3-1ubuntu1ppa1.bionic_amd64.deb -L ${KEEPALIVED_DEB_U18}
+	curl --output $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/keepalived_packages/keepalived-2.1.3-1.el7.x86_64.rpm -L ${KEEPALIVED_RPM_CENTOS7}
+	# Download Ubuntu 18.04 dependency packages as well
+	curl --output $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/keepalived_packages/libjansson4_2.11-1_amd64.deb -L http://archive.ubuntu.com/ubuntu/pool/main/j/jansson/libjansson4_2.11-1_amd64.deb
+	curl --output $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/keepalived_packages/libnftnl7_1.0.9-2_amd64.deb -L http://archive.ubuntu.com/ubuntu/pool/universe/libn/libnftnl/libnftnl7_1.0.9-2_amd64.deb
+
 
 # CRICTL install
 .PHONY: crictl
@@ -478,7 +494,7 @@ jq:
 	${WGET_CMD} -O jq -L https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 && \
 	chmod u=rwx,og=rx jq
 
-$(COMMON_SRC_ROOT): easyrsa $(AUTHBS_SRC_DIR) bouncer-docker-image kubernetes nodelet cni-plugins nerdctl crictl calicoctl etcdctl etcd_raft_checker pf9kube-addr-conv pf9kube-ip_type virtctl jq
+$(COMMON_SRC_ROOT): easyrsa $(AUTHBS_SRC_DIR) bouncer-docker-image kubernetes nodelet cni-plugins nerdctl crictl calicoctl etcdctl etcd_raft_checker pf9kube-addr-conv pf9kube-ip_type virtctl jq keepalived
 	echo "make COMMON_SRC_ROOT $(COMMON_SRC_ROOT)"
 	echo "COMMON_SRC_ROOT is $(COMMON_SRC_ROOT)" # i.e. /vagrant/build/pf9-kube/pf9-kube-src/common
 	echo "AGENT_SRC_DIR is $(AGENT_SRC_DIR)" # cp -a /vagrant/agent/root/* /vagrant/build/pf9-kube/pf9-kube-src/common/
@@ -554,7 +570,7 @@ $(PF9_KUBE_DEB_FILE): $(DEB_SRC_ROOT)
 		--description "Platform9 kubernetes(Nodelet) deb package. Built on git hash $(GITHASH)" \
 		-v $(PF9_KUBE_VERSION)-$(PF9_KUBE_RELEASE) --provides nodelet --provides pf9app \
 		--license "Commercial" --architecture all --url "http://www.platform9.net" --vendor Platform9 \
-		-d curl -d gzip -d net-tools -d keepalived -d cgroup-tools \
+		-d curl -d gzip -d net-tools -d cgroup-tools \
 		--after-install $(AGENT_SRC_DIR)/pf9-kube-after-install.sh \
 		--before-remove $(AGENT_SRC_DIR)/pf9-kube-before-remove.sh \
 		--after-remove ${AGENT_SRC_DIR}/pf9-kube-after-remove.sh \

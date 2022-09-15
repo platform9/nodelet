@@ -270,3 +270,23 @@ EOF
     systemctl daemon-reload
     systemctl restart containerd
 }
+
+function install_keepalived()
+{
+  # remove keepalived
+  echo "Removing keepalived"
+  apt-get purge -y keepalived
+
+  # install keepalived
+  echo "Installing keepalived"
+  if [ $VERSION_ID == "18.04" ]; then
+    echo "Installing libjansson4_2.11-1_amd64.deb, libnftnl7_1.0.9-2_amd64.deb and keepalived 2.1.3"
+    apt-get install -y $KEEPALIVED_PACKAGE_DIR/libjansson4_2.11-1_amd64.deb $KEEPALIVED_PACKAGE_DIR/libnftnl7_1.0.9-2_amd64.deb $KEEPALIVED_PACKAGE_DIR/keepalived_2.1.3-1ubuntu1ppa1.bionic_amd64.deb
+  elif [ $VERSION_ID == "20.04" ]; then
+    echo "Installing keepalived_2.1.3-1ubuntu1ppa1.focal_amd64.deb"
+    apt-get install -y $KEEPALIVED_PACKAGE_DIR/keepalived_2.1.3-1ubuntu1ppa1.focal_amd64.deb
+  else
+    echo "Unsupported OS version for keepalived"
+  fi
+
+}
