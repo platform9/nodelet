@@ -9,7 +9,6 @@ Provides:       pf9app
 Requires:       curl
 Requires:       gzip
 Requires:       net-tools
-Requires:       keepalived
 Requires:       libcgroup-tools
 AutoReqProv:    no
 
