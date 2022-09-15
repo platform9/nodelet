@@ -554,7 +554,7 @@ $(PF9_KUBE_DEB_FILE): $(DEB_SRC_ROOT)
 		--description "Platform9 kubernetes(Nodelet) deb package. Built on git hash $(GITHASH)" \
 		-v $(PF9_KUBE_VERSION)-$(PF9_KUBE_RELEASE) --provides nodelet --provides pf9app \
 		--license "Commercial" --architecture all --url "http://www.platform9.net" --vendor Platform9 \
-		-d curl -d gzip -d net-tools -d socat -d keepalived -d cgroup-tools \
+		-d curl -d gzip -d net-tools -d keepalived -d cgroup-tools \
 		--after-install $(AGENT_SRC_DIR)/pf9-kube-after-install.sh \
 		--before-remove $(AGENT_SRC_DIR)/pf9-kube-before-remove.sh \
 		--after-remove ${AGENT_SRC_DIR}/pf9-kube-after-remove.sh \
