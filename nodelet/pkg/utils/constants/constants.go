@@ -151,6 +151,12 @@ var (
 
 	Pf9Group = "pf9group"
 
+	EtcdCtlBin      = "/opt/pf9/pf9-kube/bin/etcdctl"
+	EtcdBackupDir   = "/var/opt/pf9/kube/etcd/etcd-backup"
+	EtcdBackUpLoc   = fmt.Sprintf("%s/etcdv3_backup.db", EtcdBackupDir)
+	EtcdVersion     = "3.4.14"
+	EtcdVersionFile = "/var/opt/pf9/etcd_version"
+
 	// Phase orders of all the phases
 	NoRolePhaseOrder                   = 10
 	GenCertsPhaseOrder                 = 20
