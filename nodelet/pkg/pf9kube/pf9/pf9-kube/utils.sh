@@ -540,7 +540,7 @@ function ensure_kubelet_running()
     local kubeconfig="/etc/pf9/kube.d/kubeconfigs/kubelet.yaml"
     local log_dir_path="/var/log/pf9/kubelet/"
     local k8s_registry="${K8S_PRIVATE_REGISTRY:-k8s.gcr.io}"
-    local pause_img="${k8s_registry}/pause:3.2"
+    local pause_img="${k8s_registry}/pause:3.6"
 
     prepare_kubelet_bootstrap_config
 
