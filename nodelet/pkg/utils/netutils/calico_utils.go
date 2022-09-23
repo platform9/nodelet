@@ -16,7 +16,6 @@ import (
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 	"github.com/subosito/gotenv"
 	"go.uber.org/zap"
-	"m.test/go/pkg/mod/google.golang.org/appengine@v1.6.5/log"
 )
 
 type CalicoImpl struct{}
@@ -39,7 +38,7 @@ func (n *CalicoImpl) network_running(cfg config.Config) error {
 	// Work-around: always return desired state until we have a better algorithm.
 	// When ROLE==none, report non-running status to make status_none.sh happy.
 	if cfg.ClusterRole == "none" {
-		log.Infof("Cluster role is not assigned.")
+		zap.S().Warnf("Cluster role is not assigned.")
 		return nil
 	}
 
