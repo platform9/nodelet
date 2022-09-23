@@ -16,7 +16,6 @@ import (
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 	"github.com/subosito/gotenv"
 	"go.uber.org/zap"
-	"m.test/go/pkg/mod/go.uber.org/zap@v1.10.0"
 )
 
 type CalicoImpl struct{}
