@@ -20,20 +20,20 @@ import (
 type CalicoImpl struct{}
 
 type CalicoUtilsInterface interface {
-	network_running(config.Config) error
-	ensure_network_running(cfg config.Config) error
-	write_cni_config_file() error
-	ensure_network_config_up_to_date() error
-	ensure_network_controller_destroyed() error
-	ensure_role_binding() error
-	local_apiserver_running(cfg config.Config) error
+	networkRunning(config.Config) error
+	ensureNetwork_running(cfg config.Config) error
+	writeCniConfig_file() error
+	ensureNetworkConfigUpToDate() error
+	ensureNetworkControllerDestroyed() error
+	ensureRoleBinding() error
+	localApiserverRunning(cfg config.Config) error
 }
 
 func New() CalicoUtilsInterface {
 	return &CalicoImpl{}
 }
 
-func (n *CalicoImpl) network_running(cfg config.Config) error {
+func (n *CalicoImpl) networkRunning(cfg config.Config) error {
 	// TODO: Check status of the local pod/app
 	// See https://platform9.atlassian.net/browse/PMK-871
 	// Work-around: always return desired state until we have a better algorithm.
@@ -46,37 +46,37 @@ func (n *CalicoImpl) network_running(cfg config.Config) error {
 	return nil
 }
 
-func (n *CalicoImpl) ensure_network_running(cfg config.Config) error {
+func (n *CalicoImpl) ensureNetworkRunning(cfg config.Config) error {
 	// Bridge for containers is created by CNI. So if docker has created a
 	// bridge, in the past, delete it
 	// See https://platform9.atlassian.net/browse/IAAS-7740 for more information
 	if cfg.Pf9ManagedDocker != false {
-		delete_docker0_bridge_if_present()
+		deleteDocker0BridgeIfPresent()
 	}
 
 	if cfg.ClusterRole == "master" {
-		deploy_calico_daemonset()
+		deployCalicoDaemonset()
 	}
 
 	return nil
 }
 
-func (n *CalicoImpl) write_cni_config_file() error {
+func (n *CalicoImpl) writeCniConfigFile() error {
 	return nil
 }
 
-func (n *CalicoImpl) ensure_network_config_up_to_date() error {
+func (n *CalicoImpl) ensureNetworkConfigUpToDate() error {
 	return nil
 }
 
-func (n *CalicoImpl) ensure_network_controller_destroyed() error {
-	remove_cni_config_file()
-	remove_ipip_tunnel_iface()
+func (n *CalicoImpl) ensureNetworkControllerDestroyed() error {
+	removeCniConfigFile()
+	removeIpipTunnelIface()
 	return nil
 }
 
 // Plugin specific methods
-func deploy_calico_daemonset() error {
+func deployCalicoDaemonset() error {
 	calico_app := "/opt/pf9/pf9-kube/conf/networkapps/calico-${KUBERNETES_VERSION}.yaml"
 
 	input, err := os.ReadFile(calico_app)
@@ -133,7 +133,7 @@ func deploy_calico_daemonset() error {
 	return nil
 }
 
-func remove_cni_config_file() {
+func removeCniConfigFile() {
 	//rm -f ${CNI_CONFIG_DIR}/10-calico* || echo "Either file not present or unable to delete. Continuing"
 	files, err := ioutil.ReadDir("/etc/cni/net.d")
 	if err != nil {
@@ -158,7 +158,7 @@ func remove_cni_config_file() {
 	}
 }
 
-func delete_docker0_bridge_if_present() error {
+func deleteDocker0BridgeIfPresent() error {
 	// Opportunistically delete docker0 bridge
 	cmd := command.New()
 	_, err := cmd.RunCommand(context.Background(), nil, 0, "", "ip", "link", "set", "dev", "docker0", "down", "||", "true")
@@ -174,7 +174,7 @@ func delete_docker0_bridge_if_present() error {
 	return nil
 }
 
-func remove_ipip_tunnel_iface() error {
+func removeIpipTunnelIface() error {
 	cmd := command.New()
 	_, err := cmd.RunCommand(context.Background(), nil, 0, "", "ip", "link", "set", "dev", "tunl0", "down", "||", "true")
 	if err != nil {
@@ -191,7 +191,7 @@ func remove_ipip_tunnel_iface() error {
 	//ip link del tunl0 || true
 }
 
-func (n *CalicoImpl) local_apiserver_running(cfg config.Config) error {
+func (n *CalicoImpl) localApiserverRunning(cfg config.Config) error {
 	port := cfg.K8sApiPort
 	ln, err := net.Listen("tcp", ":"+port)
 	if err != nil {
@@ -201,7 +201,7 @@ func (n *CalicoImpl) local_apiserver_running(cfg config.Config) error {
 	return nil
 }
 
-func (n *CalicoImpl) ensure_role_binding() error {
+func (n *CalicoImpl) ensureRoleBinding() error {
 	cmd := command.New()
 	_, err := cmd.RunCommand(context.Background(), nil, 0, "", "KUBECTL version")
 	if err != nil {

@@ -20,7 +20,7 @@ type WaitforK8sPhase struct {
 	HostPhase   *sunpikev1alpha1.HostPhase
 	log         *zap.SugaredLogger
 	kubeUtils   kubeutils.Utils
-	calicoUtils calicoutils.CalicoUtilsInterface
+	calicoUtils *calicoutils.CalicoUtilsInterface
 	netUtils    netutils.NetInterface
 	Filename    string
 	Retry       int
@@ -54,9 +54,9 @@ func (k *WaitforK8sPhase) GetOrder() int {
 func (k *WaitforK8sPhase) Status(ctx context.Context, cfg config.Config) error {
 
 	k.log.Infof("Running Status of phase: %s", k.HostPhase.Name)
-	err := k.calicoUtils.network_running(cfg)
+	err := k.calicoUtils.networkRunning(cfg)
 	if err != nil {
-		phaseutils.SetHostStatus(k.HostPhase, constants.StoppedState, "")
+		phaseutils.SetHostStatus(k.HostPhase, constants.FailedState, err.Error())
 		return nil
 	}
 	err = k.kubeUtils.K8sApiAvailable(cfg)
@@ -79,14 +79,14 @@ func (k *WaitforK8sPhase) Start(ctx context.Context, cfg config.Config) error {
 		return nil
 	}
 	statusFn = func() error {
-		err := k.calicoUtils.local_apiserver_running(cfg)
+		err := k.calicoUtils.localApiserverRunning(cfg)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
 	statusFn = func() error {
-		err := k.calicoUtils.ensure_role_binding(cfg)
+		err := k.calicoUtils.ensureRoleBinding()
 		if err != nil {
 			return err
 		}
@@ -97,7 +97,7 @@ func (k *WaitforK8sPhase) Start(ctx context.Context, cfg config.Config) error {
 	if statusFn != nil {
 		return statusFn()
 	}
-	err := k.calicoUtils.ensure_network_running(cfg)
+	err := k.calicoUtils.ensureNetworkRunning(cfg)
 	if err != nil {
 		k.log.Error(errors.Wrapf(err, "api not available"))
 		phaseutils.SetHostStatus(k.HostPhase, constants.FailedState, err.Error())
