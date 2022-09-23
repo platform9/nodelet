@@ -190,8 +190,8 @@ func remove_ipip_tunnel_iface() error {
 }
 
 func local_apiserver_running() error {
-
-	ln, err := net.Listen("tcp", ":"+cfg.K8sApiPort)
+	port := cfg.K8sApiPort
+	ln, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		fmt.Println("Connecting error:", err)
 	}
