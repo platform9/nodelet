@@ -215,4 +215,5 @@ func (n *CalicoImpl) ensure_role_binding() error {
 		zap.S().Warnf("Error running command: %v", cmd)
 		return err
 	}
+	return nil
 }
