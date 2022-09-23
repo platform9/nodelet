@@ -16,6 +16,7 @@ import (
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 	"github.com/subosito/gotenv"
 	"go.uber.org/zap"
+	"m.test/go/pkg/mod/google.golang.org/appengine@v1.6.5/log"
 )
 
 type CalicoImpl struct{}
@@ -37,8 +38,8 @@ func (n *CalicoImpl) network_running(cfg config.Config) error {
 	// See https://platform9.atlassian.net/browse/PMK-871
 	// Work-around: always return desired state until we have a better algorithm.
 	// When ROLE==none, report non-running status to make status_none.sh happy.
-	if cfg.config.ClusterRole == "none" {
-		cfg.log.Infof("Cluster role is not assigned.")
+	if cfg.ClusterRole == "none" {
+		log.Infof("Cluster role is not assigned.")
 		return nil
 	}
 
@@ -49,11 +50,11 @@ func (n *CalicoImpl) ensure_network_running(cfg config.Config) error {
 	// Bridge for containers is created by CNI. So if docker has created a
 	// bridge, in the past, delete it
 	// See https://platform9.atlassian.net/browse/IAAS-7740 for more information
-	if cfg.config.Pf9ManagedDocker != false {
+	if cfg.Pf9ManagedDocker != false {
 		delete_docker0_bridge_if_present()
 	}
 
-	if cfg.config.ClusterRole == "master" {
+	if cfg.ClusterRole == "master" {
 		deploy_calico_daemonset()
 	}
 
