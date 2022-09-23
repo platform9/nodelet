@@ -20,7 +20,7 @@ type WaitforK8sPhase struct {
 	HostPhase   *sunpikev1alpha1.HostPhase
 	log         *zap.SugaredLogger
 	kubeUtils   kubeutils.Utils
-	calicoUtils *calicoutils.CalicoUtilsInterface
+	calicoUtils calicoutils.CalicoUtilsInterface
 	netUtils    netutils.NetInterface
 	Filename    string
 	Retry       int
