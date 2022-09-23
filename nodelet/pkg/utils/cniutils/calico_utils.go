@@ -25,6 +25,8 @@ type CalicoUtilsInterface interface {
 	write_cni_config_file() error
 	ensure_network_config_up_to_date() error
 	ensure_network_controller_destroyed() error
+	ensure_role_binding() error
+	local_apiserver_running(cfg config.Config) error
 }
 
 func New() CalicoUtilsInterface {
