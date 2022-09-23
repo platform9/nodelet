@@ -1,4 +1,4 @@
-package cniutils
+package calicoutils
 
 import (
 	"context"

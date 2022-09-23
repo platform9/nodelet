@@ -6,7 +6,7 @@ import (
 
 	"github.com/cenkalti/backoff"
 	"github.com/pkg/errors"
-	"github.com/platform9/nodelet/nodelet/pkg/utils/cniutils"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/calicoutils"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/kubeutils"
@@ -20,7 +20,7 @@ type WaitforK8sPhase struct {
 	HostPhase   *sunpikev1alpha1.HostPhase
 	log         *zap.SugaredLogger
 	kubeUtils   kubeutils.Utils
-	calicoUtils cniutils.CalicoUtilsInterface
+	calicoUtils calicoutils.CalicoUtilsInterface
 	netUtils    netutils.NetInterface
 	Filename    string
 	Retry       int
@@ -33,7 +33,7 @@ func NewWaitforK8sPhase() *WaitforK8sPhase {
 			Order: int32(constants.WaitForK8sSvcPhaseOrder),
 		},
 		log:         zap.S(),
-		calicoUtils: cniutils.New(),
+		calicoUtils: calicoutils.New(),
 		kubeUtils:   nil,
 		netUtils:    netutils.New(),
 	}
