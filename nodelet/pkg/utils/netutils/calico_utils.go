@@ -1,4 +1,4 @@
-package calico
+package netutils
 
 import (
 	"context"
