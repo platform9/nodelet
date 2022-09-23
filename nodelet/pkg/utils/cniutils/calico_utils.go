@@ -189,12 +189,13 @@ func remove_ipip_tunnel_iface() error {
 	//ip link del tunl0 || true
 }
 
-func local_apiserver_running(cfg config.Config) {
+func local_apiserver_running() error {
 
-	err := net.Listen("tcp", ":"+cfg.K8sApiPort)
+	ln, err := net.Listen("tcp", ":"+cfg.K8sApiPort)
 	if err != nil {
 		fmt.Println("Connecting error:", err)
 	}
+	err = ln.Close()
 
 }
 
