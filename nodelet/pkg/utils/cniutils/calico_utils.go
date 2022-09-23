@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/command"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
@@ -189,14 +190,14 @@ func remove_ipip_tunnel_iface() error {
 	//ip link del tunl0 || true
 }
 
-func local_apiserver_running() error {
+func local_apiserver_running(cfg config.Config) error {
 	port := cfg.K8sApiPort
 	ln, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		fmt.Println("Connecting error:", err)
 	}
 	err = ln.Close()
-
+	return nil
 }
 
 func ensure_role_binding() error {
