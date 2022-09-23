@@ -2,7 +2,6 @@ package misc
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/cenkalti/backoff"
@@ -23,6 +22,8 @@ type WaitforK8sPhase struct {
 	kubeUtils   kubeutils.Utils
 	calicoutils cniutils.CalicoUtilsInterface
 	netUtils    netutils.NetInterface
+	Filename    string
+	Retry       int
 }
 
 func NewWaitforK8sPhase() *WaitforK8sPhase {
@@ -71,31 +72,30 @@ func (k *WaitforK8sPhase) Status(ctx context.Context, cfg config.Config) error {
 func (k *WaitforK8sPhase) Start(ctx context.Context, cfg config.Config) error {
 
 	statusFn := func() error {
-		err := kubeutils.kubernetes_api_available(cfg)
+		err := k.kubeUtils.k8sApiAvailable(cfg)
 		if err != nil {
-			return fmt.Errorf("non-zero exit code running status check: %s", phaseutils.Filename)
+			return err
 		}
 		return nil
 	}
 	statusFn = func() error {
-		err := kubeutils.local_apiserver_running(cfg)
+		err := k.calicoutils.local_apiserver_running(cfg)
 		if err != nil {
-			return fmt.Errorf("non-zero exit code running status check: %s", phaseutils.Filename)
+			return err
 		}
 		return nil
 	}
 	statusFn = func() error {
-		err := kubeutils.ensure_role_binding(cfg)
+		err := k.calicoutils.ensure_role_binding(cfg)
 		if err != nil {
-			return fmt.Errorf("non-zero exit code running status check: %s", phaseutils.Filename)
+			return err
 		}
 		return nil
 	}
-	statusBackoff := getBackOff(phaseutils.Retry - 1)
+	statusBackoff := getBackOff(k.Retry - 1)
 	backoff.Retry(statusFn, statusBackoff)
-	if statusFn == nil {
-		phaseutils.setHostStatus(constants.RunningState, "")
-		return nil
+	if statusFn != nil {
+		return statusFn()
 	}
 	err := k.calicoutils.ensure_network_running(cfg)
 	if err != nil {
