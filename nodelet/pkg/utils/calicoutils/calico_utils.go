@@ -21,8 +21,8 @@ type CalicoImpl struct{}
 
 type CalicoUtilsInterface interface {
 	networkRunning(config.Config) error
-	ensureNetwork_running(cfg config.Config) error
-	writeCniConfig_file() error
+	ensureNetworkRunning(cfg config.Config) error
+	writeCniConfigFile() error
 	ensureNetworkConfigUpToDate() error
 	ensureNetworkControllerDestroyed() error
 	ensureRoleBinding() error
