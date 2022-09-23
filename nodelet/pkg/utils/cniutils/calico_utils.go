@@ -192,15 +192,15 @@ func remove_ipip_tunnel_iface() error {
 
 func local_apiserver_running(cfg config.Config) {
 	host := "0.0.0.0"
-	for _, cfg.K8sApiPort = range cfg.K8sApiPort {
+	for _, port := range cfg.K8sApiPort {
 		timeout := time.Second
-		conn, err := net.DialTimeout("tcp", net.JoinHostPort(host, cfg.K8sApiPort), timeout)
+		conn, err := net.DialTimeout("tcp", net.JoinHostPort(host, port), timeout)
 		if err != nil {
 			fmt.Println("Connecting error:", err)
 		}
 		if conn != nil {
 			defer conn.Close()
-			fmt.Println("Opened", net.JoinHostPort(host, cfg.K8sApiPort))
+			fmt.Println("Opened", net.JoinHostPort(host, port))
 		}
 	}
 
