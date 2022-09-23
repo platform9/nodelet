@@ -191,7 +191,7 @@ func remove_ipip_tunnel_iface() error {
 	//ip link del tunl0 || true
 }
 
-func local_apiserver_running(cfg config.Config) error {
+func (n *CalicoImpl) local_apiserver_running(cfg config.Config) error {
 	port := cfg.K8sApiPort
 	ln, err := net.Listen("tcp", ":"+port)
 	if err != nil {
@@ -201,7 +201,7 @@ func local_apiserver_running(cfg config.Config) error {
 	return nil
 }
 
-func ensure_role_binding() error {
+func (n *CalicoImpl) ensure_role_binding() error {
 	cmd := command.New()
 	_, err := cmd.RunCommand(context.Background(), nil, 0, "", "KUBECTL version")
 	if err != nil {
@@ -215,5 +215,4 @@ func ensure_role_binding() error {
 		zap.S().Warnf("Error running command: %v", cmd)
 		return err
 	}
-	return nil
 }
