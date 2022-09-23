@@ -53,11 +53,12 @@ func (k *WaitforK8sPhase) GetOrder() int {
 func (k *WaitforK8sPhase) Status(ctx context.Context, cfg config.Config) error {
 
 	k.log.Infof("Running Status of phase: %s", k.HostPhase.Name)
-	if !k.calicoutils.network_running(cfg) {
+	err := k.calicoutils.network_running(cfg)
+	if err != nil {
 		phaseutils.SetHostStatus(k.HostPhase, constants.StoppedState, "")
 		return nil
 	}
-	err := k.kubeUtils.kubernetes_api_available(cfg)
+	err = kubeutils.kubernetes_api_available(cfg)
 	if err != nil {
 		k.log.Error(errors.Wrapf(err, "api not available"))
 		phaseutils.SetHostStatus(k.HostPhase, constants.FailedState, err.Error())
@@ -68,34 +69,23 @@ func (k *WaitforK8sPhase) Status(ctx context.Context, cfg config.Config) error {
 }
 
 func (k *WaitforK8sPhase) Start(ctx context.Context, cfg config.Config) error {
-	k.log.Infof("Running Status of phase: %s", k.HostPhase.Name)
-	err := k.kubeUtils.kubernetes_api_available(cfg)
-	if err != nil {
-		fmt.Println(err.Error())
-		fmt.Println("!!!! Error occurred - sleep for 5 second")
-		time.Sleep(time.Second * 5)
-		err = k.kubeUtils.kubernetes_api_available(cfg)
-
-	}
-	phaseutils.SetHostStatus(k.HostPhase, constants.RunningState, "")
-	return nil
 
 	statusFn := func() error {
-		err = k.kubeUtils.kubernetes_api_available(cfg)
+		err := kubeutils.kubernetes_api_available(cfg)
 		if err != nil {
 			return fmt.Errorf("non-zero exit code running status check: %s", phaseutils.Filename)
 		}
 		return nil
 	}
 	statusFn = func() error {
-		err = k.kubeUtils.local_apiserver_running(cfg)
+		err := kubeutils.local_apiserver_running(cfg)
 		if err != nil {
 			return fmt.Errorf("non-zero exit code running status check: %s", phaseutils.Filename)
 		}
 		return nil
 	}
 	statusFn = func() error {
-		err = k.kubeUtils.ensure_role_binding()
+		err := kubeutils.ensure_role_binding(cfg)
 		if err != nil {
 			return fmt.Errorf("non-zero exit code running status check: %s", phaseutils.Filename)
 		}
@@ -103,10 +93,11 @@ func (k *WaitforK8sPhase) Start(ctx context.Context, cfg config.Config) error {
 	}
 	statusBackoff := getBackOff(phaseutils.Retry - 1)
 	backoff.Retry(statusFn, statusBackoff)
-	if err != nil {
-		return err
+	if statusFn == nil {
+		phaseutils.setHostStatus(constants.RunningState, "")
+		return nil
 	}
-	err = k.calicoutils.ensure_network_running(cfg)
+	err := k.calicoutils.ensure_network_running(cfg)
 	if err != nil {
 		k.log.Error(errors.Wrapf(err, "api not available"))
 		phaseutils.SetHostStatus(k.HostPhase, constants.FailedState, err.Error())
