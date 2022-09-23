@@ -82,6 +82,8 @@ const (
 	LocalCloudProvider = "local"
 	// RuntimeContainerd represents containerd service
 	RuntimeContainerd = "containerd"
+	// cni plugin path
+	CNI_CONFIG_DIR= "/etc/cni/net.d"
 )
 
 var (
