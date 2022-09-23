@@ -10,7 +10,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/command"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
