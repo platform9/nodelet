@@ -190,7 +190,7 @@ func remove_ipip_tunnel_iface() error {
 	//ip link del tunl0 || true
 }
 
-func local_apiserver_running(cfg config.Config) {
+func local_apiserver_running(host string, cfg config.Config) {
 	host := "0.0.0.0"
 	for _, port := range cfg.K8sApiPort {
 		timeout := time.Second
