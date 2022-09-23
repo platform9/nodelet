@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/platform9/nodelet/nodelet/pkg/utils/command"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
@@ -190,11 +189,10 @@ func remove_ipip_tunnel_iface() error {
 	//ip link del tunl0 || true
 }
 
-func local_apiserver_running(host string, cfg config.Config) {
-	host := "0.0.0.0"
+func local_apiserver_running(cfg config.Config) {
+	host = "0.0.0.0"
 	for _, port := range cfg.K8sApiPort {
-		timeout := time.Second
-		conn, err := net.DialTimeout("tcp", host+":"+port, timeout)
+		conn, err := net.Listen("tcp", ":"+port)
 		if err != nil {
 			fmt.Println("Connecting error:", err)
 		}
