@@ -191,7 +191,7 @@ func removeIpipTunnelIface() error {
 	//ip link del tunl0 || true
 }
 
-func (n *CalicoImpl) LocalApiserverRunning(cfg config.Config) error {
+func (c *CalicoImpl) LocalApiserverRunning(cfg config.Config) error {
 	port := cfg.K8sApiPort
 	ln, err := net.Listen("tcp", ":"+port)
 	if err != nil {
@@ -201,7 +201,7 @@ func (n *CalicoImpl) LocalApiserverRunning(cfg config.Config) error {
 	return nil
 }
 
-func (n *CalicoImpl) EnsureRoleBinding() error {
+func (c *CalicoImpl) EnsureRoleBinding() error {
 	cmd := command.New()
 	_, err := cmd.RunCommand(context.Background(), nil, 0, "", "KUBECTL version")
 	if err != nil {
