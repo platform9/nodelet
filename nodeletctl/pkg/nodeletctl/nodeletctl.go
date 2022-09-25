@@ -96,6 +96,19 @@ func CreateCluster(cfgPath string) error {
 		return fmt.Errorf("Failed to Parse Cluster Config: %s", err)
 	}
 
+	clusterStateDir := filepath.Join(ClusterStateDir, clusterCfg.ClusterId)
+	if _, err := os.Stat(clusterStateDir); err == nil {
+		zap.S().Warnf("Found pre-existing cluster state directory %s, re-using certs. Consider removing or scale or upgrade operations", clusterStateDir)
+		fmt.Printf("Found pre-existing cluster state directory %s, re-using certs. Consider removing or scale or upgrade operations", clusterStateDir)
+	}
+
+	masters, err := GetCurrentMasters(clusterCfg)
+	if err == nil {
+		if len(masters) > 0 {
+			return fmt.Errorf("Found an already active cluster with masters: %v\nUse nodeletctl delete first", masters)
+		}
+	}
+
 	if err := DeployCluster(clusterCfg); err != nil {
 		zap.S().Infof("Cluster failed: %s\n", err)
 		return fmt.Errorf("Cluster failed: %s", err)
