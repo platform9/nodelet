@@ -394,6 +394,11 @@ func (nd *NodeletDeployer) InstallNodelet() error {
 	}
 
 	if stdOut, stdErr, err := nd.client.RunCommand(installCmd); err != nil {
+		alreadyInstalled := "does not update installed package"
+		if strings.Contains(string(stdOut), alreadyInstalled) {
+			zap.S().Warnf("Found matching nodelet package already installed, re-using...\n")
+			return nil
+		}
 		return fmt.Errorf("Failed to run %s: %s: %s: %s", installCmd, err, stdErr, stdOut)
 	}
 
