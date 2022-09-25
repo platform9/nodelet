@@ -26,7 +26,7 @@ type WaitforK8sPhase struct {
 	Retry       int
 }
 
-func NewWaitforK8sPhase() *WaitforK8sPhase {
+func NewWaitForK8sSvcPhase() *WaitforK8sPhase {
 	return &WaitforK8sPhase{
 		HostPhase: &sunpikev1alpha1.HostPhase{
 			Name:  "Wait for k8s services",
