@@ -36,7 +36,7 @@ func GetMasterPhases() ([]PhaseInterface, error) {
 		misc.NewMiscPhase(), // Order 75
 		kubelet.NewKubeletConfigureStartPhase(constants.PhaseBaseDir),       // Order 80
 		kubeproxy.NewKubeProxyStartPhase(constants.PhaseBaseDir),            // Order 90
-		misc.NewWaitForK8sSvcPhase(constants.PhaseBaseDir),                  // Order 100
+		misc.NewWaitForK8sSvcPhase(),                                        // Order 100
 		misc.NewLabelTaintNodePhase(),                                       // Order 110
 		kubelet.NewDynamicKubeletConfigPhase(constants.PhaseBaseDir),        // Order 120
 		misc.NewUncordonNodePhase(),                                         // Order 130
@@ -63,7 +63,7 @@ func GetWorkerPhases() ([]PhaseInterface, error) {
 		misc.NewMiscPhase(), // Order 75
 		kubelet.NewKubeletConfigureStartPhase(constants.PhaseBaseDir), // Order 80
 		kubeproxy.NewKubeProxyStartPhase(constants.PhaseBaseDir),      // Order 90
-		misc.NewWaitForK8sSvcPhase(constants.PhaseBaseDir),            // Order 100
+		misc.NewWaitForK8sSvcPhase(),                                  // Order 100
 		misc.NewLabelTaintNodePhase(),                                 // Order 110
 		kubelet.NewDynamicKubeletConfigPhase(constants.PhaseBaseDir),  // Order 120
 		misc.NewUncordonNodePhase(),                                   // Order 130
