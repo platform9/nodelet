@@ -39,79 +39,79 @@ func NewWaitforK8sPhase() *WaitforK8sPhase {
 	}
 }
 
-func (k *WaitforK8sPhase) GetHostPhase() sunpikev1alpha1.HostPhase {
-	return *k.HostPhase
+func (w *WaitforK8sPhase) GetHostPhase() sunpikev1alpha1.HostPhase {
+	return *w.HostPhase
 }
 
-func (k *WaitforK8sPhase) GetPhaseName() string {
-	return k.HostPhase.Name
+func (w *WaitforK8sPhase) GetPhaseName() string {
+	return w.HostPhase.Name
 }
 
-func (k *WaitforK8sPhase) GetOrder() int {
-	return int(k.HostPhase.Order)
+func (w *WaitforK8sPhase) GetOrder() int {
+	return int(w.HostPhase.Order)
 }
 
-func (k *WaitforK8sPhase) Status(ctx context.Context, cfg config.Config) error {
+func (w *WaitforK8sPhase) Status(ctx context.Context, cfg config.Config) error {
 
-	k.log.Infof("Running Status of phase: %s", k.HostPhase.Name)
-	err := k.calicoUtils.networkRunning(cfg)
+	w.log.Infof("Running Status of phase: %s", w.HostPhase.Name)
+	err := w.calicoUtils.NetworkRunning(cfg)
 	if err != nil {
-		phaseutils.SetHostStatus(k.HostPhase, constants.FailedState, err.Error())
+		phaseutils.SetHostStatus(w.HostPhase, constants.FailedState, err.Error())
 		return nil
 	}
-	err = k.kubeUtils.K8sApiAvailable(cfg)
+	err = w.kubeUtils.K8sApiAvailable(cfg)
 	if err != nil {
-		k.log.Error(errors.Wrapf(err, "api not available"))
-		phaseutils.SetHostStatus(k.HostPhase, constants.FailedState, err.Error())
+		w.log.Error(errors.Wrapf(err, "api not available"))
+		phaseutils.SetHostStatus(w.HostPhase, constants.FailedState, err.Error())
 		return err
 	}
-	phaseutils.SetHostStatus(k.HostPhase, constants.RunningState, "")
+	phaseutils.SetHostStatus(w.HostPhase, constants.RunningState, "")
 	return nil
 }
 
-func (k *WaitforK8sPhase) Start(ctx context.Context, cfg config.Config) error {
+func (w *WaitforK8sPhase) Start(ctx context.Context, cfg config.Config) error {
 
 	statusFn := func() error {
-		err := k.kubeUtils.K8sApiAvailable(cfg)
+		err := w.kubeUtils.K8sApiAvailable(cfg)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
 	statusFn = func() error {
-		err := k.calicoUtils.localApiserverRunning(cfg)
+		err := w.calicoUtils.LocalApiserverRunning(cfg)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
 	statusFn = func() error {
-		err := k.calicoUtils.ensureRoleBinding()
+		err := w.calicoUtils.EnsureRoleBinding()
 		if err != nil {
 			return err
 		}
 		return nil
 	}
-	statusBackoff := getBackOff(k.Retry - 1)
+	statusBackoff := getBackOff(w.Retry - 1)
 	backoff.Retry(statusFn, statusBackoff)
 	if statusFn != nil {
 		return statusFn()
 	}
-	err := k.calicoUtils.ensureNetworkRunning(cfg)
+	err := w.calicoUtils.EnsureNetworkRunning(cfg)
 	if err != nil {
-		k.log.Error(errors.Wrapf(err, "api not available"))
-		phaseutils.SetHostStatus(k.HostPhase, constants.FailedState, err.Error())
+		w.log.Error(errors.Wrapf(err, "api not available"))
+		phaseutils.SetHostStatus(w.HostPhase, constants.FailedState, err.Error())
 		return err
 	}
-	phaseutils.SetHostStatus(k.HostPhase, constants.RunningState, "")
+	phaseutils.SetHostStatus(w.HostPhase, constants.RunningState, "")
 	return nil
 	// retry logic
 
 }
 
-func (k *WaitforK8sPhase) Stop(ctx context.Context, cfg config.Config) error {
-	k.log.Infof("Running Stop of phase: %s", k.HostPhase.Name)
-	phaseutils.SetHostStatus(k.HostPhase, constants.StoppedState, "")
+func (w *WaitforK8sPhase) Stop(ctx context.Context, cfg config.Config) error {
+	w.log.Infof("Running Stop of phase: %s", w.HostPhase.Name)
+	phaseutils.SetHostStatus(w.HostPhase, constants.StoppedState, "")
 	return nil
 }
 

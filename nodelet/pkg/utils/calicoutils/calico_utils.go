@@ -20,20 +20,20 @@ import (
 type CalicoImpl struct{}
 
 type CalicoUtilsInterface interface {
-	networkRunning(config.Config) error
-	ensureNetworkRunning(cfg config.Config) error
-	writeCniConfigFile() error
-	ensureNetworkConfigUpToDate() error
-	ensureNetworkControllerDestroyed() error
-	ensureRoleBinding() error
-	localApiserverRunning(cfg config.Config) error
+	NetworkRunning(config.Config) error
+	EnsureNetworkRunning(cfg config.Config) error
+	WriteCniConfigFile() error
+	EnsureNetworkConfigUpToDate() error
+	EnsureNetworkControllerDestroyed() error
+	EnsureRoleBinding() error
+	LocalApiserverRunning(cfg config.Config) error
 }
 
 func New() CalicoUtilsInterface {
 	return &CalicoImpl{}
 }
 
-func (n *CalicoImpl) networkRunning(cfg config.Config) error {
+func (c *CalicoImpl) NetworkRunning(cfg config.Config) error {
 	// TODO: Check status of the local pod/app
 	// See https://platform9.atlassian.net/browse/PMK-871
 	// Work-around: always return desired state until we have a better algorithm.
@@ -46,7 +46,7 @@ func (n *CalicoImpl) networkRunning(cfg config.Config) error {
 	return nil
 }
 
-func (n *CalicoImpl) ensureNetworkRunning(cfg config.Config) error {
+func (c *CalicoImpl) EnsureNetworkRunning(cfg config.Config) error {
 	// Bridge for containers is created by CNI. So if docker has created a
 	// bridge, in the past, delete it
 	// See https://platform9.atlassian.net/browse/IAAS-7740 for more information
@@ -61,15 +61,15 @@ func (n *CalicoImpl) ensureNetworkRunning(cfg config.Config) error {
 	return nil
 }
 
-func (n *CalicoImpl) writeCniConfigFile() error {
+func (c *CalicoImpl) WriteCniConfigFile() error {
 	return nil
 }
 
-func (n *CalicoImpl) ensureNetworkConfigUpToDate() error {
+func (c *CalicoImpl) EnsureNetworkConfigUpToDate() error {
 	return nil
 }
 
-func (n *CalicoImpl) ensureNetworkControllerDestroyed() error {
+func (c *CalicoImpl) EnsureNetworkControllerDestroyed() error {
 	removeCniConfigFile()
 	removeIpipTunnelIface()
 	return nil
@@ -191,7 +191,7 @@ func removeIpipTunnelIface() error {
 	//ip link del tunl0 || true
 }
 
-func (n *CalicoImpl) localApiserverRunning(cfg config.Config) error {
+func (n *CalicoImpl) LocalApiserverRunning(cfg config.Config) error {
 	port := cfg.K8sApiPort
 	ln, err := net.Listen("tcp", ":"+port)
 	if err != nil {
@@ -201,7 +201,7 @@ func (n *CalicoImpl) localApiserverRunning(cfg config.Config) error {
 	return nil
 }
 
-func (n *CalicoImpl) ensureRoleBinding() error {
+func (n *CalicoImpl) EnsureRoleBinding() error {
 	cmd := command.New()
 	_, err := cmd.RunCommand(context.Background(), nil, 0, "", "KUBECTL version")
 	if err != nil {
