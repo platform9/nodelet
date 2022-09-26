@@ -22,7 +22,7 @@ CLOUD_PROVIDER_TYPE: local
 CLUSTER_ID: {{ .ClusterId }}
 CLUSTER_PROJECT_ID: 373d078433b8422490fdfcd96d406805
 CONTAINERS_CIDR: 10.20.0.0/22
-CONTROLLER_MANAGER_FLAGS: ""
+CONTROLLER_MANAGER_FLAGS: "--cluster-signing-cert-file=/srv/kubernetes/certs/apiserver/request.crt,--cluster-signing-key-file=/srv/kubernetes/certs/apiserver/request.key"
 CPU_MANAGER_POLICY: none
 DEBUG: "true"
 DEPLOY_KUBEVIRT: "false"

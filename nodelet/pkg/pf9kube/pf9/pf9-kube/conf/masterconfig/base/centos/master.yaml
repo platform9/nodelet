@@ -12,8 +12,6 @@ spec:
       command:
         - "kube-controller-manager"
         - "--cloud-provider=__CLOUD_PROVIDER__"
-        - "--cluster-signing-cert-file=/srv/kubernetes/certs/apiserver/request.crt"
-        - "--cluster-signing-key-file=/srv/kubernetes/certs/apiserver/request.key"
         - "--kubeconfig=/srv/kubernetes/kubeconfigs/kube-controller-manager.yaml"
         - "--leader-elect=true"
         - "--profiling=false"
