@@ -308,8 +308,8 @@ func DeployCluster(clusterCfg *BootstrapConfig) error {
 
 	err := trustCA(clusterCfg.CertsDir)
 	if err != nil {
-		zap.S().Infof("error adding nodelet Root CA as trusted certs: %s\n", err)
-		return err
+		zap.S().Errorf("error adding nodelet Root CA as trusted certs: %s\n", err)
+		return fmt.Errorf("error adding nodelet Root CA as trusted certs: %s\n", err)
 	}
 
 	if err := GenKubeconfig(clusterCfg); err != nil {
@@ -772,6 +772,12 @@ func RegenClusterCerts(cfgPath string) error {
 	if err != nil {
 		zap.S().Errorf("Failed to regenerate new CA: %s", err)
 		return fmt.Errorf("Failed to regenerate new CA: %s", err)
+	}
+
+	err = trustCA(clusterCfg.CertsDir)
+	if err != nil {
+		zap.S().Errorf("error adding nodelet Root CA as trusted certs: %s\n", err)
+		return fmt.Errorf("error adding nodelet Root CA as trusted certs: %s\n", err)
 	}
 
 	clusterStatus := new(ClusterStatus)
