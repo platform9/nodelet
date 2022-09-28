@@ -306,6 +306,12 @@ func DeployCluster(clusterCfg *BootstrapConfig) error {
 		clusterCfg.CertsDir = certsDir
 	}
 
+	err := trustCA(clusterCfg.CertsDir)
+	if err != nil {
+		zap.S().Infof("error adding nodelet Root CA as trusted certs: %s\n", err)
+		return err
+	}
+
 	if err := GenKubeconfig(clusterCfg); err != nil {
 		zap.S().Infof("Failed to generate kubeconfig: %s\n", err)
 		return err
