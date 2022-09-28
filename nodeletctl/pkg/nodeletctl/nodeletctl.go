@@ -839,7 +839,9 @@ func ConfigClusterDNS(cfgPath string) error {
 func UploadHostsFile(clusterCfg *BootstrapConfig) error {
 	failed := false
 	for _, host := range clusterCfg.MasterNodes {
-		deployer, err := GetNodeletDeployer(clusterCfg, nil, nil, host.NodeName, "")
+		nodeletCfg := new(NodeletConfig)
+		setNodeletClusterCfg(clusterCfg, nodeletCfg)
+		deployer, err := GetNodeletDeployer(clusterCfg, nil, nodeletCfg, host.NodeName, "")
 		if err != nil {
 			zap.S().Errorf("failed to get nodelet deployer: %v", err)
 			return fmt.Errorf("failed to get nodelet deployer: %v", err)
