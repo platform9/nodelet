@@ -9,14 +9,15 @@ import (
 	"encoding/base64"
 	"encoding/pem"
 	"fmt"
+	"go.uber.org/zap"
 	"io/ioutil"
 	"math/big"
 	"os"
+	"os/exec"
+	"path"
 	"path/filepath"
 	"text/template"
 	"time"
-
-	"go.uber.org/zap"
 )
 
 type KubeConfigData struct {
@@ -299,4 +300,38 @@ func getPseudoRandomSerial() (*big.Int, error) {
 		return nil, fmt.Errorf("Failed to generate random serial number: %s", err)
 	}
 	return serialNumber, err
+}
+
+func trustCA(certsDir string) error {
+	trustCmd := exec.Command("update-ca-trust", "force-enable")
+	output, err := trustCmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to enable ca trust: %v - %s", err, string(output))
+	}
+
+	srcFile := path.Join(certsDir, RootCACRT)
+	dstFile := CAPath
+
+	// clean up any previous ca
+	err = os.Remove(dstFile)
+	if err != nil {
+		zap.S().Warnf("failed to remove %s: %v", dstFile, err)
+	}
+
+	readB, err := os.ReadFile(srcFile)
+	if err != nil {
+		return fmt.Errorf("failed to read %s: %v", srcFile, err)
+	}
+
+	err = os.WriteFile(dstFile, readB, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write %s: %v", srcFile, err)
+	}
+
+	extractCmd := exec.Command("update-ca-trust", "extract")
+	output, err = extractCmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to extract ca: %v - %s", err, string(output))
+	}
+	return nil
 }

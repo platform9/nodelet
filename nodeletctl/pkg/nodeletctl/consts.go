@@ -25,4 +25,5 @@ const (
 	WorkerLabel        = "node-role.kubernetes.io/worker"
 	MasterLabel        = "node-role.kubernetes.io/master"
 	UserImagesDir      = "/var/opt/pf9/images"
+	CAPath             = "/etc/pki/ca-trust/source/anchors/nodelet-ca.pem"
 )
