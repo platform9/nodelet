@@ -7,21 +7,21 @@ APISERVER_STORAGE_BACKEND: etcd3
 APP_CATALOG_ENABLED: "false"
 AUTHZ_ENABLED: "true"
 BOUNCER_SLOW_REQUEST_WEBHOOK: ""
-CALICO_IPIP_MODE: Always
-CALICO_IPV4: autodetect
-CALICO_IPV4_BLOCK_SIZE: "26"
+CALICO_IPIP_MODE: {{ .CalicoV4IpIpMode }}
+CALICO_IPV4: {{ .CalicoIP4 }}
+CALICO_IPV4_BLOCK_SIZE: {{ .CalicoV4BlockSize }}
 CALICO_IPV4_DETECTION_METHOD: {{ .CalicoV4Interface }}
-CALICO_IPV6: none
+CALICO_IPV6: {{ .CalicoIP6 }}
 CALICO_IPV6_DETECTION_METHOD: {{ .CalicoV6Interface }}
-CALICO_IPV6POOL_BLOCK_SIZE: "116"
-CALICO_IPV6POOL_CIDR: ""
-CALICO_IPV6POOL_NAT_OUTGOING: "false"
-CALICO_NAT_OUTGOING: "true"
+CALICO_IPV6POOL_BLOCK_SIZE: {{ .CalicoV6BlockSize }}
+CALICO_IPV6POOL_CIDR: {{ .CalicoV6ContainersCidr }}
+CALICO_IPV6POOL_NAT_OUTGOING: {{ .CalicoV6NATOutgoing }}
+CALICO_NAT_OUTGOING: {{ .CalicoV4NATOutgoing }}
 CALICO_ROUTER_ID: hash
 CLOUD_PROVIDER_TYPE: local
 CLUSTER_ID: {{ .ClusterId }}
 CLUSTER_PROJECT_ID: 373d078433b8422490fdfcd96d406805
-CONTAINERS_CIDR: 10.20.0.0/22
+CONTAINERS_CIDR: {{ .ContainersCidr }}
 CONTROLLER_MANAGER_FLAGS: "--cluster-signing-cert-file=/srv/kubernetes/certs/apiserver/request.crt,--cluster-signing-key-file=/srv/kubernetes/certs/apiserver/request.key"
 CPU_MANAGER_POLICY: none
 DEBUG: "true"
@@ -44,11 +44,19 @@ ETCD_ENV: |-
   ETCD_STRICT_RECONFIG_CHECK=true
   ETCD_INITIAL_CLUSTER_TOKEN={{ .ClusterId }}
   ETCD_INITIAL_CLUSTER_STATE={{ .EtcdClusterState }}
+  {{ if .IPv6Enabled -}}
+  ETCD_INITIAL_CLUSTER={{- range $MasterName, $MasterIp := .MasterList }}{{ $MasterName }}=https://[{{ $MasterIp }}]:2380,{{ end }}
+  ETCD_INITIAL_ADVERTISE_PEER_URLS=https://[{{ .HostIp }}]:2380
+  ETCD_LISTEN_PEER_URLS=https://[{{ .HostIp }}]:2380
+  ETCD_ADVERTISE_CLIENT_URLS=https://[{{ .HostIp }}]:4001
+  ETCD_LISTEN_CLIENT_URLS=https://0.0.0.0:4001,http://127.0.0.1:2379,http://[::1]:2379
+  {{ else -}}
   ETCD_INITIAL_CLUSTER={{- range $MasterName, $MasterIp := .MasterList }}{{ $MasterName }}=https://{{ $MasterIp }}:2380,{{ end }}
   ETCD_INITIAL_ADVERTISE_PEER_URLS=https://{{ .HostIp }}:2380
   ETCD_LISTEN_PEER_URLS=https://{{ .HostIp }}:2380
   ETCD_ADVERTISE_CLIENT_URLS=https://{{ .HostIp }}:4001
   ETCD_LISTEN_CLIENT_URLS=https://0.0.0.0:4001,http://127.0.0.1:2379
+  {{ end -}}
   ETCD_DATA_DIR=/var/etcd/data
   ETCD_CERT_FILE=/certs/etcd/client/request.crt
   ETCD_KEY_FILE=/certs/etcd/client/request.key
@@ -63,11 +71,11 @@ ETCD_HEARTBEAT_INTERVAL: "100"
 ETCD_VERSION: ""
 EXTERNAL_DNS_NAME: ""
 EXTRA_OPTS: ""
-FELIX_IPV6SUPPORT: "false"
+FELIX_IPV6SUPPORT: {{ .IPv6Enabled }}
 GCR_PRIVATE_REGISTRY: ""
 HOSTID: {{ .HostId }}
-IPV6_ENABLED: "false"
-K8S_API_PORT: "443"
+IPV6_ENABLED: {{ .IPv6Enabled }}
+K8S_API_PORT: {{ .K8sApiPort }}
 K8S_PRIVATE_REGISTRY: ""
 KEYSTONE_DOMAIN: kubernetes-keystone.platform9.horse
 KEYSTONE_ENABLED: "true"
@@ -96,9 +104,9 @@ CONTAINERD_CGROUP:  {{ .ContainerRuntime.CgroupDriver }}
 DOCKER_CGROUP: {{ .ContainerRuntime.CgroupDriver }}
 RUNTIME_CONFIG: ""
 SCHEDULER_FLAGS: ""
-SERVICES_CIDR: 10.21.0.0/22
+SERVICES_CIDR: {{ .ServicesCidr }}
 TOPOLOGY_MANAGER_POLICY: none
-USE_HOSTNAME: "false"
+USE_HOSTNAME: {{ .UseHostname }}
 STANDALONE: "true"
 DOCKER_ROOT: /var/lib/docker
 {{if .UserImages -}}
@@ -118,21 +126,21 @@ APISERVER_STORAGE_BACKEND: etcd3
 APP_CATALOG_ENABLED: "false"
 AUTHZ_ENABLED: "true"
 BOUNCER_SLOW_REQUEST_WEBHOOK: ""
-CALICO_IPIP_MODE: Always
-CALICO_IPV4: autodetect
-CALICO_IPV4_BLOCK_SIZE: "26"
+CALICO_IPIP_MODE: {{ .CalicoV4IpIpMode }}
+CALICO_IPV4: {{ .CalicoIP4 }}
+CALICO_IPV4_BLOCK_SIZE: {{ .CalicoV4BlockSize }}
 CALICO_IPV4_DETECTION_METHOD: {{ .CalicoV4Interface }}
-CALICO_IPV6: none
+CALICO_IPV6: {{ .CalicoIP6 }}
 CALICO_IPV6_DETECTION_METHOD: {{ .CalicoV6Interface }}
-CALICO_IPV6POOL_BLOCK_SIZE: "116"
-CALICO_IPV6POOL_CIDR: ""
-CALICO_IPV6POOL_NAT_OUTGOING: "false"
-CALICO_NAT_OUTGOING: "true"
+CALICO_IPV6POOL_BLOCK_SIZE: {{ .CalicoV6BlockSize }}
+CALICO_IPV6POOL_CIDR: {{ .CalicoV6ContainersCidr }}
+CALICO_IPV6POOL_NAT_OUTGOING: {{ .CalicoV6NATOutgoing }}
+CALICO_NAT_OUTGOING: {{ .CalicoV4NATOutgoing }}
 CALICO_ROUTER_ID: hash
 CLOUD_PROVIDER_TYPE: local
 CLUSTER_ID: {{ .ClusterId }}
 CLUSTER_PROJECT_ID: 373d078433b8422490fdfcd96d406805
-CONTAINERS_CIDR: 10.20.0.0/22
+CONTAINERS_CIDR: {{ .ContainersCidr }}
 CONTROLLER_MANAGER_FLAGS: ""
 CPU_MANAGER_POLICY: none
 DEBUG: "true"
@@ -149,11 +157,11 @@ ENABLE_CAS: "false"
 ENABLE_PROFILE_AGENT: "true"
 EXTERNAL_DNS_NAME: ""
 EXTRA_OPTS: ""
-FELIX_IPV6SUPPORT: "false"
+FELIX_IPV6SUPPORT: {{ .IPv6Enabled }}
 GCR_PRIVATE_REGISTRY: ""
 HOSTID: {{ .HostId }}
-IPV6_ENABLED: "false"
-K8S_API_PORT: "443"
+IPV6_ENABLED: {{ .IPv6Enabled }}
+K8S_API_PORT: {{ .K8sApiPort }}
 K8S_PRIVATE_REGISTRY: ""
 KEYSTONE_DOMAIN: kubernetes-keystone.platform9.horse
 KEYSTONE_ENABLED: "true"
@@ -182,9 +190,9 @@ CONTAINERD_CGROUP:  {{ .ContainerRuntime.CgroupDriver }}
 DOCKER_CGROUP: {{ .ContainerRuntime.CgroupDriver }}
 RUNTIME_CONFIG: ""
 SCHEDULER_FLAGS: ""
-SERVICES_CIDR: 10.21.0.0/22
+SERVICES_CIDR: {{ .ServicesCidr }}
 TOPOLOGY_MANAGER_POLICY: none
-USE_HOSTNAME: "false"
+USE_HOSTNAME: {{ .UseHostname }}
 STANDALONE: "true"
 DOCKER_ROOT: /var/lib/docker
 {{if .UserImages -}}

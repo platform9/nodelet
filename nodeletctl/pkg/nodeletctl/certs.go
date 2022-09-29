@@ -9,7 +9,6 @@ import (
 	"encoding/base64"
 	"encoding/pem"
 	"fmt"
-	"go.uber.org/zap"
 	"io/ioutil"
 	"math/big"
 	"os"
@@ -18,6 +17,8 @@ import (
 	"path/filepath"
 	"text/template"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 type KubeConfigData struct {
@@ -208,11 +209,16 @@ func GenKubeconfig(cfg *BootstrapConfig) error {
 
 	kubeconfigArgs := &KubeConfigData{
 		ClusterId:      cfg.ClusterId,
-		MasterIp:       cfg.MasterIp,
 		K8sApiPort:     cfg.K8sApiPort,
 		CACertData:     CACertB64,
 		ClientCertData: adminCertB64,
 		ClientKeyData:  adminKeyB64,
+	}
+
+	if cfg.IPv6Enabled {
+		kubeconfigArgs.MasterIp = "[" + cfg.MasterIp + "]"
+	} else {
+		kubeconfigArgs.MasterIp = cfg.MasterIp
 	}
 
 	if err := writeKubeconfigFile(kubeconfigArgs); err != nil {
