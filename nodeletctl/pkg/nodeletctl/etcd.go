@@ -18,9 +18,17 @@ func InitEtcdClient(clusterCfg *BootstrapConfig, activeMasters *[]HostConfig) (*
 	for _, host := range *activeMasters {
 		var endpoint string
 		if host.NodeIP != nil {
-			endpoint = "https://" + *host.NodeIP + ":4001"
+			if clusterCfg.IPv6Enabled {
+				endpoint = "https://[" + *host.NodeIP + "]:4001"
+			} else {
+				endpoint = "https://" + *host.NodeIP + ":4001"
+			}
 		} else {
-			endpoint = "https://" + host.NodeName + ":4001"
+			if clusterCfg.IPv6Enabled {
+				endpoint = "https://[" + host.NodeName + "]:4001"
+			} else {
+				endpoint = "https://" + host.NodeName + ":4001"
+			}
 		}
 		etcdEndpoints = append(etcdEndpoints, endpoint)
 	}

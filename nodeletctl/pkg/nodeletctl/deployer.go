@@ -45,7 +45,8 @@ func NewNodeletDeployer(cfg *BootstrapConfig, sshClient ssh.Client,
 	return deployer
 }
 
-func GetNodeletDeployer(cfg *BootstrapConfig, clusterStatus *ClusterStatus, nodeletCfg *NodeletConfig, nodeName, nodeletSrcFile string) (*NodeletDeployer, error) {
+func GetNodeletDeployer(cfg *BootstrapConfig, clusterStatus *ClusterStatus, nodeletCfg *NodeletConfig, nodeletSrcFile string) (*NodeletDeployer, error) {
+	nodeName := nodeletCfg.HostIp
 	local, err := isLocal(nodeName)
 	if err != nil {
 		return nil, err
