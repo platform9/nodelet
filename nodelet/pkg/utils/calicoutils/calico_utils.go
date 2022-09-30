@@ -125,7 +125,7 @@ func deployCalicoDaemonset() error {
 	// Apply daemon set yaml
 	//${KUBECTL_SYSTEM} apply -f ${calico_app_configured}
 	cmd := command.New()
-	_, err = cmd.RunCommand(context.Background(), nil, 0, "", constants.kubectlApply+"apply -f ", calico_app)
+	_, err = cmd.RunCommand(context.Background(), nil, 0, "", constants.KubectlApply, "apply -f ", calico_app)
 	if err != nil {
 		zap.S().Warnf("Error running command: %v", cmd)
 		return err

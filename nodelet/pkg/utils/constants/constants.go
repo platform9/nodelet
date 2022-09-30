@@ -83,7 +83,7 @@ const (
 	// RuntimeContainerd represents containerd service
 	RuntimeContainerd = "containerd"
 	// cni plugin path
-	CNI_CONFIG_DIR= "/etc/cni/net.d"
+	CNI_CONFIG_DIR = "/etc/cni/net.d"
 )
 
 var (
@@ -106,6 +106,7 @@ var (
 	AdminCerts               = ConfigDstDir + "/certs/admin"
 	KubeConfig               = ConfigDstDir + "/kubeconfigs/admin.yaml"
 	KubectlCmd               = fmt.Sprintf("bin/kubectl -v=8 --kubeconfig=%s --context=default-context", KubeConfig)
+	KubectlApply             = fmt.Sprintf("bin/kubectl -v=8 --kubeconfig=%s --context=system-context", KubeConfig)
 	KubeStackStartFileMarker = "var/opt/pf9/is_node_booting_up"
 	// UserImagesDir is the default directory for tar/zip archives of user images
 	UserImagesDir = "/var/opt/pf9/images"
@@ -130,6 +131,10 @@ var (
 	CoreDNSHostsFile = "/etc/hosts"
 
 	CloudConfigFile = "/etc/pf9/kube.d/cloud-config"
+
+	// kubectl paths
+	KUBECTL_BIN = "bin/kubectl"
+	KUBECTL     = KUBECTL_BIN + "${KUBECTL_BIN} --kubeconfig=${KUBECONFIG} --context=default-context"
 
 	// Phase orders of all the phases
 	NoRolePhaseOrder                   = 10
