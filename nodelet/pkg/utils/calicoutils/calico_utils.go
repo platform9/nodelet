@@ -125,7 +125,7 @@ func deployCalicoDaemonset() error {
 	// Apply daemon set yaml
 	//${KUBECTL_SYSTEM} apply -f ${calico_app_configured}
 	cmd := command.New()
-	_, err = cmd.RunCommand(context.Background(), nil, 0, "", "KUBECTL apply -f ", calico_app)
+	_, err = cmd.RunCommand(context.Background(), nil, 0, "", constants.kubectlApply+"apply -f ", calico_app)
 	if err != nil {
 		zap.S().Warnf("Error running command: %v", cmd)
 		return err
@@ -203,16 +203,16 @@ func (c *CalicoImpl) LocalApiserverRunning(cfg config.Config) error {
 
 func (c *CalicoImpl) EnsureRoleBinding() error {
 	cmd := command.New()
-	_, err := cmd.RunCommand(context.Background(), nil, 0, "", constants.KubectlCmd+"version")
+	_, err := cmd.RunCommand(context.Background(), nil, 0, "", constants.KubectlCmd, "version")
 	if err != nil {
-		zap.S().Warnf("Error running command: %v", cmd)
+		zap.S().Warnf("Error running command: %v", err)
 		return err
 	}
 	role_binding := "/etc/pf9/kube.d/rolebindings/"
 
-	_, err = cmd.RunCommand(context.Background(), nil, 0, "", constants.KubectlCmd+"apply --force -f ", role_binding)
+	_, err = cmd.RunCommand(context.Background(), nil, 0, "", constants.KubectlCmd, "apply --force -f ", role_binding)
 	if err != nil {
-		zap.S().Warnf("Error running command: %v", cmd)
+		zap.S().Warnf("Error running command: %v", err)
 		return err
 	}
 	return nil
