@@ -37,6 +37,13 @@ func New() EtcdUtils {
 	}
 }
 
+// Todo :
+//IsContainerExist
+//isContainerRunning
+//isEtcdHealthy
+//get_container_logs() by logpath
+//getetcdlogs by pf9ctr_run logs etcd > "${logfile}"
+
 func (e *EtcdImpl) EnsureEtcdDataStoredOnHost() (bool, error) {
 	zap.S().Infof("Ensuring etcd data is stored on host")
 	exist, err := e.InspectEtcd()
@@ -63,8 +70,16 @@ func (e *EtcdImpl) InspectEtcd() (bool, error) {
 func (e *EtcdImpl) IsEligibleForEtcdBackup() (bool, error) {
 
 	eligible := true
-	if _, err := os.Stat(constants.EtcdVersionFile); err == nil {
 
+	if _, err := os.Stat(constants.EtcdVersionFile); os.IsNotExist(err) {
+		// writing etcd version to a file during start_master instead of stop_master,
+		// During the upgrade new package sequence is : status --> stop --> start
+		// Due to above, cannot rely on writing version during stop, as that will lead
+		// to false assumption.
+		// With this, backup and raft check shall happen once during both fresh install
+		// and upgrade
+		e.WriteEtcdVersionToFile()
+	} else {
 		oldVersion, err := e.file.ReadFile(constants.EtcdVersionFile)
 		if err != nil {
 			return false, err
@@ -78,18 +93,8 @@ func (e *EtcdImpl) IsEligibleForEtcdBackup() (bool, error) {
 			// perform backup and raft check and update the etcd version to most recent
 			e.WriteEtcdVersionToFile()
 		}
-	} else if errors.Is(err, os.ErrNotExist) {
-		// writing etcd version to a file during start_master instead of stop_master,
-		// During the upgrade new package sequence is : status --> stop --> start
-		// Due to above, cannot rely on writing version during stop, as that will lead
-		// to false assumption.
-		// With this, backup and raft check shall happen once during both fresh install
-		// and upgrade
-		e.WriteEtcdVersionToFile()
-	} //else {
-	// what to do here? is this else block required?
-	// this block will come into the case when os.stat returns err which is not ErrNotExist
-	//}
+	}
+
 	return eligible, nil
 }
 
@@ -164,11 +169,13 @@ func (e *EtcdImpl) EnsureEtcdClusterStatus() error {
 
 func (e *EtcdImpl) WriteEtcdEnv(cfg config.Config) error {
 	zap.S().Info("Deriving local etcd environment")
-	err := e.file.TouchFile(constants.EtcdEnvFile)
-	if err != nil {
-		return err
+	if _, err := os.Stat(constants.EtcdEnvFile); os.IsNotExist(err) {
+		err := e.file.TouchFile(constants.EtcdEnvFile)
+		if err != nil {
+			return err
+		}
 	}
-	err = e.file.WriteToFile(constants.EtcdEnvFile, cfg.EtcdEnv, false)
+	err := e.file.WriteToFile(constants.EtcdEnvFile, cfg.EtcdEnv, false)
 	if err != nil {
 		return err
 	}
@@ -176,15 +183,72 @@ func (e *EtcdImpl) WriteEtcdEnv(cfg config.Config) error {
 }
 
 func (e *EtcdImpl) EnsureEtcdRunning(ctx context.Context, cfg config.Config) error {
-	err := os.MkdirAll(cfg.EtcdDataDir, 0700)
+
+	err := createEtcdDirsIfnotPresent(ctx, cfg)
+	if err != nil {
+		return err
+	}
+	err = e.WriteEtcdEnv(cfg)
 	if err != nil {
 		return err
 	}
 
-	etcdRunOpts := cr.RunOpts{}
-	etcdRunOpts.Network = cr.Host
+	volumes := getEtcdVolume(cfg)
+	etcdEnv := getEtcdEnv(cfg)
+	etcdEnvFiles := []string{constants.EtcdEnvFile}
+	etcdContainerNetwork := cr.Host
 
-	volumes := []string{}
+	etcdRunOpts := cr.RunOpts{}
+
+	etcdRunOpts.Volumes = volumes
+	etcdRunOpts.Env = etcdEnv
+	etcdRunOpts.EnvFiles = etcdEnvFiles
+	etcdRunOpts.Network = etcdContainerNetwork
+	etcdRunOpts.Privileged = false
+
+	etcdContainerName := "etcd"
+	etcdContainerImage := getEtcdContainerImage(cfg)
+	etcdCmdArgs := getEtcdCmdArgs()
+
+	cont, err := cr.NewContainerUtil()
+	if err != nil {
+		return err
+	}
+	err = cont.EnsureFreshContainerRunning(ctx, constants.K8sNamespace, etcdContainerName, etcdContainerImage, etcdRunOpts, etcdCmdArgs)
+	if err != nil {
+		zap.S().Errorf("running etcd container failed: %v", err)
+		return err
+	}
+
+	// healthy := false
+	// retries := 90
+	// for i := 0; i < retries; i++ {
+	// 	running = isContainerRunning("etcd")
+	// 	if !running {
+	// 		//local logfile="/var/log/pf9/kube/etcd-${timestamp}.log"
+	// 		//pf9ctr_run logs etcd > "${logfile}" 2>&1
+	// 		zap.S().Info("Restarting failed etcd")
+	// 		err = cont.EnsureFreshContainerRunning(ctx, etcdContainerName, etcdContainerImage, etcdRunOpts, etcdCmdArgs)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 		continue
+	// 	}
+	// 	healthy = isEtcdHealthy()
+	// 	if healthy {
+	// 		break
+	// 	}
+	// 	zap.S().Infof("Waiting for healthy etcd cluster")
+	// }
+	// if !healthy {
+	// 	zap.S().Infof("timed out waiting for etcd initialization")
+	// 	return err
+	// }
+	return nil
+}
+
+func getEtcdVolume(cfg config.Config) []string {
+	var volumes []string
 	volumes = append(volumes,
 		"/etc/ssl:/etc/ssl",
 		"/etc/pki:/etc/pki",
@@ -192,61 +256,27 @@ func (e *EtcdImpl) EnsureEtcdRunning(ctx context.Context, cfg config.Config) err
 		"/etc/pf9/kube.d/certs/apiserver:/certs/apiserver",
 		fmt.Sprintf("%s:/var/etcd/data", cfg.EtcdDataDir),
 	)
+	return volumes
+}
+
+func getEtcdEnv(cfg config.Config) []string {
+
 	// ETCD_LOG_LEVEL: --debug flag and ETCD_DEBUG to be deprecated in v3.5
 	// ETCD_LOGGER: default logger capnslog to be deprecated in v3.5, using zap
 	// ETCD_ENABLE_V2: Need this for flannel's compatibility with etcd v3.4.14
 
+	var etcdEnv []string
 	etcdLogLevel := "info"
 	if cfg.Debug == "true" {
 		etcdLogLevel = "debug"
 	}
-	etcdEnv := []string{}
+
 	etcdEnv = append(etcdEnv,
 		fmt.Sprintf("ETCD_LOG_LEVEL=%s", etcdLogLevel),
 		"ETCD_LOGGER=zap",
 		"ETCD_ENABLE_V2=true",
 		"ETCD_PEER_CLIENT_CERT_AUTH=true",
 	)
-
-	gcrRegistry := constants.GcrRegistry
-	if cfg.GcrPrivateRegistry != "" {
-		gcrRegistry = cfg.GcrPrivateRegistry
-	}
-	etcdContainerImage := strings.ReplaceAll(constants.EtcdContainerImg, constants.GcrRegistry, gcrRegistry)
-
-	containerCmd := "/usr/local/bin/etcd"
-	extraOptEtcdFlags := os.Getenv("EXTRA_OPT_ETCD_FLAGS")
-	etcdCmdArgs := []string{}
-	etcdCmdArgs = append(etcdCmdArgs, containerCmd)
-	if extraOptEtcdFlags != "" {
-		etcdCmdArgs = append(etcdCmdArgs, extraOptEtcdFlags)
-	}
-	cmd := command.New()
-	if _, err := os.Stat("/etc/pki"); errors.Is(err, os.ErrNotExist) {
-		zap.S().Info("creating dir /etc/pki")
-		exitCode, stdErr, err := cmd.RunCommandWithStdErr(ctx, nil, 0, "", "sudo", "mkdir", "/etc/pki")
-		if err != nil || exitCode != 0 {
-			return fmt.Errorf("could not create dir /etc/pki: %v, STDERR:%v", err, stdErr)
-		}
-	}
-	if _, err := os.Stat(constants.EtcdConfDir); errors.Is(err, os.ErrNotExist) {
-		zap.S().Infof("creating dir: %s", constants.EtcdConfDir)
-		// exitCode, stdErr, err := cmd.RunCommandWithStdErr(ctx, nil, 0, "", "sudo", "mkdir", constants.EtcdConfDir)
-		// if err != nil || exitCode != 0 {
-		// 	return fmt.Errorf("could not create dir %s: %v, STDERR:%v", constants.EtcdConfDir, err, stdErr)
-		// }
-		err = os.Mkdir(constants.EtcdConfDir, 0700)
-		if err != nil {
-			return err
-		}
-	}
-
-	err = e.WriteEtcdEnv(cfg)
-	if err != nil {
-		return err
-	}
-
-	etcdEnvFiles := []string{constants.EtcdEnvFile}
 
 	if cfg.EtcdHeartBeatInterval != "" {
 		etcdEnv = append(etcdEnv, cfg.EtcdHeartBeatInterval)
@@ -329,52 +359,53 @@ func (e *EtcdImpl) EnsureEtcdRunning(ctx context.Context, cfg config.Config) err
 	if etcdAutoComactionRetention != "" {
 		etcdEnv = append(etcdEnv, etcdAutoComactionRetention)
 	}
-
-	etcdRunOpts.Env = etcdEnv
-	etcdRunOpts.Volumes = volumes
-	etcdRunOpts.EnvFiles = etcdEnvFiles
-	etcdContainerName := "etcd"
-
-	cont, err := cr.NewContainerUtil()
-	if err != nil {
-		return err
-	}
-	err = cont.EnsureFreshContainerRunning(ctx, constants.K8sNamespace, etcdContainerName, etcdContainerImage, etcdRunOpts, etcdCmdArgs)
-	if err != nil {
-		zap.S().Errorf("running etcd container failed: %v", err)
-		return err
-	}
-
-	// healthy := false
-	// retries := 90
-	// for i := 0; i < retries; i++ {
-	// 	running = isContainerRunning("etcd")
-	// 	if !running {
-	// 		//local logfile="/var/log/pf9/kube/etcd-${timestamp}.log"
-	// 		//pf9ctr_run logs etcd > "${logfile}" 2>&1
-	// 		zap.S().Info("Restarting failed etcd")
-	// 		err = cont.EnsureFreshContainerRunning(ctx, etcdContainerName, etcdContainerImage, etcdRunOpts, etcdCmdArgs)
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 		continue
-	// 	}
-	// 	healthy = isEtcdHealthy()
-	// 	if healthy {
-	// 		break
-	// 	}
-	// 	zap.S().Infof("Waiting for healthy etcd cluster")
-	// }
-	// if !healthy {
-	// 	zap.S().Infof("timed out waiting for etcd initialization")
-	// 	return err
-	// }
-	return nil
+	return etcdEnv
 }
 
-// Todo :
-//IsContainerExist
-//isContainerRunning
-//isEtcdHealthy
-//get_container_logs() by logpath
-//getetcdlogs by pf9ctr_run logs etcd > "${logfile}"
+func getEtcdContainerImage(cfg config.Config) string {
+	gcrRegistry := constants.GcrRegistry
+	if cfg.GcrPrivateRegistry != "" {
+		gcrRegistry = cfg.GcrPrivateRegistry
+	}
+	etcdContainerImage := strings.ReplaceAll(constants.EtcdContainerImg, constants.GcrRegistry, gcrRegistry)
+	return etcdContainerImage
+}
+
+func getEtcdCmdArgs() []string {
+	var etcdCmdArgs []string
+	containerCmd := "/usr/local/bin/etcd"
+	extraOptEtcdFlags := os.Getenv("EXTRA_OPT_ETCD_FLAGS")
+	etcdCmdArgs = append(etcdCmdArgs, containerCmd)
+	if extraOptEtcdFlags != "" {
+		etcdCmdArgs = append(etcdCmdArgs, extraOptEtcdFlags)
+	}
+	return etcdCmdArgs
+}
+
+func createEtcdDirsIfnotPresent(ctx context.Context, cfg config.Config) error {
+	cmd := command.New()
+
+	err := os.MkdirAll(cfg.EtcdDataDir, 0700)
+	if err != nil {
+		return err
+	}
+	if _, err := os.Stat(constants.EtcdConfDir); errors.Is(err, os.ErrNotExist) {
+		zap.S().Infof("creating dir: %s", constants.EtcdConfDir)
+		// exitCode, stdErr, err := cmd.RunCommandWithStdErr(ctx, nil, 0, "", "sudo", "mkdir", constants.EtcdConfDir)
+		// if err != nil || exitCode != 0 {
+		// 	return fmt.Errorf("could not create dir %s: %v, STDERR:%v", constants.EtcdConfDir, err, stdErr)
+		// }
+		err = os.Mkdir(constants.EtcdConfDir, 0700)
+		if err != nil {
+			return err
+		}
+	}
+	if _, err := os.Stat("/etc/pki"); errors.Is(err, os.ErrNotExist) {
+		zap.S().Info("creating dir /etc/pki")
+		exitCode, stdErr, err := cmd.RunCommandWithStdErr(ctx, nil, 0, "", "sudo", "mkdir", "/etc/pki")
+		if err != nil || exitCode != 0 {
+			return fmt.Errorf("could not create dir /etc/pki: %v, STDERR:%v", err, stdErr)
+		}
+	}
+	return nil
+}

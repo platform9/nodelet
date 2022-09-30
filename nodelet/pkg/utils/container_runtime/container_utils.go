@@ -12,12 +12,16 @@ import (
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/errdefs"
+	"github.com/containerd/containerd/mount"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
-	rspecs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/containerd/containerd/pkg/userns"
+	"github.com/opencontainers/image-spec/identity"
+	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 	"go.uber.org/zap"
+	"golang.org/x/sys/unix"
 )
 
 type ContainerUtility struct {
@@ -28,10 +32,11 @@ type ContainerUtility struct {
 }
 
 type RunOpts struct {
-	Env      []string
-	EnvFiles []string
-	Volumes  []string
-	Network  string
+	Env        []string
+	EnvFiles   []string
+	Volumes    []string
+	Network    string
+	Privileged bool
 }
 
 const (
@@ -210,73 +215,40 @@ func (c *ContainerUtility) DestroyContainersInNamespacesList(ctx context.Context
 
 func (c *ContainerUtility) CreateContainer(ctx context.Context, containerName string, containerImage string, runOpts RunOpts, cmdArgs []string) (containerd.Container, error) {
 
-	image, err := c.Client.GetImage(ctx, containerImage)
-	if err != nil {
-		c.log.Infof("couldn't get %s image from client, so pulling the image\n", containerImage)
-		image, err = c.Client.Pull(ctx, containerImage, containerd.WithPullUnpack)
-		if err != nil {
-			return nil, errors.Wrapf(err, "couldn't pull image:%s", containerImage)
-		}
-		c.log.Infof("image pulled: %s\n", image.Name())
-	}
 	var (
 		opts  []oci.SpecOpts
 		cOpts []containerd.NewContainerOpts
 	)
 
-	// TODO: is unpacking required?
-	if err := image.Unpack(ctx, constants.DefaultSnapShotter); err != nil {
-		return nil, fmt.Errorf("error unpacking image: %w", err)
+	image, err := c.EnsureImage(ctx, containerImage)
+	if err != nil {
+		return nil, err
 	}
 
-	if runOpts.Network == Host {
-		opts = append(opts, oci.WithHostNamespace(rspecs.NetworkNamespace), oci.WithHostHostsFile, oci.WithHostResolvconf)
-	}
-	// TODO: net for cni, none and invalid
-
-	opts = append(opts, oci.WithImageConfigArgs(image, cmdArgs))
-	// check if this required //opts = append(opts, oci.WithProcessArgs(processArgs...)) and how to use
-
-	env := runOpts.Env
-	if len(env) > 0 {
-		opts = append(opts, oci.WithEnv(env))
+	opts = GetNetworkopts(runOpts, opts)
+	opts = GetCmdargsOpts(image, cmdArgs, opts)
+	opts = SetPlatformOptions(opts) //is it required?
+	opts = GetPrivilegedOpts(runOpts, opts)
+	opts, err = GetEnvOpts(runOpts, opts)
+	if err != nil {
+		return nil, err
 	}
 
-	envFiles := runOpts.EnvFiles
-	if len(envFiles) > 0 {
-		env, err := parseEnvVars(envFiles)
-		if err != nil {
-			return nil, err
-		}
-		opts = append(opts, oci.WithEnv(env))
+	err = c.MountandUnmount(ctx, image) // dont know whats it doing. just added for cheking it working
+	if err != nil {
+		return nil, err
 	}
 
-	mounts := []rspecs.Mount{}
-	for _, v := range runOpts.Volumes {
-		split := strings.Split(v, ":")
-		src := split[0]
-		dst := split[1]
-		// when we provide mode option like --volume ${CERTS_DIR}/authn_webhook/:/certs:ro" here `ro` is mode
-		options := []string{}
-		if len(split) == 3 {
-			options = append(options, split[2])
-		}
-		options = append(options, "rbind")
-		mount := rspecs.Mount{
-			Type:        "none",
-			Source:      src,
-			Destination: dst,
-			Options:     options,
-		}
-		mounts = append(mounts, mount)
+	opts, err = GetVolumeOPts(runOpts, opts)
+	if err != nil {
+		return nil, err
 	}
-	opts = append(opts, oci.WithMounts(mounts))
 
 	cOpts = append(cOpts, containerd.WithImage(image))
 	cOpts = append(cOpts, containerd.WithNewSnapshot(containerName, image))
 
-	var s rspecs.Spec
-	spec := containerd.WithSpec(&s, opts...)
+	var specs specs.Spec
+	spec := containerd.WithSpec(&specs, opts...)
 	cOpts = append(cOpts, spec)
 
 	// create a container
@@ -490,4 +462,204 @@ func parseEnvVars(paths []string) ([]string, error) {
 		}
 	}
 	return vars, nil
+}
+
+// getUnprivilegedMountFlags is from https://github.com/moby/moby/blob/v20.10.5/daemon/oci_linux.go#L420-L450
+//
+// Get the set of mount flags that are set on the mount that contains the given
+// path and are locked by CL_UNPRIVILEGED. This is necessary to ensure that
+// bind-mounting "with options" will not fail with user namespaces, due to
+// kernel restrictions that require user namespace mounts to preserve
+// CL_UNPRIVILEGED locked flags.
+func getUnprivilegedMountFlags(path string) ([]string, error) {
+	var statfs unix.Statfs_t
+	if err := unix.Statfs(path, &statfs); err != nil {
+		return nil, err
+	}
+
+	// The set of keys come from https://github.com/torvalds/linux/blob/v4.13/fs/namespace.c#L1034-L1048.
+	unprivilegedFlags := map[uint64]string{
+		unix.MS_RDONLY:     "ro",
+		unix.MS_NODEV:      "nodev",
+		unix.MS_NOEXEC:     "noexec",
+		unix.MS_NOSUID:     "nosuid",
+		unix.MS_NOATIME:    "noatime",
+		unix.MS_RELATIME:   "relatime",
+		unix.MS_NODIRATIME: "nodiratime",
+	}
+
+	var flags []string
+	for mask, flag := range unprivilegedFlags {
+		if uint64(statfs.Flags)&mask == mask {
+			flags = append(flags, flag)
+		}
+	}
+
+	return flags, nil
+}
+
+func DedupeStrSlice(in []string) []string {
+	m := make(map[string]struct{})
+	var res []string
+	for _, s := range in {
+		if _, ok := m[s]; !ok {
+			res = append(res, s)
+			m[s] = struct{}{}
+		}
+	}
+	return res
+}
+
+func (c *ContainerUtility) EnsureImage(ctx context.Context, containerImage string) (containerd.Image, error) {
+	image, err := c.Client.GetImage(ctx, containerImage)
+	if err != nil {
+		c.log.Infof("couldn't get %s image from client, so pulling the image\n", containerImage)
+		image, err = c.Client.Pull(ctx, containerImage, containerd.WithPullUnpack)
+		if err != nil {
+			return nil, errors.Wrapf(err, "couldn't pull image:%s", containerImage)
+		}
+		c.log.Infof("image pulled: %s\n", image.Name())
+	}
+
+	// TODO: is unpacking required?
+	if err := image.Unpack(ctx, constants.DefaultSnapShotter); err != nil {
+		return image, fmt.Errorf("error unpacking image: %w", err)
+	}
+	return image, nil
+}
+
+func (c *ContainerUtility) MountandUnmount(ctx context.Context, image containerd.Image) error {
+	diffIDs, err := image.RootFS(ctx)
+	if err != nil {
+		return err
+	}
+	chainID := identity.ChainID(diffIDs).String()
+
+	s := c.Client.SnapshotService(constants.DefaultSnapShotter)
+	tempDir, err := os.MkdirTemp("", "initialC")
+	if err != nil {
+		return err
+	}
+	// We use Remove here instead of RemoveAll.
+	// The RemoveAll will delete the temp dir and all children it contains.
+	// When the Unmount fails, RemoveAll will incorrectly delete data from the mounted dir
+	defer os.Remove(tempDir)
+
+	var mounts []mount.Mount
+	mounts, err = s.View(ctx, tempDir, chainID)
+	if err != nil {
+		return err
+	}
+
+	unmounter := func(mountPath string) {
+		if uerr := mount.Unmount(mountPath, 0); uerr != nil {
+			zap.S().Debugf("Failed to unmount snapshot %q", tempDir)
+			if err == nil {
+				err = uerr
+			}
+		}
+	}
+
+	defer unmounter(tempDir)
+	if err := mount.All(mounts, tempDir); err != nil {
+		if err := s.Remove(ctx, tempDir); err != nil && !errdefs.IsNotFound(err) {
+			return err
+		}
+		return err
+	}
+	return nil
+}
+
+func GetNetworkopts(runOpts RunOpts, opts []oci.SpecOpts) []oci.SpecOpts {
+
+	if runOpts.Network == Host {
+		opts = append(opts, oci.WithHostNamespace(specs.NetworkNamespace), oci.WithHostHostsFile, oci.WithHostResolvconf)
+	}
+	return opts
+	// TODO: --net for cni, none and invalid
+}
+
+func SetPlatformOptions(opts []oci.SpecOpts) []oci.SpecOpts {
+	opts = append(opts,
+		oci.WithDefaultUnixDevices,
+		oci.WithoutRunMount, // unmount default tmpfs on "/run": https://github.com/containerd/nerdctl/issues/157)
+	)
+	//is this needed/right/wrong ?
+	opts = append(opts,
+		oci.WithMounts([]specs.Mount{
+			{Type: "cgroup", Source: "cgroup", Destination: "/sys/fs/cgroup", Options: []string{"ro", "nosuid", "noexec", "nodev"}},
+		}))
+	return opts
+}
+
+func GetEnvOpts(runOpts RunOpts, opts []oci.SpecOpts) ([]oci.SpecOpts, error) {
+	env := runOpts.Env
+	if len(env) > 0 {
+		opts = append(opts, oci.WithEnv(env))
+	}
+
+	envFiles := runOpts.EnvFiles
+	if len(envFiles) > 0 {
+		env, err := parseEnvVars(envFiles)
+		if err != nil {
+			return opts, err
+		}
+		opts = append(opts, oci.WithEnv(env))
+	}
+	return opts, nil
+}
+
+func GetVolumeOPts(runOpts RunOpts, opts []oci.SpecOpts) ([]oci.SpecOpts, error) {
+	mounts := []specs.Mount{}
+	for _, v := range runOpts.Volumes {
+		split := strings.Split(v, ":")
+		src := split[0]
+		dst := split[1]
+		// flag like --volume ${CERTS_DIR}/authn_webhook/:/certs:ro" contains here `ro` which is mode/option = split[2]
+		options := []string{}
+		if len(split) == 3 {
+			options = append(options, split[2])
+		}
+		options = append(options, "rbind") // dont know why appending rbind.
+		if userns.RunningInUserNS() {
+			unpriv, err := getUnprivilegedMountFlags(src)
+			if err != nil {
+				return opts, err
+			}
+			options = DedupeStrSlice(append(options, unpriv...))
+		}
+
+		mount := specs.Mount{
+			Type:        "none", // dont know why its none
+			Source:      src,
+			Destination: dst,
+			Options:     options,
+		}
+		mounts = append(mounts, mount)
+	}
+
+	opts = append(opts, oci.WithMounts(mounts))
+
+	return opts, nil
+}
+
+func GetCmdargsOpts(image containerd.Image, cmdArgs []string, opts []oci.SpecOpts) []oci.SpecOpts {
+	opts = append(opts, oci.WithImageConfigArgs(image, cmdArgs))
+	// check if this required //opts = append(opts, oci.WithProcessArgs(processArgs...)) and how to use
+	return opts
+}
+
+func GetPrivilegedOpts(runOpts RunOpts, opts []oci.SpecOpts) []oci.SpecOpts {
+
+	if runOpts.Privileged {
+		privilegedOpts := []oci.SpecOpts{
+			oci.WithPrivileged,
+			oci.WithAllDevicesAllowed,
+			oci.WithHostDevices,
+			oci.WithNewPrivileges,
+		}
+		opts = append(opts, privilegedOpts...)
+	}
+
+	return opts
 }
