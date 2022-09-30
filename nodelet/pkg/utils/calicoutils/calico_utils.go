@@ -203,14 +203,14 @@ func (c *CalicoImpl) LocalApiserverRunning(cfg config.Config) error {
 
 func (c *CalicoImpl) EnsureRoleBinding() error {
 	cmd := command.New()
-	_, err := cmd.RunCommand(context.Background(), nil, 0, "", "KUBECTL version")
+	_, err := cmd.RunCommand(context.Background(), nil, 0, "", "kubectl version")
 	if err != nil {
 		zap.S().Warnf("Error running command: %v", cmd)
 		return err
 	}
 	role_binding := "/etc/pf9/kube.d/rolebindings/"
 
-	_, err = cmd.RunCommand(context.Background(), nil, 0, "", "KUBECTL apply --force -f ", role_binding)
+	_, err = cmd.RunCommand(context.Background(), nil, 0, "", "kubectl apply --force -f ", role_binding)
 	if err != nil {
 		zap.S().Warnf("Error running command: %v", cmd)
 		return err
