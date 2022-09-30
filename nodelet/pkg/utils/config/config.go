@@ -89,6 +89,10 @@ type Config struct {
 	KubeletCloudConfig        string  `mapstructure:"KUBELET_CLOUD_CONFIG"`
 	CoreDNSHostsFile          string  `mapstructure:"COREDNS_HOSTS_FILE"`
 	EtcdDataDir               string  `mapstructure:"ETCD_DATA_DIR"`
+	EtcdEnv                   string  `mapstructure:"ETCD_ENV"`
+	GcrPrivateRegistry        string  `mapstructure:"GCR_PRIVATE_REGISTRY"`
+	EtcdHeartBeatInterval     string  `mapstructure:"ETCD_HEARTBEAT_INTERVAL"`
+	EtcdElectionTimeOut       string  `mapstructure:"ETCD_ELECTION_TIMEOUT"`
 }
 
 // ToStringMap converts the Config struct to a map of strings

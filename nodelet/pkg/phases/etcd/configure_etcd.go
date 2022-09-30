@@ -5,6 +5,7 @@ import (
 
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/etcd"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/phaseutils"
 	"go.uber.org/zap"
 
@@ -14,6 +15,7 @@ import (
 type ConfigureEtcdPhase struct {
 	HostPhase *sunpikev1alpha1.HostPhase
 	log       *zap.SugaredLogger
+	etcd      etcd.EtcdUtils
 }
 
 func NewConfigureEtcdPhase() *ConfigureEtcdPhase {
@@ -23,56 +25,67 @@ func NewConfigureEtcdPhase() *ConfigureEtcdPhase {
 			Name:  "Configure etcd",
 			Order: int32(constants.ConfigureEtcdPhaseOrder),
 		},
-		log: log,
+		log:  log,
+		etcd: etcd.New(),
 	}
-
 }
 
-func (d *ConfigureEtcdPhase) GetHostPhase() sunpikev1alpha1.HostPhase {
-	return *d.HostPhase
+func (ce *ConfigureEtcdPhase) GetHostPhase() sunpikev1alpha1.HostPhase {
+	return *ce.HostPhase
 }
 
-func (d *ConfigureEtcdPhase) GetPhaseName() string {
-	return d.HostPhase.Name
+func (ce *ConfigureEtcdPhase) GetPhaseName() string {
+	return ce.HostPhase.Name
 }
 
-func (d *ConfigureEtcdPhase) GetOrder() int {
-	return int(d.HostPhase.Order)
+func (ce *ConfigureEtcdPhase) GetOrder() int {
+	return int(ce.HostPhase.Order)
 }
 
-func (d *ConfigureEtcdPhase) Status(context.Context, config.Config) error {
+func (ce *ConfigureEtcdPhase) Status(context.Context, config.Config) error {
 
-	d.log.Infof("Running Status of phase: %s", d.HostPhase.Name)
+	ce.log.Infof("Running Status of phase: %s", ce.HostPhase.Name)
 
-	phaseutils.SetHostStatus(d.HostPhase, constants.RunningState, "")
+	phaseutils.SetHostStatus(ce.HostPhase, constants.RunningState, "")
 	return nil
 }
 
-func (d *ConfigureEtcdPhase) Start(context.Context, config.Config) error {
+func (ce *ConfigureEtcdPhase) Start(ctx context.Context, cfg config.Config) error {
 
-	d.log.Infof("Running Start of phase: %s", d.HostPhase.Name)
+	ce.log.Infof("Running Start of phase: %s", ce.HostPhase.Name)
 
-	EnsureEtcdDataStoredOnHost()
+	exist, err := ce.etcd.EnsureEtcdDataStoredOnHost()
+	if err != nil {
+		return err
+	}
+	if !exist {
+		zap.S().Errorf("Skipping; etcd container does not exist")
+
+		return nil
+	}
 	// check if etcd backup and raft index check is required
 	// Performed once during
 	// 1. new cluster
 	// 2. cluster upgrade
-	etcdUpgrade, err := IsEligibleForEtcdBackup()
+	etcdUpgrade, err := ce.etcd.IsEligibleForEtcdBackup()
 	if err != nil {
 		return err
 	}
 	if etcdUpgrade {
-		d.log.Infof("etcd to be upgraded. performing etcd data backup")
-		EnsureEtcdDataBackup()
+		ce.log.Infof("etcd to be upgraded. performing etcd data backup")
+		err = ce.etcd.EnsureEtcdDataBackup(cfg)
+		if err != nil {
+			return err
+		}
 	}
-	phaseutils.SetHostStatus(d.HostPhase, constants.RunningState, "")
+	phaseutils.SetHostStatus(ce.HostPhase, constants.RunningState, "")
 	return nil
 }
 
-func (d *ConfigureEtcdPhase) Stop(ctx context.Context, cfg config.Config) error {
+func (ce *ConfigureEtcdPhase) Stop(ctx context.Context, cfg config.Config) error {
 
-	d.log.Infof("Running Stop of phase: %s", d.HostPhase.Name)
+	ce.log.Infof("Running Stop of phase: %s", ce.HostPhase.Name)
 
-	phaseutils.SetHostStatus(d.HostPhase, constants.StoppedState, "")
+	phaseutils.SetHostStatus(ce.HostPhase, constants.StoppedState, "")
 	return nil
 }

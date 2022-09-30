@@ -151,11 +151,15 @@ var (
 
 	Pf9Group = "pf9group"
 
-	EtcdCtlBin      = "/opt/pf9/pf9-kube/bin/etcdctl"
-	EtcdBackupDir   = "/var/opt/pf9/kube/etcd/etcd-backup"
-	EtcdBackUpLoc   = fmt.Sprintf("%s/etcdv3_backup.db", EtcdBackupDir)
-	EtcdVersion     = "3.4.14"
-	EtcdVersionFile = "/var/opt/pf9/etcd_version"
+	EtcdCtlBin       = "/opt/pf9/pf9-kube/bin/etcdctl"
+	EtcdBackupDir    = "/var/opt/pf9/kube/etcd/etcd-backup"
+	EtcdBackUpLoc    = fmt.Sprintf("%s/etcdv3_backup.db", EtcdBackupDir)
+	EtcdVersion      = "3.4.14"
+	EtcdVersionFile  = "/var/opt/pf9/etcd_version"
+	EtcdConfDir      = "/etc/pf9/kube.d/etcd/"
+	EtcdEnvFile      = fmt.Sprintf("%s/etcd.env", EtcdConfDir)
+	GcrRegistry      = "gcr.io"
+	EtcdContainerImg = fmt.Sprintf("%s/etcd-development/etcd:v%s", GcrRegistry, EtcdVersion)
 
 	// Phase orders of all the phases
 	NoRolePhaseOrder                   = 10

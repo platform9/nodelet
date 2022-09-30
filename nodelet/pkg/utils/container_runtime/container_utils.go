@@ -1,8 +1,11 @@
 package containerruntime
 
 import (
+	"bufio"
 	"context"
 	"fmt"
+	"os"
+	"strings"
 	"syscall"
 	"time"
 
@@ -11,6 +14,7 @@ import (
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
+	rspecs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 	"go.uber.org/zap"
@@ -23,7 +27,17 @@ type ContainerUtility struct {
 	log     *zap.SugaredLogger
 }
 
-const timeOut = "10s"
+type RunOpts struct {
+	Env      []string
+	EnvFiles []string
+	Volumes  []string
+	Network  string
+}
+
+const (
+	TimeOut = "10s"
+	Host    = "host"
+)
 
 func NewContainerUtil() (ContainerUtils, error) {
 
@@ -49,13 +63,21 @@ func NewContainerdClient() (*containerd.Client, error) {
 	return containerdclient, nil
 }
 
-func (c *ContainerUtility) EnsureFreshContainerRunning(ctx context.Context, containerName string, containerImage string) error {
+func (c *ContainerUtility) CloseClient() {
+	err := c.Client.Close()
+	if err != nil {
+		c.log.Infof("could not close containerd connection: %v", err)
+	}
+}
 
-	err := c.EnsureContainerDestroyed(ctx, containerName, timeOut)
+func (c *ContainerUtility) EnsureFreshContainerRunning(ctx context.Context, namespace string, containerName string, containerImage string, runOpts RunOpts, cmdArgs []string) error {
+
+	ctx = namespaces.WithNamespace(ctx, namespace)
+	err := c.EnsureContainerDestroyed(ctx, containerName, TimeOut)
 	if err != nil {
 		return err
 	}
-	container, err := c.CreateContainer(ctx, containerName, containerImage)
+	container, err := c.CreateContainer(ctx, containerName, containerImage, runOpts, cmdArgs)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create container:%s", containerName)
 	}
@@ -86,6 +108,7 @@ func (c *ContainerUtility) EnsureFreshContainerRunning(ctx context.Context, cont
 	return nil
 }
 
+// EnsureContainerDestroyed takes containers Name
 func (c *ContainerUtility) EnsureContainerDestroyed(ctx context.Context, containerName string, timeoutStr string) error {
 
 	container, err := c.GetContainerWithGivenName(ctx, containerName)
@@ -93,7 +116,7 @@ func (c *ContainerUtility) EnsureContainerDestroyed(ctx context.Context, contain
 		return err
 	}
 	if container == nil {
-		c.log.Infof("container not present: %s.\n", containerName)
+		c.log.Infof("container not present: %s", containerName)
 		return nil
 	}
 	err = c.StopContainer(ctx, container, timeoutStr)
@@ -107,6 +130,7 @@ func (c *ContainerUtility) EnsureContainerDestroyed(ctx context.Context, contain
 	return nil
 }
 
+// EnsureContainersDestroyed takes containers list
 func (c *ContainerUtility) EnsureContainersDestroyed(ctx context.Context, containers []containerd.Container, timeoutStr string) error {
 	var err error
 	for _, container := range containers {
@@ -143,7 +167,7 @@ func (c *ContainerUtility) EnsureContainerStoppedOrNonExistent(ctx context.Conte
 		return nil
 	}
 
-	err = c.StopContainer(ctx, container, "10s")
+	err = c.StopContainer(ctx, container, TimeOut)
 	if err != nil {
 		return errors.Wrapf(err, "couldn't stop the container: %s", container.ID())
 	}
@@ -151,7 +175,7 @@ func (c *ContainerUtility) EnsureContainerStoppedOrNonExistent(ctx context.Conte
 }
 
 func (c *ContainerUtility) GetContainersInNamespace(ctx context.Context, namespace string) ([]containerd.Container, error) {
-	ctx = namespaces.WithNamespace(ctx, namespace)
+
 	containers, err := c.Client.Containers(ctx)
 	if err != nil {
 		return nil, err
@@ -166,26 +190,26 @@ func (c *ContainerUtility) DestroyContainersInNamespace(ctx context.Context, nam
 		return errors.Wrapf(err, "error getting containers in namespace: %s ", namespace)
 	}
 
-	ctx = namespaces.WithNamespace(ctx, namespace)
-
-	err = c.EnsureContainersDestroyed(ctx, containers, timeOut)
+	err = c.EnsureContainersDestroyed(ctx, containers, TimeOut)
 	if err != nil {
 		return errors.Wrapf(err, "could not destroy containers in namespace: %s", namespace)
 	}
 	return nil
 }
 
-func (c *ContainerUtility) DestroyContainersInNamespacesList(ctx context.Context, namespaces []string) error {
+func (c *ContainerUtility) DestroyContainersInNamespacesList(ctx context.Context, namespacelist []string) error {
 
-	for _, namespace := range namespaces {
+	for _, namespace := range namespacelist {
 		zap.S().Infof("Destroying containers in namespace: %s", namespace)
+		ctx = namespaces.WithNamespace(ctx, namespace)
 		err := c.DestroyContainersInNamespace(ctx, namespace)
 		return err
 	}
 	return nil
 }
 
-func (c *ContainerUtility) CreateContainer(ctx context.Context, containerName string, containerImage string) (containerd.Container, error) {
+func (c *ContainerUtility) CreateContainer(ctx context.Context, containerName string, containerImage string, runOpts RunOpts, cmdArgs []string) (containerd.Container, error) {
+
 	image, err := c.Client.GetImage(ctx, containerImage)
 	if err != nil {
 		c.log.Infof("couldn't get %s image from client, so pulling the image\n", containerImage)
@@ -195,19 +219,75 @@ func (c *ContainerUtility) CreateContainer(ctx context.Context, containerName st
 		}
 		c.log.Infof("image pulled: %s\n", image.Name())
 	}
-	// create a container
-	container, err := c.Client.NewContainer(
-		ctx,
-		containerName,
-		containerd.WithImage(image),
-		containerd.WithNewSnapshot(containerName, image),
-		containerd.WithNewSpec(oci.WithImageConfig(image)),
+	var (
+		opts  []oci.SpecOpts
+		cOpts []containerd.NewContainerOpts
 	)
+
+	// TODO: is unpacking required?
+	if err := image.Unpack(ctx, constants.DefaultSnapShotter); err != nil {
+		return nil, fmt.Errorf("error unpacking image: %w", err)
+	}
+
+	if runOpts.Network == Host {
+		opts = append(opts, oci.WithHostNamespace(rspecs.NetworkNamespace), oci.WithHostHostsFile, oci.WithHostResolvconf)
+	}
+	// TODO: net for cni, none and invalid
+
+	opts = append(opts, oci.WithImageConfigArgs(image, cmdArgs))
+	// check if this required //opts = append(opts, oci.WithProcessArgs(processArgs...)) and how to use
+
+	env := runOpts.Env
+	if len(env) > 0 {
+		opts = append(opts, oci.WithEnv(env))
+	}
+
+	envFiles := runOpts.EnvFiles
+	if len(envFiles) > 0 {
+		env, err := parseEnvVars(envFiles)
+		if err != nil {
+			return nil, err
+		}
+		opts = append(opts, oci.WithEnv(env))
+	}
+
+	mounts := []rspecs.Mount{}
+	for _, v := range runOpts.Volumes {
+		split := strings.Split(v, ":")
+		src := split[0]
+		dst := split[1]
+		// when we provide mode option like --volume ${CERTS_DIR}/authn_webhook/:/certs:ro" here `ro` is mode
+		options := []string{}
+		if len(split) == 3 {
+			options = append(options, split[2])
+		}
+		options = append(options, "rbind")
+		mount := rspecs.Mount{
+			Type:        "none",
+			Source:      src,
+			Destination: dst,
+			Options:     options,
+		}
+		mounts = append(mounts, mount)
+	}
+	opts = append(opts, oci.WithMounts(mounts))
+
+	cOpts = append(cOpts, containerd.WithImage(image))
+	cOpts = append(cOpts, containerd.WithNewSnapshot(containerName, image))
+
+	var s rspecs.Spec
+	spec := containerd.WithSpec(&s, opts...)
+	cOpts = append(cOpts, spec)
+
+	// create a container
+	container, err := c.Client.NewContainer(ctx, containerName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
+
 	return container, nil
 }
+
 func (c *ContainerUtility) RemoveContainer(ctx context.Context, container containerd.Container, force bool) error {
 
 	id := container.ID()
@@ -385,4 +465,29 @@ func (c *ContainerUtility) GetContainerWithGivenName(ctx context.Context, contai
 	}
 	c.log.Infof("container not found: %s\n", containerName)
 	return nil, nil
+}
+
+func parseEnvVars(paths []string) ([]string, error) {
+	vars := make([]string, 0)
+	for _, path := range paths {
+		f, err := os.Open(path)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open env file %s: %w", path, err)
+		}
+		defer f.Close()
+
+		sc := bufio.NewScanner(f)
+		for sc.Scan() {
+			line := strings.TrimSpace(sc.Text())
+			// skip comment lines
+			if strings.HasPrefix(line, "#") {
+				continue
+			}
+			vars = append(vars, line)
+		}
+		if err = sc.Err(); err != nil {
+			return nil, err
+		}
+	}
+	return vars, nil
 }
