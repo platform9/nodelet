@@ -58,7 +58,7 @@ func (n *NetImpl) GetNodeIdentifier(cfg config.Config) (string, error) {
 
 	var err error
 	var nodeIdentifier string
-	if cfg.CloudProviderType == constants.LocalCloudProvider && cfg.UseHostname == constants.TrueString {
+	if cfg.CloudProviderType == constants.LocalCloudProvider && cfg.UseHostname {
 		nodeIdentifier, err = os.Hostname()
 		if err != nil {
 			return nodeIdentifier, errors.Wrap(err, "failed to get hostName for node identification")

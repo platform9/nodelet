@@ -78,7 +78,7 @@ type Config struct {
 	GRPCRetryTimeoutSeconds   int     `mapstructure:"GRPC_RETRY_TIMEOUT_SECONDS"`
 	NumCmdOutputLinesToLog    int     `mapstructure:"NUM_CMD_OP_LINES_TO_LOG"`
 	CloudProviderType         string  `mapstructure:"CLOUD_PROVIDER_TYPE"`
-	UseHostname               string  `mapstructure:"USE_HOSTNAME"`
+	UseHostname               bool    `mapstructure:"USE_HOSTNAME"`
 	MasterIp                  string  `mapstructure:"MASTER_IP"`
 	K8sApiPort                string  `mapstructure:"K8S_API_PORT"`
 	MasterSchedulable         bool    `mapstructure:"ALLOW_WORKLOADS_ON_MASTER"`
