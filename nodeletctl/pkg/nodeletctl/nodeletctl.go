@@ -293,6 +293,8 @@ func InitBootstrapConfig() *BootstrapConfig {
 	calicoConfig.V4NATOutgoing = true
 	calicoConfig.V6NATOutgoing = false
 	calicoConfig.V4IpIpMode = "Always"
+	calicoConfig.V4Interface = "first-found"
+	calicoConfig.V6Interface = "first-found"
 
 	bootstrapCfg := &BootstrapConfig{
 		AllowWorkloadsOnMaster: false,
@@ -462,18 +464,25 @@ func setNodeletClusterCfg(cfg *BootstrapConfig, nodelet *NodeletConfig) {
 	nodelet.CoreDNSHostsFile = cfg.DNS.HostsFile
 	nodelet.IPv6Enabled = cfg.IPv6Enabled
 
+	//Set default Calico opts first
+	nodelet.CalicoV4Interface = cfg.Calico.V4Interface
+	nodelet.CalicoV4BlockSize = cfg.Calico.V4BlockSize
+	nodelet.CalicoV4IpIpMode = cfg.Calico.V4IpIpMode
+	nodelet.CalicoV4NATOutgoing = cfg.Calico.V4NATOutgoing
+	nodelet.ContainersCidr = cfg.Calico.V4ContainersCidr
+	nodelet.CalicoV6Interface = cfg.Calico.V6Interface
+	nodelet.CalicoV6BlockSize = cfg.Calico.V6BlockSize
+	nodelet.CalicoV6NATOutgoing = cfg.Calico.V6NATOutgoing
+	nodelet.CalicoV6ContainersCidr = cfg.Calico.V6ContainersCidr
+
 	if cfg.IPv6Enabled {
 		// Always use hostname as node identifier for IPv6
 		nodelet.UseHostname = true
 		// Disable IPv4 as dualstack not yet supported
 		nodelet.CalicoIP4 = "none"
 		nodelet.CalicoIP6 = "autodetect"
-		nodelet.CalicoV6Interface = cfg.Calico.V6Interface
-		nodelet.CalicoV6BlockSize = cfg.Calico.V6BlockSize
-		nodelet.CalicoV6NATOutgoing = cfg.Calico.V6NATOutgoing
-		nodelet.CalicoV6ContainersCidr = cfg.Calico.V6ContainersCidr
-		// Remove the default from CFG as it is written back to file
-		cfg.Calico.V4ContainersCidr = ""
+
+		// Need to set this field for v6, as it is used to set kube-proxy arg
 		nodelet.ContainersCidr = cfg.Calico.V6ContainersCidr
 		if cfg.ServicesCidr == "" {
 			nodelet.ServicesCidr = "fd00:102::/116"
@@ -486,13 +495,6 @@ func setNodeletClusterCfg(cfg *BootstrapConfig, nodelet *NodeletConfig) {
 		nodelet.UseHostname = cfg.UseHostname
 		nodelet.CalicoIP4 = "autodetect"
 		nodelet.CalicoIP6 = "none"
-		nodelet.CalicoV4Interface = cfg.Calico.V4Interface
-		nodelet.CalicoV4BlockSize = cfg.Calico.V4BlockSize
-		nodelet.CalicoV4IpIpMode = cfg.Calico.V4IpIpMode
-		nodelet.CalicoV4NATOutgoing = cfg.Calico.V4NATOutgoing
-		nodelet.ContainersCidr = cfg.Calico.V4ContainersCidr
-		// Remove the default from CFG as it is written back to file
-		cfg.Calico.V6ContainersCidr = ""
 		if cfg.ServicesCidr == "" {
 			nodelet.ServicesCidr = "10.21.0.0/22"
 			cfg.ServicesCidr = "10.21.0.0/22"
