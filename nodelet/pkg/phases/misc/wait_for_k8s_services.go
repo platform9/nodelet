@@ -59,6 +59,16 @@ func (w *WaitforK8sPhase) Status(ctx context.Context, cfg config.Config) error {
 		phaseutils.SetHostStatus(w.HostPhase, constants.FailedState, err.Error())
 		return nil
 	}
+	//var err error
+	if w.kubeUtils == nil || w.kubeUtils.IsInterfaceNil() {
+		w.kubeUtils, err = kubeutils.NewClient()
+		if err != nil {
+			w.log.Error(errors.Wrap(err, "could not refresh k8s client"))
+			phaseutils.SetHostStatus(w.HostPhase, constants.StoppedState, "")
+			return err
+		}
+	}
+
 	err = w.kubeUtils.K8sApiAvailable(cfg)
 	if err != nil {
 		w.log.Error(errors.Wrapf(err, "api not available"))
