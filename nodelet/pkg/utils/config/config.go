@@ -88,6 +88,7 @@ type Config struct {
 	AppCatalogEnabled         bool    `mapstructure:"APP_CATALOG_ENABLED"`
 	KubeletCloudConfig        string  `mapstructure:"KUBELET_CLOUD_CONFIG"`
 	CoreDNSHostsFile          string  `mapstructure:"COREDNS_HOSTS_FILE"`
+	IPv6Enabled               bool    `mapstructure:"IPV6_ENABLED"`
 }
 
 // ToStringMap converts the Config struct to a map of strings
