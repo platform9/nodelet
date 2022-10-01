@@ -2,6 +2,7 @@ package kubelet
 
 import (
 	"context"
+	"fmt"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/kubeletutils"
@@ -46,8 +47,9 @@ func (k *KubeletConfigureStartPhase) Status(ctx context.Context, cfg config.Conf
 
 	k.log.Infof("Running Status of phase: %s", k.HostPhase.Name)
 	if !k.kubeletUtils.IsKubeletRunning() {
-		phaseutils.SetHostStatus(k.HostPhase, constants.StoppedState, "")
-		return nil
+		err := fmt.Errorf("pf9-kubelet is not active")
+		phaseutils.SetHostStatus(k.HostPhase, constants.FailedState, err.Error())
+		return err
 	}
 
 	phaseutils.SetHostStatus(k.HostPhase, constants.RunningState, "")

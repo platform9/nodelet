@@ -11,31 +11,35 @@ import (
 	"io"
 	"net/http"
 	"os"
-	osuser "os/user"
-	"strconv"
 	"strings"
 )
 
 type KubeletUtilsInterface interface {
-	EnsureKubeletRunning(config.Config) error
 	EnsureKubeletStopped() error
+	EnsureKubeletRunning(config.Config) error
 	FetchAwsInstanceId() (string, error)
 	FetchAwsAz() (string, error)
-	TrimSans(str string) string
+	TrimSans(string) string
 	PrepareKubeletBootstrapConfig(cfg config.Config) error
-	EnsureDirReadableByPf9(dir string) error
-	KubeletSetup(kubeletArgs string) error
-	GenerateKubeletSystemdUnit(kubeletArgs string) error
+	EnsureDirReadableByPf9(string) error
+	KubeletSetup(string) error
+	GenerateKubeletSystemdUnit(string) error
 	ConfigureKubeletHttpProxy()
 	KubeletStart() error
 	KubeletStop() error
 	IsKubeletRunning() bool
 }
 
-type KubeletImpl struct{}
+type KubeletImpl struct {
+	Cmd      command.CLI
+	NetUtils netutils.NetInterface
+}
 
 func New() KubeletUtilsInterface {
-	return &KubeletImpl{}
+	return &KubeletImpl{
+		Cmd:      command.New(),
+		NetUtils: netutils.New(),
+	}
 }
 
 func (k *KubeletImpl) EnsureKubeletStopped() error {
@@ -54,28 +58,36 @@ func (k *KubeletImpl) EnsureKubeletRunning(cfg config.Config) error {
 		return nil
 	}
 
-	kubeconfig := "/etc/pf9/kube.d/kubeconfigs/kubelet.yaml"
-	logDirPath := "/var/log/pf9/kubelet/"
-	pauseImg := cfg.K8sPrivateRegistry + "/pause:3.2"
+	pauseImg := cfg.K8sPrivateRegistry + "/pause:3.6"
 
+	// Prepares kubelet bootstrap config and saves it to bootstrap-config.yaml file
 	err := k.PrepareKubeletBootstrapConfig(cfg)
 	if err != nil {
-		zap.S().Errorf("failed to prepare kubelet bootstrap config")
+		zap.S().Errorf("failed to prepare kubelet bootstrap config, %s", err)
 		return err
 	}
 
-	err = os.MkdirAll(constants.KubeletDataDir, 0660)
+	// need to create this with sudo due to lack of permissions
+	_, stdErr, err := k.Cmd.RunCommandWithStdErr(context.Background(), nil, 0, "", "sudo", "mkdir", "-p", constants.KubeletDataDir)
 	if err != nil {
-		zap.S().Panicf("failed to create kubelet data directory directory")
+		zap.S().Panicf("failed to create kubelet data directory. %s, %s\n", err, stdErr[0])
 		return err
 	}
+	zap.S().Debugf("kubelet data directory created\n")
 
-	kubeletArgs := fmt.Sprintf(" --kubeconfig=" + kubeconfig +
+	//err = os.MkdirAll(constants.KubeletDataDir, 0660)
+	//if err != nil {
+	//	zap.S().Panicf("failed to create kubelet data directory directory, %s", err)
+	//	return err
+	//}
+	// remove permission for /var/lib
+
+	kubeletArgs := fmt.Sprintf(" --kubeconfig=" + constants.KubeletKubeconfig +
 		" --enable-server" +
 		" --network-plugin=cni" +
 		" --cni-conf-dir=" + constants.CNIConfigDir +
 		" --cni-bin-dir=" + constants.CNIBinDir +
-		" --log-dir=" + logDirPath +
+		" --log-dir=" + constants.KubeletLogDirPath +
 		" --logtostderr=false" +
 		" --config=" + constants.KubeletBootstrapConfig +
 		" --register-schedulable=false" +
@@ -97,8 +109,7 @@ func (k *KubeletImpl) EnsureKubeletRunning(cfg config.Config) error {
 			" --container-log-max-size=" + containerLogMaxSize)
 	}
 
-	netutls := netutils.New()
-	nodeName, err := netutls.GetNodeIdentifier(cfg)
+	nodeName, err := k.NetUtils.GetNodeIdentifier(cfg)
 	if err != nil {
 		zap.S().Errorf("failed to fetch node name %s", err)
 		return err
@@ -113,7 +124,7 @@ func (k *KubeletImpl) EnsureKubeletRunning(cfg config.Config) error {
 		kubeletArgs += " --hostname-override=" + nodeName
 	}
 
-	nodeIP, err := netutls.GetNodeIP()
+	nodeIP, err := k.NetUtils.GetNodeIP()
 	if err != nil {
 		zap.S().Panicf("failed to fetch NodeIP %s", err)
 		return err
@@ -171,7 +182,7 @@ func (k *KubeletImpl) EnsureKubeletRunning(cfg config.Config) error {
 }
 
 func (k *KubeletImpl) FetchAwsInstanceId() (string, error) {
-	instanceId, err := os.ReadFile("/var/lib/cloud/data/instance-id")
+	instanceId, err := os.ReadFile(constants.AWSInstanceIdLoc)
 	if err != nil {
 		zap.S().Panicf("failed to read instance-id. %s", err)
 		return "", err
@@ -180,7 +191,7 @@ func (k *KubeletImpl) FetchAwsInstanceId() (string, error) {
 }
 
 func (k *KubeletImpl) FetchAwsAz() (string, error) {
-	url := "http://" + constants.AWSMetadataIp + "/latest/meta-data/placement/availability-zone"
+	url := constants.AWSAvailabilityZoneURL
 	resp, err := http.Get(url)
 	if err != nil {
 		zap.S().Panicf("failed to fetch AWS availability zone with %s\n", err)
@@ -208,17 +219,21 @@ func (k *KubeletImpl) PrepareKubeletBootstrapConfig(cfg config.Config) error {
 
 	err := os.MkdirAll(constants.KubeletConfigDir, 0660)
 	if err != nil {
-		zap.S().Panicf("failed to create kubelet config directory directory")
+		zap.S().Panicf("failed to create kubelet config directory directory %s", err)
 		return err
 	}
 
 	err = k.EnsureDirReadableByPf9(constants.KubeletConfigDir)
 	if err != nil {
-		zap.S().Errorf("failed to ensure directory readable by pf9")
+		zap.S().Errorf("failed to ensure directory readable by pf9, %s", err)
 		return err
 	}
 
-	dnsIp := "bin/addr_conv -cidr " + cfg.ServicesCIDR + " -pos 10"
+	dnsIp, err := k.NetUtils.AddrConv(cfg.ServicesCIDR, 10)
+	if err != nil {
+		zap.S().Errorf("failed to convert address, %s", err)
+		return err
+	}
 
 	kubeletBootstrapConfig := "apiVersion: kubelet.config.k8s.io/v1beta1\n" +
 		"kind: KubeletConfiguration\n" +
@@ -262,30 +277,47 @@ func (k *KubeletImpl) PrepareKubeletBootstrapConfig(cfg config.Config) error {
 		kubeletBootstrapConfig += "failSwapOn: false\n"
 	}
 
+	// Write the kubeletBootstrapConfig to the config file
+	err = os.WriteFile(constants.KubeletBootstrapConfig, []byte(kubeletBootstrapConfig), 0660)
+	if err != nil {
+		zap.S().Errorf("failed to write kubelet bootstrap config file in %s", constants.KubeletBootstrapConfig)
+		return err
+	}
+
 	return nil
 }
 
 func (k *KubeletImpl) EnsureDirReadableByPf9(dir string) error {
-	user, err := osuser.Lookup(constants.Pf9User)
-	if err != nil {
-		return err
-	}
+	//user, err := osuser.Lookup(constants.Pf9User)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//uid, err := strconv.Atoi(user.Uid)
+	//if err != nil {
+	//	return err
+	//}
+	//gid, err := strconv.Atoi(user.Gid)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//err = os.Chown(dir, uid, gid)
+	//if err != nil {
+	//	zap.S().Errorf("failed to change file permissions. %s", err)
+	//	return err
+	//}
+	//return nil
 
-	uid, err := strconv.Atoi(user.Uid)
+	usrgrp := constants.Pf9User + ":" + constants.Pf9Group
+	_, stdOut, stdErr, err := k.Cmd.RunCommandWithStdOutStdErr(context.Background(), nil, 0, "", "sudo", "chown", "-R", usrgrp, dir)
 	if err != nil {
+		zap.S().Panicf("failed ensure directory readable by pf9 user. %s %s\n", stdErr[0], err)
 		return err
 	}
-	gid, err := strconv.Atoi(user.Gid)
-	if err != nil {
-		return err
-	}
-
-	err = os.Chown(dir, uid, gid)
-	if err != nil {
-		zap.S().Errorf("failed to change file permissions. %s", err)
-		return err
-	}
+	zap.S().Debugf("ensured directory readable by pf9 user\n%s", stdOut)
 	return nil
+
 }
 
 // os specific stuff for ubuntu and centos but since both were same just combined them
@@ -297,8 +329,7 @@ func (k *KubeletImpl) KubeletSetup(kubeletArgs string) error {
 		return err
 	}
 
-	cmd := command.New()
-	_, stdErr, err := cmd.RunCommandWithStdErr(context.Background(), nil, 0, "", "sudo", "systemctl", "daemon-reload")
+	_, stdErr, err := k.Cmd.RunCommandWithStdErr(context.Background(), nil, 0, "", "sudo", "systemctl", "daemon-reload")
 	if err != nil {
 		zap.S().Panicf("failed to reload daemon. %s %s\n", stdErr[0], err)
 		return err
@@ -364,8 +395,7 @@ func (k *KubeletImpl) ConfigureKubeletHttpProxy() {
 }
 
 func (k *KubeletImpl) KubeletStart() error {
-	cmd := command.New()
-	_, stdErr, err := cmd.RunCommandWithStdErr(context.Background(), nil, 0, "", "sudo", "systemctl", "start", "pf9-kubelet")
+	_, stdErr, err := k.Cmd.RunCommandWithStdErr(context.Background(), nil, 0, "", "sudo", "systemctl", "start", "pf9-kubelet")
 	if err != nil {
 		zap.S().Panicf("failed to start pf9-kubelet. %s, %s\n", err, stdErr[0])
 		return err
@@ -375,8 +405,7 @@ func (k *KubeletImpl) KubeletStart() error {
 }
 
 func (k *KubeletImpl) KubeletStop() error {
-	cmd := command.New()
-	_, stdErr, err := cmd.RunCommandWithStdErr(context.Background(), nil, 0, "", "sudo", "systemctl", "stop", "pf9-kubelet")
+	_, stdErr, err := k.Cmd.RunCommandWithStdErr(context.Background(), nil, 0, "", "sudo", "systemctl", "stop", "pf9-kubelet")
 	if err != nil {
 		zap.S().Panicf("failed to stop pf9-kubelet. %s, %s\n", err, stdErr[0])
 		return err
@@ -385,10 +414,10 @@ func (k *KubeletImpl) KubeletStop() error {
 	return nil
 }
 
+// fixme
 func (k *KubeletImpl) IsKubeletRunning() bool {
-	cmd := command.New()
-	_, stdOut, stdErr, err := cmd.RunCommandWithStdOutStdErr(context.Background(), nil, 0, "", "sudo", "systemctl", "is-active", "pf9-kubelet")
-	if err != nil {
+	_, stdOut, stdErr, err := k.Cmd.RunCommandWithStdOutStdErr(context.Background(), nil, 0, "", "sudo", "systemctl", "is-active", "pf9-kubelet")
+	if stdOut[0] == "inactive" /*err != nil*/ {
 		zap.S().Debugf("pf9-kubelet is not active.%s, %s\n", err, stdErr[0])
 		return false
 	}

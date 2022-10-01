@@ -122,6 +122,8 @@ var (
 
 	// Kubelet related variables from defaults.env
 	KubeletDataDir          = "/var/lib/kubelet"
+	KubeletKubeconfig       = "/etc/pf9/kube.d/kubeconfigs/kubelet.yaml"
+	KubeletLogDirPath       = "/var/log/pf9/kubelet/"
 	CNIConfigDir            = "/etc/cni/net.d"
 	CNIBinDir               = "/opt/cni/bin"
 	KubeletConfigDir        = "/var/opt/pf9/kube/kubelet-config"
@@ -130,13 +132,15 @@ var (
 	// AWSMetadataIp # 169.254.169.254 belongs to the 169.254/16 range of IPv4 Link-Local addresses (https://tools.ietf.org/html/rfc3927).
 	//# This IP address in particular is significant because Amazon Web Services uses this IP address
 	//# for instance metadata (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html)
-	AWSMetadataIp        = "169.254.169.254"
-	OpenstackMetadataIp  = "169.254.169.254"
-	Runtime              = "containerd"
-	ContainerdCgroup     = "systemd"
-	UseHostname          = "false"
-	DockerLogMaxFile     = "10"
-	ContainerLogMaxFiles = DockerLogMaxFile
+	AWSMetadataIp          = "169.254.169.254"
+	AWSInstanceIdLoc       = "/var/lib/cloud/data/instance-id"
+	AWSAvailabilityZoneURL = "http://" + AWSMetadataIp + "/latest/meta-data/placement/availability-zone"
+	OpenstackMetadataIp    = "169.254.169.254"
+	Runtime                = "containerd"
+	ContainerdCgroup       = "systemd"
+	UseHostname            = "false"
+	DockerLogMaxFile       = "10"
+	ContainerLogMaxFiles   = DockerLogMaxFile
 	// ContainerLogMaxSize
 	// Why not use DOCKER_LOG_MAX_SIZE variable?
 	// The formatting for docker config is 10m while kubelet expects 10Mi. To avoid implement string manipulation in bash just hardcoding
