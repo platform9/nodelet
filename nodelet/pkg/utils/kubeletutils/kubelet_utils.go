@@ -280,7 +280,7 @@ func (k *KubeletImpl) PrepareKubeletBootstrapConfig(cfg config.Config) error {
 	// Write the kubeletBootstrapConfig to the config file
 	err = os.WriteFile(constants.KubeletBootstrapConfig, []byte(kubeletBootstrapConfig), 0660)
 	if err != nil {
-		zap.S().Errorf("failed to write kubelet bootstrap config file in %s", constants.KubeletBootstrapConfig)
+		zap.S().Errorf("failed to write kubelet bootstrap config file in %s, %s", constants.KubeletBootstrapConfig, err)
 		return err
 	}
 
@@ -325,7 +325,7 @@ func (k *KubeletImpl) EnsureDirReadableByPf9(dir string) error {
 func (k *KubeletImpl) KubeletSetup(kubeletArgs string) error {
 	err := k.GenerateKubeletSystemdUnit(kubeletArgs)
 	if err != nil {
-		zap.S().Errorf("failed to generate kubelet systemd unit")
+		zap.S().Errorf("failed to generate kubelet systemd unit, %s", err)
 		return err
 	}
 
