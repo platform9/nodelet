@@ -390,6 +390,8 @@ func (k *KubeletImpl) GenerateKubeletSystemdUnit(kubeletArgs string) error {
 	}
 	zap.S().Debugf("created pf9-kubelet.service")
 
+	// sudo chown pf9:pf9group /run/systemd/system/pf9-kubelet.service
+
 	// own file
 	usrgrp := constants.Pf9User + ":" + constants.Pf9Group
 	_, stdOut, stdErr, err := k.Cmd.RunCommandWithStdOutStdErr(context.Background(), nil, 0, "", "sudo", "chown", usrgrp, constants.SystemdRuntimeUnitDir+"/pf9-kubelet.service")

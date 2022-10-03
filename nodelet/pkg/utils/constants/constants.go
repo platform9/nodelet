@@ -148,7 +148,7 @@ var (
 	ContainerLogMaxSize           = "10Mi"
 	EnableCAS                     = false
 	AllowSwap                     = false
-	KubeletBin                    = "`pwd`/bin/kubelet"
+	KubeletBin                    = "/opt/pf9/pf9-kube/bin/kubelet"
 	Pf9KubeletSystemdUnitTemplate = "/opt/pf9/pf9-kube/pf9-kubelet.service.template"
 	SystemdRuntimeUnitDir         = "/run/systemd/system"
 	Pf9User                       = "pf9"
