@@ -217,7 +217,7 @@ func (k *KubeletImpl) TrimSans(str string) string {
 
 func (k *KubeletImpl) PrepareKubeletBootstrapConfig(cfg config.Config) error {
 
-	err := os.MkdirAll(constants.KubeletConfigDir, 0660)
+	err := os.MkdirAll(constants.KubeletConfigDir, 0770)
 	if err != nil {
 		zap.S().Panicf("failed to create kubelet config directory directory %s", err)
 		return err
@@ -278,23 +278,11 @@ func (k *KubeletImpl) PrepareKubeletBootstrapConfig(cfg config.Config) error {
 	}
 
 	// Write the kubeletBootstrapConfig to the config file
-	file, err := os.Create(constants.KubeletBootstrapConfig)
+	err = os.WriteFile(constants.KubeletBootstrapConfig, []byte(kubeletBootstrapConfig), 0770)
 	if err != nil {
-		zap.S().Errorf("failed to create kubelet bootstrap config file. %s", err)
+		zap.S().Errorf("failed to write kubelet bootstrap config file in %s, %s", constants.KubeletBootstrapConfig, err)
 		return err
 	}
-
-	_, err = file.WriteString(kubeletBootstrapConfig)
-	if err != nil {
-		zap.S().Errorf("failed to write kubelet bootstrap config file. %s", err)
-		return err
-	}
-
-	//err = os.WriteFile(constants.KubeletBootstrapConfig, []byte(kubeletBootstrapConfig), 0660)
-	//if err != nil {
-	//	zap.S().Errorf("failed to write kubelet bootstrap config file in %s, %s", constants.KubeletBootstrapConfig, err)
-	//	return err
-	//}
 
 	return nil
 }
@@ -372,7 +360,7 @@ func (k *KubeletImpl) GenerateKubeletSystemdUnit(kubeletArgs string) error {
 	}
 	// Remove export from each field in file
 	kubeletEnv := strings.ReplaceAll(string(kubeEnv), "export ", "")
-	err = os.WriteFile(constants.KubeletEnvPath, []byte(kubeletEnv), 0660)
+	err = os.WriteFile(constants.KubeletEnvPath, []byte(kubeletEnv), 0770)
 	if err != nil {
 		zap.S().Panicf("failed to write to file /etc/pf9/kubelet.env. %s", err)
 		return err
@@ -393,7 +381,34 @@ func (k *KubeletImpl) GenerateKubeletSystemdUnit(kubeletArgs string) error {
 	}
 	pf9KubeletService := strings.ReplaceAll(string(pf9KubeletSystemdUnitTemplate), "__KUBELET_BIN__", constants.KubeletBin)
 	pf9KubeletService = strings.ReplaceAll(pf9KubeletService, "__KUBELET_ARGS__", kubeletArgs)
-	err = os.WriteFile(constants.SystemdRuntimeUnitDir+"/pf9-kubelet.service", []byte(pf9KubeletService), 0660)
+
+	// create the file
+	_, stdErr, err := k.Cmd.RunCommandWithStdErr(context.Background(), nil, 0, "", "sudo", "touch", constants.SystemdRuntimeUnitDir+"/pf9-kubelet.service")
+	if err != nil {
+		zap.S().Panicf("failed to create pf9-kubelet.service %s, %s\n", err, stdErr[0])
+		return err
+	}
+	zap.S().Debugf("created pf9-kubelet.service")
+
+	// own file
+	usrgrp := constants.Pf9User + ":" + constants.Pf9Group
+	_, stdOut, stdErr, err := k.Cmd.RunCommandWithStdOutStdErr(context.Background(), nil, 0, "", "sudo", "chown", usrgrp, constants.SystemdRuntimeUnitDir+"/pf9-kubelet.service")
+	if err != nil {
+		zap.S().Panicf("failed to own pf9 kubelet service file. %s %s\n", stdErr[0], err)
+		return err
+	}
+	zap.S().Debugf("pf9 user ownes pf9 kubelet service file \n%s", stdOut)
+
+	// change permissions
+	_, stdOut, stdErr, err = k.Cmd.RunCommandWithStdOutStdErr(context.Background(), nil, 0, "", "sudo", "chmod", "770", constants.SystemdRuntimeUnitDir+"/pf9-kubelet.service")
+	if err != nil {
+		zap.S().Panicf("failed to change permissions for pf9 kubelet service file. %s %s\n", stdErr[0], err)
+		return err
+	}
+	zap.S().Debugf("changed permissions for pf9 kubelet service file \n%s", stdOut)
+
+	// write file
+	err = os.WriteFile(constants.SystemdRuntimeUnitDir+"/pf9-kubelet.service", []byte(pf9KubeletService), 0770)
 	if err != nil {
 		zap.S().Panicf("failed to write to file pf9-kubelet.service. %s", err)
 		return err
