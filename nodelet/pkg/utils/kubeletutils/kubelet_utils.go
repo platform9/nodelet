@@ -278,11 +278,23 @@ func (k *KubeletImpl) PrepareKubeletBootstrapConfig(cfg config.Config) error {
 	}
 
 	// Write the kubeletBootstrapConfig to the config file
-	err = os.WriteFile(constants.KubeletBootstrapConfig, []byte(kubeletBootstrapConfig), 0660)
+	file, err := os.Create(constants.KubeletBootstrapConfig)
 	if err != nil {
-		zap.S().Errorf("failed to write kubelet bootstrap config file in %s, %s", constants.KubeletBootstrapConfig, err)
+		zap.S().Errorf("failed to create kubelet bootstrap config file. %s", err)
 		return err
 	}
+
+	_, err = file.WriteString(kubeletBootstrapConfig)
+	if err != nil {
+		zap.S().Errorf("failed to write kubelet bootstrap config file. %s", err)
+		return err
+	}
+
+	//err = os.WriteFile(constants.KubeletBootstrapConfig, []byte(kubeletBootstrapConfig), 0660)
+	//if err != nil {
+	//	zap.S().Errorf("failed to write kubelet bootstrap config file in %s, %s", constants.KubeletBootstrapConfig, err)
+	//	return err
+	//}
 
 	return nil
 }
