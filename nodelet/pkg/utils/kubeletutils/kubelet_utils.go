@@ -68,7 +68,7 @@ func (k *KubeletImpl) EnsureKubeletRunning(cfg config.Config) error {
 	}
 
 	// need to create this with sudo due to lack of permissions
-	_, stdErr, err := k.Cmd.RunCommandWithStdErr(context.Background(), nil, 0, "", "sudo", "mkdir", "-p", constants.KubeletDataDir)
+	_, stdErr, err := k.Cmd.RunCommandWithStdErr(context.Background(), nil, 0, "", "sudo", "/bin/mkdir", "-p", constants.KubeletDataDir)
 	if err != nil {
 		zap.S().Panicf("failed to create kubelet data directory. %s, %s\n", err, stdErr[0])
 		return err
