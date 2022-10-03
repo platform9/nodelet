@@ -244,15 +244,15 @@ func (k *KubeletImpl) PrepareKubeletBootstrapConfig(cfg config.Config) error {
 		"  webhook:\n" +
 		"    enabled: true\n" +
 		"  x509:\n" +
-		"    clientCAFile:" + constants.KubeletClientCaFile + "\n" +
+		"    clientCAFile: " + constants.KubeletClientCaFile + "\n" +
 		"authorization:\n" +
 		"  mode: AlwaysAllow\n" +
 		"clusterDNS:\n" +
 		"- " + dnsIp + "\n" +
 		"clusterDomain: " + constants.DnsDomain + "\n" +
-		"cpuManagerPolicy:" + cfg.CPUManagerPolicy + "\n" +
-		"topologyManagerPolicy:" + cfg.TopologyManagerPolicy + "\n" +
-		"reservedSystemCPUs:" + cfg.ReservedCPUs + "\n" +
+		"cpuManagerPolicy: " + cfg.CPUManagerPolicy + "\n" +
+		"topologyManagerPolicy: " + cfg.TopologyManagerPolicy + "\n" +
+		"reservedSystemCPUs: " + cfg.ReservedCPUs + "\n" +
 		"featureGates:\n" +
 		"  DynamicKubeletConfig: true\n" +
 		"maxPods: 200\n" +
