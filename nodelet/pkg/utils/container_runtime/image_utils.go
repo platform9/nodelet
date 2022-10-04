@@ -26,11 +26,12 @@ func NewImageUtil() ImageUtils {
 
 // LoadImagesFromDir loads images from all tar files in the given directory to container runtime with given namespace
 func (i *ImageUtility) LoadImagesFromDir(ctx context.Context, imageDir string, namespace string) error {
-	items, _ := ioutil.ReadDir(imageDir)
+	items, err := ioutil.ReadDir(imageDir)
+	if err != nil {
+		return errors.Wrapf(err, "could not read dir: %s", imageDir)
+	}
 	for _, item := range items {
-		if item.IsDir() {
-			continue
-		} else {
+		if !item.IsDir() {
 			imageFile := fmt.Sprintf("%s/%s", imageDir, item.Name())
 			ctx = namespaces.WithNamespace(ctx, namespace)
 			err := i.LoadImagesFromFile(ctx, imageFile)
@@ -63,6 +64,7 @@ func (i *ImageUtility) LoadImagesFromFile(ctx context.Context, fileName string) 
 	if err != nil {
 		return errors.Wrap(err, "failed to create container runtime client")
 	}
+	defer client.Close()
 
 	imgs, err := client.Import(ctx, decompressor, containerd.WithDigestRef(archive.DigestTranslator(constants.DefaultSnapShotter)), containerd.WithSkipDigestRef(func(name string) bool { return name != "" }), containerd.WithImportPlatform(platform))
 	if err != nil {
