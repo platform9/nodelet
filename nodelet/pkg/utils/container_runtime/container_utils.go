@@ -86,20 +86,21 @@ func (c *ContainerUtility) EnsureFreshContainerRunning(ctx context.Context, name
 	if err != nil {
 		return errors.Wrapf(err, "failed to create container:%s", containerName)
 	}
-	// create a task from the container
-	task, err := container.NewTask(ctx, cio.NewCreator())
+	c.log.Infof("container: %v created", container.ID())
+	//create a task from the container
+	task, err := container.NewTask(ctx, cio.NewCreator(cio.WithStdio))
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to create new task:%s", containerName)
 	}
 
 	// make sure we wait before calling start
 	exitStatusC, err := task.Wait(ctx)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to wait for new task:%v in %s", task.ID(), containerName)
 	}
 
 	if err := task.Start(ctx); err != nil {
-		return err
+		return errors.Wrapf(err, "failed to start new task:%v in %s", task.ID(), containerName)
 	}
 
 	status := <-exitStatusC
@@ -227,25 +228,30 @@ func (c *ContainerUtility) CreateContainer(ctx context.Context, containerName st
 
 	opts = GetNetworkopts(runOpts, opts)
 	opts = GetCmdargsOpts(image, cmdArgs, opts)
-	opts = SetPlatformOptions(opts) //is it required?
-	opts = GetPrivilegedOpts(runOpts, opts)
+	//opts = SetPlatformOptions(opts) //is it required?
+	if runOpts.Privileged {
+		opts = GetPrivilegedOpts(runOpts, opts)
+	}
+
 	opts, err = GetEnvOpts(runOpts, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	err = c.MountandUnmount(ctx, image) // dont know whats it doing. just added for cheking it working
-	if err != nil {
-		return nil, err
-	}
+	// err = c.MountandUnmount(ctx, image) // dont know whats it doing. just added for cheking its working
+	// if err != nil {
+	// 	c.log.Errorf("error in mountandunmount:%v", err)
+	// 	return nil, err
+	// }
 
 	opts, err = GetVolumeOPts(runOpts, opts)
 	if err != nil {
+		c.log.Errorf("error getting volumeopts:%v", err)
 		return nil, err
 	}
 
 	cOpts = append(cOpts, containerd.WithImage(image))
-	cOpts = append(cOpts, containerd.WithNewSnapshot(containerName, image))
+	//cOpts = append(cOpts, containerd.WithNewSnapshot(containerName+"-snapshot", image))
 
 	var specs specs.Spec
 	spec := containerd.WithSpec(&specs, opts...)
@@ -254,6 +260,7 @@ func (c *ContainerUtility) CreateContainer(ctx context.Context, containerName st
 	// create a container
 	container, err := c.Client.NewContainer(ctx, containerName, cOpts...)
 	if err != nil {
+		c.log.Errorf("error creating container:%v", err)
 		return nil, err
 	}
 
@@ -514,31 +521,27 @@ func (c *ContainerUtility) EnsureImage(ctx context.Context, containerImage strin
 	image, err := c.Client.GetImage(ctx, containerImage)
 	if err != nil {
 		c.log.Infof("couldn't get %s image from client, so pulling the image\n", containerImage)
-		image, err = c.Client.Pull(ctx, containerImage, containerd.WithPullUnpack)
+		image, err = c.Client.Pull(ctx, containerImage, containerd.WithPullUnpack) // withpull unpack required?
 		if err != nil {
 			return nil, errors.Wrapf(err, "couldn't pull image:%s", containerImage)
 		}
 		c.log.Infof("image pulled: %s\n", image.Name())
 	}
 
-	// TODO: is unpacking required?
-	if err := image.Unpack(ctx, constants.DefaultSnapShotter); err != nil {
-		return image, fmt.Errorf("error unpacking image: %w", err)
-	}
 	return image, nil
 }
 
 func (c *ContainerUtility) MountandUnmount(ctx context.Context, image containerd.Image) error {
 	diffIDs, err := image.RootFS(ctx)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "could not get rootfs")
 	}
 	chainID := identity.ChainID(diffIDs).String()
 
 	s := c.Client.SnapshotService(constants.DefaultSnapShotter)
 	tempDir, err := os.MkdirTemp("", "initialC")
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "could not mkdirtemp")
 	}
 	// We use Remove here instead of RemoveAll.
 	// The RemoveAll will delete the temp dir and all children it contains.
@@ -548,7 +551,7 @@ func (c *ContainerUtility) MountandUnmount(ctx context.Context, image containerd
 	var mounts []mount.Mount
 	mounts, err = s.View(ctx, tempDir, chainID)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "could not view snapshotter")
 	}
 
 	unmounter := func(mountPath string) {
@@ -563,9 +566,9 @@ func (c *ContainerUtility) MountandUnmount(ctx context.Context, image containerd
 	defer unmounter(tempDir)
 	if err := mount.All(mounts, tempDir); err != nil {
 		if err := s.Remove(ctx, tempDir); err != nil && !errdefs.IsNotFound(err) {
-			return err
+			return errors.Wrapf(err, "could not remove tempdir")
 		}
-		return err
+		return errors.Wrapf(err, "could not get get mount.all")
 	}
 	return nil
 }
@@ -602,6 +605,7 @@ func GetEnvOpts(runOpts RunOpts, opts []oci.SpecOpts) ([]oci.SpecOpts, error) {
 	if len(envFiles) > 0 {
 		env, err := parseEnvVars(envFiles)
 		if err != nil {
+			zap.S().Errorf("error parsing env vars: %v", err)
 			return opts, err
 		}
 		opts = append(opts, oci.WithEnv(env))
@@ -624,7 +628,7 @@ func GetVolumeOPts(runOpts RunOpts, opts []oci.SpecOpts) ([]oci.SpecOpts, error)
 		if userns.RunningInUserNS() {
 			unpriv, err := getUnprivilegedMountFlags(src)
 			if err != nil {
-				return opts, err
+				return opts, errors.Wrapf(err, "error getting unprirvileged mount flags")
 			}
 			options = DedupeStrSlice(append(options, unpriv...))
 		}

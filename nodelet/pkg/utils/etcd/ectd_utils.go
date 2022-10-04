@@ -190,7 +190,7 @@ func (e *EtcdImpl) EnsureEtcdRunning(ctx context.Context, cfg config.Config) err
 	}
 	err = e.WriteEtcdEnv(cfg)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "could not write etcd env")
 	}
 
 	volumes := getEtcdVolume(cfg)
@@ -387,7 +387,7 @@ func createEtcdDirsIfnotPresent(ctx context.Context, cfg config.Config) error {
 
 	err := os.MkdirAll(cfg.EtcdDataDir, 0700)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "could not create etcd data dir:%v", cfg.EtcdDataDir)
 	}
 	if _, err := os.Stat(constants.EtcdConfDir); errors.Is(err, os.ErrNotExist) {
 		zap.S().Infof("creating dir: %s", constants.EtcdConfDir)
@@ -397,7 +397,7 @@ func createEtcdDirsIfnotPresent(ctx context.Context, cfg config.Config) error {
 		// }
 		err = os.Mkdir(constants.EtcdConfDir, 0700)
 		if err != nil {
-			return err
+			return errors.Wrapf(err, "could not create etcd conf dir:%v", constants.EtcdConfDir)
 		}
 	}
 	if _, err := os.Stat("/etc/pki"); errors.Is(err, os.ErrNotExist) {
