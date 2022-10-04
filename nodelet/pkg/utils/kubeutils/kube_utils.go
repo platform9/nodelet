@@ -310,7 +310,9 @@ func (u *UtilsImpl) K8sApiAvailable(cfg config.Config) error {
 	res, err := client.Get(healthzUrl)
 
 	defer func() {
-		res.Body.Close()
+		if res != nil && res.Body != nil {
+			res.Body.Close()
+		}
 	}()
 
 	if err != nil {
