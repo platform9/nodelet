@@ -91,6 +91,7 @@ func (cp *ContainerdRunPhase) Stop(ctx context.Context, cfg config.Config) error
 		phaseutils.SetHostStatus(cp.hostPhase, constants.FailedState, err.Error())
 		return err
 	}
+	defer containerUtil.CloseClientConnection()
 
 	namespaces := []string{constants.K8sNamespace, constants.MobyNamespace}
 	err = containerUtil.DestroyContainersInNamespacesList(ctx, namespaces)

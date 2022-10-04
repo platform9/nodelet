@@ -23,7 +23,7 @@ type ContainerUtility struct {
 	log     *zap.SugaredLogger
 }
 
-const timeOut = "10s"
+const TimeOut = "10s"
 
 func NewContainerUtil() (ContainerUtils, error) {
 
@@ -49,9 +49,20 @@ func NewContainerdClient() (*containerd.Client, error) {
 	return containerdclient, nil
 }
 
+func (c *ContainerUtility) CloseClientConnection() {
+	if c.Client != nil {
+		err := c.Client.Close()
+		if err != nil {
+			c.log.Warnf("couldn't close containerd client connection: %v", err)
+			return
+		}
+		c.log.Info("closed containerd client connection")
+	}
+}
+
 func (c *ContainerUtility) EnsureFreshContainerRunning(ctx context.Context, containerName string, containerImage string) error {
 
-	err := c.EnsureContainerDestroyed(ctx, containerName, timeOut)
+	err := c.EnsureContainerDestroyed(ctx, containerName, TimeOut)
 	if err != nil {
 		return err
 	}
@@ -168,7 +179,7 @@ func (c *ContainerUtility) DestroyContainersInNamespace(ctx context.Context, nam
 
 	ctx = namespaces.WithNamespace(ctx, namespace)
 
-	err = c.EnsureContainersDestroyed(ctx, containers, timeOut)
+	err = c.EnsureContainersDestroyed(ctx, containers, TimeOut)
 	if err != nil {
 		return errors.Wrapf(err, "could not destroy containers in namespace: %s", namespace)
 	}
