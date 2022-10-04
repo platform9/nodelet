@@ -288,8 +288,8 @@ func InitBootstrapConfig() *BootstrapConfig {
 	calicoConfig := CalicoConfig{}
 	calicoConfig.V4BlockSize = 26
 	calicoConfig.V6BlockSize = 122
-	calicoConfig.V4ContainersCidr = "10.20.0.0/22"
-	calicoConfig.V6ContainersCidr = "fd00:101::/116"
+	calicoConfig.V4ContainersCidr = DefaultCalicoV4Cidr
+	calicoConfig.V6ContainersCidr = DefaultCalicoV6Cidr
 	calicoConfig.V4NATOutgoing = true
 	calicoConfig.V6NATOutgoing = false
 	calicoConfig.V4IpIpMode = "Always"
@@ -485,8 +485,8 @@ func setNodeletClusterCfg(cfg *BootstrapConfig, nodelet *NodeletConfig) {
 		// Need to set this field for v6, as it is used to set kube-proxy arg
 		nodelet.ContainersCidr = cfg.Calico.V6ContainersCidr
 		if cfg.ServicesCidr == "" {
-			nodelet.ServicesCidr = "fd00:102::/116"
-			cfg.ServicesCidr = "fd00:102::/116"
+			nodelet.ServicesCidr = DefaultV6ServicesCidr
+			cfg.ServicesCidr = DefaultV6ServicesCidr
 		} else {
 			nodelet.ServicesCidr = cfg.ServicesCidr
 		}
@@ -496,8 +496,8 @@ func setNodeletClusterCfg(cfg *BootstrapConfig, nodelet *NodeletConfig) {
 		nodelet.CalicoIP4 = "autodetect"
 		nodelet.CalicoIP6 = "none"
 		if cfg.ServicesCidr == "" {
-			nodelet.ServicesCidr = "10.21.0.0/22"
-			cfg.ServicesCidr = "10.21.0.0/22"
+			nodelet.ServicesCidr = DefaultV4ServicesCidr
+			cfg.ServicesCidr = DefaultV4ServicesCidr
 		} else {
 			nodelet.ServicesCidr = cfg.ServicesCidr
 		}

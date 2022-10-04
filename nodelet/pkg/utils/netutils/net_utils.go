@@ -96,6 +96,7 @@ func (n *NetImpl) GetNodeIP(v6Enabled bool) (string, error) {
 func (n *NetImpl) GetHostPrimaryIp(ipFam int) (string, error) {
 	routes, _ := netlink.RouteList(nil, ipFam)
 	for _, route := range routes {
+		// Skip regular routes, Default routes have Dst as empty
 		if route.Dst != nil {
 			continue
 		}
