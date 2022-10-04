@@ -115,6 +115,11 @@ type Config struct {
 	TopologyManagerPolicy     string  `mapstructure:"TOPOLOGY_MANAGER_POLICY"`
 	ReservedCPUs              string  `mapstructure:"RESERVED_CPUS"`
 	IPv6Enabled               bool    `mapstructure:"IPV6_ENABLED"`
+	EtcdDataDir               string  `mapstructure:"ETCD_DATA_DIR"`
+	EtcdEnv                   string  `mapstructure:"ETCD_ENV"`
+	GcrPrivateRegistry        string  `mapstructure:"GCR_PRIVATE_REGISTRY"`
+	EtcdHeartBeatInterval     string  `mapstructure:"ETCD_HEARTBEAT_INTERVAL"`
+	EtcdElectionTimeOut       string  `mapstructure:"ETCD_ELECTION_TIMEOUT"`
 }
 
 // ToStringMap converts the Config struct to a map of strings

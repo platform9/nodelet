@@ -17,6 +17,8 @@ require (
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/onsi/ginkgo v1.14.2
 	github.com/onsi/gomega v1.10.3
+	github.com/opencontainers/image-spec v1.0.2-0.20211117181255-693428a734f5
+	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/pkg/errors v0.9.1
 	github.com/platform9/pf9-qbert/sunpike/apiserver v0.0.0
 	github.com/platform9/pf9-qbert/sunpike/conductor v0.0.0-20210928133414-c4e8ce211671
@@ -28,6 +30,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/vishvananda/netlink v1.1.1-0.20210330154013-f5de75959ad5
 	go.uber.org/zap v1.19.0
+	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e
 	google.golang.org/grpc v1.43.0
 	k8s.io/api v0.23.5
 	k8s.io/apimachinery v0.23.5
@@ -48,7 +51,6 @@ require (
 	github.com/containerd/fifo v1.0.0 // indirect
 	github.com/containerd/ttrpc v1.1.0 // indirect
 	github.com/containerd/typeurl v1.0.2 // indirect
-	github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
 	github.com/erwinvaneyk/cobras v0.0.0-20200914200705-1d2dfabe2493 // indirect
@@ -60,7 +62,6 @@ require (
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.19.5 // indirect
 	github.com/go-openapi/swag v0.19.14 // indirect
-	github.com/godbus/dbus v0.0.0-20190422162347-ade71ed3457e // indirect
 	github.com/gogo/googleapis v1.4.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
@@ -91,9 +92,7 @@ require (
 	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00 // indirect
 	github.com/nxadm/tail v1.4.5 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.0.2-0.20211117181255-693428a734f5 // indirect
 	github.com/opencontainers/runc v1.1.0 // indirect
-	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417 // indirect
 	github.com/opencontainers/selinux v1.10.0 // indirect
 	github.com/pelletier/go-toml v1.9.3 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
@@ -112,7 +111,6 @@ require (
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect

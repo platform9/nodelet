@@ -28,6 +28,7 @@ pf9     ALL = NOPASSWD: /opt/pf9/pf9-kube/setup_env_and_run_script.sh /opt/pf9/p
           NOPASSWD: /usr/bin/systemctl stop containerd, \
           NOPASSWD: /usr/bin/systemctl is-active containerd, \
           NOPASSWD: /usr/bin/chown pf9\:pf9group /run/containerd/containerd.sock, \
-          NOPASSWD: /usr/bin/rm -rf /var/lib/nerdctl
+          NOPASSWD: /usr/bin/rm -rf /var/lib/nerdctl, \
+          NOPASSWD: /usr/bin/mkdir /etc/pki
 
 Defaults:pf9 !requiretty

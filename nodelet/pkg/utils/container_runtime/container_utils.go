@@ -1,19 +1,27 @@
 package containerruntime
 
 import (
+	"bufio"
 	"context"
 	"fmt"
+	"os"
+	"strings"
 	"syscall"
 	"time"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/errdefs"
+	"github.com/containerd/containerd/mount"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
+	"github.com/containerd/containerd/pkg/userns"
+	"github.com/opencontainers/image-spec/identity"
+	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
 	"go.uber.org/zap"
+	"golang.org/x/sys/unix"
 )
 
 type ContainerUtility struct {
@@ -23,7 +31,18 @@ type ContainerUtility struct {
 	log     *zap.SugaredLogger
 }
 
-const TimeOut = "10s"
+type RunOpts struct {
+	Env        []string
+	EnvFiles   []string
+	Volumes    []string
+	Network    string
+	Privileged bool
+}
+
+const (
+	TimeOut = "10s"
+	Host    = "host"
+)
 
 func NewContainerUtil() (ContainerUtils, error) {
 
@@ -60,30 +79,32 @@ func (c *ContainerUtility) CloseClientConnection() {
 	}
 }
 
-func (c *ContainerUtility) EnsureFreshContainerRunning(ctx context.Context, containerName string, containerImage string) error {
+func (c *ContainerUtility) EnsureFreshContainerRunning(ctx context.Context, namespace string, containerName string, containerImage string, runOpts RunOpts, cmdArgs []string) error {
 
+	ctx = namespaces.WithNamespace(ctx, namespace)
 	err := c.EnsureContainerDestroyed(ctx, containerName, TimeOut)
 	if err != nil {
 		return err
 	}
-	container, err := c.CreateContainer(ctx, containerName, containerImage)
+	container, err := c.CreateContainer(ctx, containerName, containerImage, runOpts, cmdArgs)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create container:%s", containerName)
 	}
-	// create a task from the container
-	task, err := container.NewTask(ctx, cio.NewCreator())
+	c.log.Infof("container: %v created", container.ID())
+	//create a task from the container
+	task, err := container.NewTask(ctx, cio.NewCreator(cio.WithStdio))
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to create new task:%s", containerName)
 	}
 
 	// make sure we wait before calling start
 	exitStatusC, err := task.Wait(ctx)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to wait for new task:%v in %s", task.ID(), containerName)
 	}
 
 	if err := task.Start(ctx); err != nil {
-		return err
+		return errors.Wrapf(err, "failed to start new task:%v in %s", task.ID(), containerName)
 	}
 
 	status := <-exitStatusC
@@ -97,6 +118,7 @@ func (c *ContainerUtility) EnsureFreshContainerRunning(ctx context.Context, cont
 	return nil
 }
 
+// EnsureContainerDestroyed takes containers Name
 func (c *ContainerUtility) EnsureContainerDestroyed(ctx context.Context, containerName string, timeoutStr string) error {
 
 	container, err := c.GetContainerWithGivenName(ctx, containerName)
@@ -104,7 +126,7 @@ func (c *ContainerUtility) EnsureContainerDestroyed(ctx context.Context, contain
 		return err
 	}
 	if container == nil {
-		c.log.Infof("container not present: %s.\n", containerName)
+		c.log.Infof("container not present: %s", containerName)
 		return nil
 	}
 	err = c.StopContainer(ctx, container, timeoutStr)
@@ -118,6 +140,7 @@ func (c *ContainerUtility) EnsureContainerDestroyed(ctx context.Context, contain
 	return nil
 }
 
+// EnsureContainersDestroyed takes containers list
 func (c *ContainerUtility) EnsureContainersDestroyed(ctx context.Context, containers []containerd.Container, timeoutStr string) error {
 	var err error
 	for _, container := range containers {
@@ -154,7 +177,7 @@ func (c *ContainerUtility) EnsureContainerStoppedOrNonExistent(ctx context.Conte
 		return nil
 	}
 
-	err = c.StopContainer(ctx, container, "10s")
+	err = c.StopContainer(ctx, container, TimeOut)
 	if err != nil {
 		return errors.Wrapf(err, "couldn't stop the container: %s", container.ID())
 	}
@@ -162,7 +185,7 @@ func (c *ContainerUtility) EnsureContainerStoppedOrNonExistent(ctx context.Conte
 }
 
 func (c *ContainerUtility) GetContainersInNamespace(ctx context.Context, namespace string) ([]containerd.Container, error) {
-	ctx = namespaces.WithNamespace(ctx, namespace)
+
 	containers, err := c.Client.Containers(ctx)
 	if err != nil {
 		return nil, err
@@ -177,8 +200,6 @@ func (c *ContainerUtility) DestroyContainersInNamespace(ctx context.Context, nam
 		return errors.Wrapf(err, "error getting containers in namespace: %s ", namespace)
 	}
 
-	ctx = namespaces.WithNamespace(ctx, namespace)
-
 	err = c.EnsureContainersDestroyed(ctx, containers, TimeOut)
 	if err != nil {
 		return errors.Wrapf(err, "could not destroy containers in namespace: %s", namespace)
@@ -186,39 +207,70 @@ func (c *ContainerUtility) DestroyContainersInNamespace(ctx context.Context, nam
 	return nil
 }
 
-func (c *ContainerUtility) DestroyContainersInNamespacesList(ctx context.Context, namespaces []string) error {
+func (c *ContainerUtility) DestroyContainersInNamespacesList(ctx context.Context, namespacelist []string) error {
 
-	for _, namespace := range namespaces {
+	for _, namespace := range namespacelist {
 		zap.S().Infof("Destroying containers in namespace: %s", namespace)
+		ctx = namespaces.WithNamespace(ctx, namespace)
 		err := c.DestroyContainersInNamespace(ctx, namespace)
 		return err
 	}
 	return nil
 }
 
-func (c *ContainerUtility) CreateContainer(ctx context.Context, containerName string, containerImage string) (containerd.Container, error) {
-	image, err := c.Client.GetImage(ctx, containerImage)
-	if err != nil {
-		c.log.Infof("couldn't get %s image from client, so pulling the image\n", containerImage)
-		image, err = c.Client.Pull(ctx, containerImage, containerd.WithPullUnpack)
-		if err != nil {
-			return nil, errors.Wrapf(err, "couldn't pull image:%s", containerImage)
-		}
-		c.log.Infof("image pulled: %s\n", image.Name())
-	}
-	// create a container
-	container, err := c.Client.NewContainer(
-		ctx,
-		containerName,
-		containerd.WithImage(image),
-		containerd.WithNewSnapshot(containerName, image),
-		containerd.WithNewSpec(oci.WithImageConfig(image)),
+func (c *ContainerUtility) CreateContainer(ctx context.Context, containerName string, containerImage string, runOpts RunOpts, cmdArgs []string) (containerd.Container, error) {
+
+	var (
+		opts  []oci.SpecOpts
+		cOpts []containerd.NewContainerOpts
 	)
+
+	image, err := c.EnsureImage(ctx, containerImage)
 	if err != nil {
 		return nil, err
 	}
+
+	opts = GetNetworkopts(runOpts, opts)
+	opts = GetCmdargsOpts(image, cmdArgs, opts)
+	//opts = SetPlatformOptions(opts) //is it required?
+	if runOpts.Privileged {
+		opts = GetPrivilegedOpts(runOpts, opts)
+	}
+
+	opts, err = GetEnvOpts(runOpts, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	// err = c.MountandUnmount(ctx, image) // dont know whats it doing. just added for cheking its working
+	// if err != nil {
+	// 	c.log.Errorf("error in mountandunmount:%v", err)
+	// 	return nil, err
+	// }
+
+	opts, err = GetVolumeOPts(runOpts, opts)
+	if err != nil {
+		c.log.Errorf("error getting volumeopts:%v", err)
+		return nil, err
+	}
+
+	cOpts = append(cOpts, containerd.WithImage(image))
+	//cOpts = append(cOpts, containerd.WithNewSnapshot(containerName+"-snapshot", image))
+
+	var specs specs.Spec
+	spec := containerd.WithSpec(&specs, opts...)
+	cOpts = append(cOpts, spec)
+
+	// create a container
+	container, err := c.Client.NewContainer(ctx, containerName, cOpts...)
+	if err != nil {
+		c.log.Errorf("error creating container:%v", err)
+		return nil, err
+	}
+
 	return container, nil
 }
+
 func (c *ContainerUtility) RemoveContainer(ctx context.Context, container containerd.Container, force bool) error {
 
 	id := container.ID()
@@ -396,4 +448,227 @@ func (c *ContainerUtility) GetContainerWithGivenName(ctx context.Context, contai
 	}
 	c.log.Infof("container not found: %s\n", containerName)
 	return nil, nil
+}
+
+func parseEnvVars(paths []string) ([]string, error) {
+	vars := make([]string, 0)
+	for _, path := range paths {
+		f, err := os.Open(path)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open env file %s: %w", path, err)
+		}
+		defer f.Close()
+
+		sc := bufio.NewScanner(f)
+		for sc.Scan() {
+			line := strings.TrimSpace(sc.Text())
+			// skip comment lines
+			if strings.HasPrefix(line, "#") {
+				continue
+			}
+			vars = append(vars, line)
+		}
+		if err = sc.Err(); err != nil {
+			return nil, err
+		}
+	}
+	return vars, nil
+}
+
+// getUnprivilegedMountFlags is from https://github.com/moby/moby/blob/v20.10.5/daemon/oci_linux.go#L420-L450
+//
+// Get the set of mount flags that are set on the mount that contains the given
+// path and are locked by CL_UNPRIVILEGED. This is necessary to ensure that
+// bind-mounting "with options" will not fail with user namespaces, due to
+// kernel restrictions that require user namespace mounts to preserve
+// CL_UNPRIVILEGED locked flags.
+func getUnprivilegedMountFlags(path string) ([]string, error) {
+	var statfs unix.Statfs_t
+	if err := unix.Statfs(path, &statfs); err != nil {
+		return nil, err
+	}
+
+	// The set of keys come from https://github.com/torvalds/linux/blob/v4.13/fs/namespace.c#L1034-L1048.
+	unprivilegedFlags := map[uint64]string{
+		unix.MS_RDONLY:     "ro",
+		unix.MS_NODEV:      "nodev",
+		unix.MS_NOEXEC:     "noexec",
+		unix.MS_NOSUID:     "nosuid",
+		unix.MS_NOATIME:    "noatime",
+		unix.MS_RELATIME:   "relatime",
+		unix.MS_NODIRATIME: "nodiratime",
+	}
+
+	var flags []string
+	for mask, flag := range unprivilegedFlags {
+		if uint64(statfs.Flags)&mask == mask {
+			flags = append(flags, flag)
+		}
+	}
+
+	return flags, nil
+}
+
+// checks and removes duplicate values in string slice
+func DedupeStrSlice(in []string) []string {
+	m := make(map[string]struct{})
+	var res []string
+	for _, s := range in {
+		if _, ok := m[s]; !ok {
+			res = append(res, s)
+			m[s] = struct{}{}
+		}
+	}
+	return res
+}
+
+func (c *ContainerUtility) EnsureImage(ctx context.Context, containerImage string) (containerd.Image, error) {
+	image, err := c.Client.GetImage(ctx, containerImage)
+	if err != nil {
+		c.log.Infof("couldn't get %s image from client, so pulling the image\n", containerImage)
+		image, err = c.Client.Pull(ctx, containerImage, containerd.WithPullUnpack) // withpull unpack required?
+		if err != nil {
+			return nil, errors.Wrapf(err, "couldn't pull image:%s", containerImage)
+		}
+		c.log.Infof("image pulled: %s\n", image.Name())
+	}
+
+	return image, nil
+}
+
+func (c *ContainerUtility) MountandUnmount(ctx context.Context, image containerd.Image) error {
+	diffIDs, err := image.RootFS(ctx)
+	if err != nil {
+		return errors.Wrapf(err, "could not get rootfs")
+	}
+	chainID := identity.ChainID(diffIDs).String()
+
+	s := c.Client.SnapshotService(constants.DefaultSnapShotter)
+	tempDir, err := os.MkdirTemp("", "initialC")
+	if err != nil {
+		return errors.Wrapf(err, "could not mkdirtemp")
+	}
+	// We use Remove here instead of RemoveAll.
+	// The RemoveAll will delete the temp dir and all children it contains.
+	// When the Unmount fails, RemoveAll will incorrectly delete data from the mounted dir
+	defer os.Remove(tempDir)
+
+	var mounts []mount.Mount
+	mounts, err = s.View(ctx, tempDir, chainID)
+	if err != nil {
+		return errors.Wrapf(err, "could not view snapshotter")
+	}
+
+	unmounter := func(mountPath string) {
+		if uerr := mount.Unmount(mountPath, 0); uerr != nil {
+			zap.S().Debugf("Failed to unmount snapshot %q", tempDir)
+			if err == nil {
+				err = uerr
+			}
+		}
+	}
+
+	defer unmounter(tempDir)
+	if err := mount.All(mounts, tempDir); err != nil {
+		if err := s.Remove(ctx, tempDir); err != nil && !errdefs.IsNotFound(err) {
+			return errors.Wrapf(err, "could not remove tempdir")
+		}
+		return errors.Wrapf(err, "could not get get mount.all")
+	}
+	return nil
+}
+
+func GetNetworkopts(runOpts RunOpts, opts []oci.SpecOpts) []oci.SpecOpts {
+
+	if runOpts.Network == Host {
+		opts = append(opts, oci.WithHostNamespace(specs.NetworkNamespace), oci.WithHostHostsFile, oci.WithHostResolvconf)
+	}
+	return opts
+	// TODO: --net for cni, none and invalid
+}
+
+func SetPlatformOptions(opts []oci.SpecOpts) []oci.SpecOpts {
+	opts = append(opts,
+		oci.WithDefaultUnixDevices,
+		oci.WithoutRunMount, // unmount default tmpfs on "/run": https://github.com/containerd/nerdctl/issues/157)
+	)
+	//is this needed/right/wrong ?
+	opts = append(opts,
+		oci.WithMounts([]specs.Mount{
+			{Type: "cgroup", Source: "cgroup", Destination: "/sys/fs/cgroup", Options: []string{"ro", "nosuid", "noexec", "nodev"}},
+		}))
+	return opts
+}
+
+func GetEnvOpts(runOpts RunOpts, opts []oci.SpecOpts) ([]oci.SpecOpts, error) {
+	env := runOpts.Env
+	if len(env) > 0 {
+		opts = append(opts, oci.WithEnv(env))
+	}
+
+	envFiles := runOpts.EnvFiles
+	if len(envFiles) > 0 {
+		env, err := parseEnvVars(envFiles)
+		if err != nil {
+			zap.S().Errorf("error parsing env vars: %v", err)
+			return opts, err
+		}
+		opts = append(opts, oci.WithEnv(env))
+	}
+	return opts, nil
+}
+
+func GetVolumeOPts(runOpts RunOpts, opts []oci.SpecOpts) ([]oci.SpecOpts, error) {
+	mounts := []specs.Mount{}
+	for _, v := range runOpts.Volumes {
+		split := strings.Split(v, ":")
+		src := split[0]
+		dst := split[1]
+		// flag like --volume ${CERTS_DIR}/authn_webhook/:/certs:ro" contains here `ro` which is mode/option = split[2]
+		options := []string{}
+		if len(split) == 3 {
+			options = append(options, split[2])
+		}
+		options = append(options, "rbind") // dont know why appending rbind.
+		if userns.RunningInUserNS() {
+			unpriv, err := getUnprivilegedMountFlags(src)
+			if err != nil {
+				return opts, errors.Wrapf(err, "error getting unprirvileged mount flags")
+			}
+			options = DedupeStrSlice(append(options, unpriv...))
+		}
+
+		mount := specs.Mount{
+			Type:        "none", // dont know why its none
+			Source:      src,
+			Destination: dst,
+			Options:     options,
+		}
+		mounts = append(mounts, mount)
+	}
+
+	opts = append(opts, oci.WithMounts(mounts))
+
+	return opts, nil
+}
+
+func GetCmdargsOpts(image containerd.Image, cmdArgs []string, opts []oci.SpecOpts) []oci.SpecOpts {
+	opts = append(opts, oci.WithImageConfigArgs(image, cmdArgs))
+	// check if this required //opts = append(opts, oci.WithProcessArgs(processArgs...)) and how to use
+	return opts
+}
+
+func GetPrivilegedOpts(runOpts RunOpts, opts []oci.SpecOpts) []oci.SpecOpts {
+
+	if runOpts.Privileged {
+		privilegedOpts := []oci.SpecOpts{
+			oci.WithPrivileged,
+			oci.WithAllDevicesAllowed,
+			oci.WithHostDevices,
+			oci.WithNewPrivileges,
+		}
+		opts = append(opts, privilegedOpts...)
+	}
+
+	return opts
 }
