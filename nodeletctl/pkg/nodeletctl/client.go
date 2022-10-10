@@ -23,6 +23,7 @@ func GetClient(clusterCfg *BootstrapConfig) (*ClusterClient, error) {
 	var kubeconfig string
 	if clusterCfg.KubeConfig == "" {
 		kubeconfigPath := filepath.Join(ClusterStateDir, clusterCfg.ClusterId, "certs", AdminKubeconfig)
+		kubeconfig = kubeconfigPath
 		if _, err := os.Stat(kubeconfigPath); os.IsNotExist(err) {
 			return nil, fmt.Errorf("kubeconfig not specified and not found in default path %s", kubeconfigPath)
 		}

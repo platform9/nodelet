@@ -17,7 +17,7 @@ import (
 type LocalClient struct {
 }
 
-func getLocalClient() ssh.Client {
+func GetLocalClient() ssh.Client {
 	return &LocalClient{}
 }
 
