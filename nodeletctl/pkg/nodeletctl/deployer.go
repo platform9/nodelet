@@ -47,13 +47,13 @@ func NewNodeletDeployer(cfg *BootstrapConfig, sshClient ssh.Client,
 
 func GetNodeletDeployer(cfg *BootstrapConfig, clusterStatus *ClusterStatus, nodeletCfg *NodeletConfig, nodeletSrcFile string) (*NodeletDeployer, error) {
 	nodeName := nodeletCfg.HostIp
-	local, err := isLocal(nodeName)
+	local, err := IsLocal(nodeName)
 	if err != nil {
 		return nil, err
 	}
 	var sshClient ssh.Client
 	if local {
-		sshClient = getLocalClient()
+		sshClient = GetLocalClient()
 	} else {
 		sshKey, err := ioutil.ReadFile(cfg.SSHPrivateKeyFile)
 		if err != nil {
@@ -69,7 +69,7 @@ func GetNodeletDeployer(cfg *BootstrapConfig, clusterStatus *ClusterStatus, node
 	return deployer, nil
 }
 
-func isLocal(nodeName string) (bool, error) {
+func IsLocal(nodeName string) (bool, error) {
 	name, err := os.Hostname()
 	if err != nil {
 		return false, fmt.Errorf("failed to get hostname: %s", err)
