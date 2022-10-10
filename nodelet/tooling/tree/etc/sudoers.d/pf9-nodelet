@@ -20,6 +20,9 @@ pf9     ALL = NOPASSWD: /opt/pf9/pf9-kube/setup_env_and_run_script.sh /opt/pf9/p
           NOPASSWD: /bin/systemctl stop pf9-kubelet, \
           NOPASSWD: /bin/systemctl is-active pf9-kubelet, \
           NOPASSWD: /bin/chown -R pf9\:pf9group /var/opt/pf9/kube/kubelet-config, \
-          NOPASSWD: /bin/mkdir -p /var/lib/kubelet
+          NOPASSWD: /bin/mkdir -p /var/lib/kubelet, \
+          NOPASSWD: /usr/bin/touch /run/systemd/system/pf9-kubelet.service, \
+          NOPASSWD: /bin/chown pf9\:pf9group /run/systemd/system/pf9-kubelet.service, \
+          NOPASSWD: /bin/chmod 770 /run/systemd/system/pf9-kubelet.service
 
 Defaults:pf9 !requiretty
