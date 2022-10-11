@@ -13,7 +13,6 @@ import (
 	"math/big"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"text/template"
 	"time"
@@ -34,7 +33,7 @@ func GenCALocal(clusterName string) (string, error) {
 	certsDir := filepath.Join(ClusterStateDir, clusterName, "certs")
 	if CertsExist(clusterName) {
 		zap.S().Infof("Certs already exist, using preexisting: %s\n", certsDir)
-		return "", nil
+		return certsDir, nil
 	}
 	if err := os.MkdirAll(certsDir, 0755); err != nil {
 		return "", err
@@ -92,12 +91,12 @@ func genCA(certsDir string) error {
 	caFile := filepath.Join(certsDir, RootCACRT)
 	keyFile := filepath.Join(certsDir, RootCAKey)
 
-	err = ioutil.WriteFile(caFile, caCertPEM.Bytes(), os.ModeAppend)
+	err = ioutil.WriteFile(caFile, caCertPEM.Bytes(), 0644)
 	if err != nil {
 		return fmt.Errorf("Failed to write CA cert: %s", err)
 	}
 
-	err = ioutil.WriteFile(keyFile, caPrivKeyPEM.Bytes(), 0644)
+	err = ioutil.WriteFile(keyFile, caPrivKeyPEM.Bytes(), 0600)
 	if err != nil {
 		return fmt.Errorf("Failed to write CA private key: %s", err)
 	}
@@ -198,7 +197,7 @@ func GenKubeconfig(cfg *BootstrapConfig) error {
 		return fmt.Errorf("Failed to write admin client cert: %s", err)
 	}
 
-	err = ioutil.WriteFile(adminKeyFile, adminPrivKeyPEM.Bytes(), 0644)
+	err = ioutil.WriteFile(adminKeyFile, adminPrivKeyPEM.Bytes(), 0600)
 	if err != nil {
 		return fmt.Errorf("Failed to write admin private key: %s", err)
 	}
@@ -315,7 +314,7 @@ func trustCA(certsDir string) error {
 		return fmt.Errorf("failed to enable ca trust: %v - %s", err, string(output))
 	}
 
-	srcFile := path.Join(certsDir, RootCACRT)
+	srcFile := filepath.Join(certsDir, RootCACRT)
 	dstFile := CAPath
 
 	// clean up any previous ca
