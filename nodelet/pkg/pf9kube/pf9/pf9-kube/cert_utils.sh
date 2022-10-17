@@ -17,6 +17,9 @@ function download_missing_certs() {
         params_for_cmnd=${cert_path_to_params_map["$try_cert_path"]}
         cert $params_for_cmnd "--certs_dir=$try_cert_path" &
         cert_lpid="$!"
+        if [ $STANDALONE == "true" ]; then
+            wait $cert_lpid
+        fi
         cert_pids_to_path_map[${cert_lpid}]="$try_cert_path"
     done
 }
@@ -230,12 +233,27 @@ function self_sign_csr()
     ca=$4
     sans=$5
 
+    local serial_arg='-CAcreateserial'
+    if [ -f $CERTS_SERIAL_FILE ]; then
+        echo "CSR: ${csr} Certs serial file exists, using -CAserial ${CERTS_SERIAL_FILE}"
+        serial_arg="-CAserial ${CERTS_SERIAL_FILE}"
+    else
+        echo "CSR: ${csr} serial file does not exist, using -CAcreateserial"
+    fi
+
     if [ "x$sans" == "x" ]; then
         sans="DNS:$name"
     fi
     dir=`dirname $csr`
     openssl_temp_conf=$dir/openssl_$name.conf
     echo -e "[v3_req]\nkeyUsage=critical,digitalSignature,keyEncipherment\nextendedKeyUsage=critical,serverAuth,clientAuth\nsubjectAltName=$sans" > $openssl_temp_conf
-    openssl x509 -req -CA $cacert -CAkey $cakey -in $csr -out $cert -days 365 -CAcreateserial -extensions v3_req -extfile $openssl_temp_conf
+    openssl x509 -req $serial_arg -CA $cacert -CAkey $cakey -in $csr -out $cert -days 365 -extensions v3_req -extfile $openssl_temp_conf
+
+    while [ ! -f $CERTS_SERIAL_FILE ] ;
+    do
+        echo "${CERTS_SERIAL_FILE} does not exist, waiting for creation after openssl req..."
+        sleep 1
+    done
+
     cp $cacert $ca
 }
