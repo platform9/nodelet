@@ -1152,6 +1152,11 @@ function teardown_certs()
         echo "Removing the certs directory"
         rm -rf "$CERTS_DIR" ;
     fi
+
+    if [ -f $CERTS_SERIAL_FILE ]; then
+        echo "Removing certs serial file"
+        rm -f $CERTS_SERIAL_FILE
+    fi
 }
 
 # Returns sed expression to replace a pattern. If the replacement string is
