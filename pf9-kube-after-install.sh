@@ -104,4 +104,5 @@ chmod -w -R /opt/pf9/pf9-kube || true
 # Add write and execute permissions /opt/pf9/pf9-kube/conf to allow templates to be rendered
 chmod 0770 -R /opt/pf9/pf9-kube/conf/
 
+systemctl enable pf9-nodeletd
 
