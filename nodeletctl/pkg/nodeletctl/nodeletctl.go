@@ -988,7 +988,15 @@ func UploadHostsFile(clusterCfg *BootstrapConfig) error {
 }
 
 func WriteHostsFileForEntries(clusterName string, entries []string) (string, error) {
-	hostsFile := filepath.Join(ClusterStateDir, clusterName, "hosts")
+	clusterDir := filepath.Join(ClusterStateDir, clusterName)
+	if _, err := os.Stat(clusterDir); os.IsNotExist(err) {
+		zap.S().Infof("Creating node state dir: %s\n", clusterDir)
+		if err := os.MkdirAll(clusterDir, 0777); err != nil {
+			return "", fmt.Errorf("Failed to create dir: %s", err)
+		}
+	}
+
+	hostsFile := filepath.Join(clusterDir, "hosts")
 	fd, err := os.OpenFile(hostsFile, os.O_TRUNC|os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
 		zap.S().Errorf("Failed to open hosts file %s for writing: %s", hostsFile, err)
