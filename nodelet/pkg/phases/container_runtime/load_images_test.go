@@ -84,13 +84,13 @@ var _ = Describe("Test Load user images to container runtime phase", func() {
 			assert.NotNil(GinkgoT(), reterr)
 			assert.Equal(GinkgoT(), err, reterr)
 		})
-		It("succeds if check is false and successfully loads images", func() {
+		It("succeeds if check is false and successfully loads images", func() {
 			fakeFileUtils.EXPECT().VerifyChecksum(fakeCfg.UserImagesDir).Return(false, nil).AnyTimes()
 			fakeImageUtils.EXPECT().LoadImagesFromDir(ctx, fakeCfg.UserImagesDir, constants.K8sNamespace).Return(nil).AnyTimes()
 			reterr := fakePhase.Status(ctx, *fakeCfg)
 			assert.Nil(GinkgoT(), reterr)
 		})
-		It("succeds if check is true", func() {
+		It("succeeds if check is true", func() {
 			fakeFileUtils.EXPECT().VerifyChecksum(fakeCfg.UserImagesDir).Return(true, nil).AnyTimes()
 			reterr := fakePhase.Status(ctx, *fakeCfg)
 			assert.Nil(GinkgoT(), reterr)
@@ -136,16 +136,23 @@ var _ = Describe("Test Load user images to container runtime phase", func() {
 				err := os.Remove("testdata/checksum/sha256sums.txt")
 				assert.Nil(GinkgoT(), err)
 			})
-			It("Fails if could not load images", func() {
+			It("Fails if checksum mismatches and could not load images", func() {
 				err := errors.New("error")
+				fakeFileUtils.EXPECT().VerifyChecksum(fakeCfg.UserImagesDir).Return(false, nil).AnyTimes()
 				fakeImageUtils.EXPECT().LoadImagesFromDir(ctx, fakeCfg.UserImagesDir, constants.K8sNamespace).Return(err).AnyTimes()
 				reterr := fakePhase.Start(ctx, *fakeCfg)
 				assert.NotNil(GinkgoT(), reterr)
 				assert.Equal(GinkgoT(), err, reterr)
 			})
-			It("Succeeds if loads images", func() {
+			It("Succeeds if checksum mismatches and it loads images", func() {
+				fakeFileUtils.EXPECT().VerifyChecksum(fakeCfg.UserImagesDir).Return(false, nil).AnyTimes()
 				fakeImageUtils.EXPECT().LoadImagesFromDir(ctx, fakeCfg.UserImagesDir, constants.K8sNamespace).Return(nil).AnyTimes()
 				reterr := fakePhase.Start(ctx, *fakeCfg)
+				assert.Nil(GinkgoT(), reterr)
+			})
+			It("succeeds if checksum matches", func() {
+				fakeFileUtils.EXPECT().VerifyChecksum(fakeCfg.UserImagesDir).Return(true, nil).AnyTimes()
+				reterr := fakePhase.Status(ctx, *fakeCfg)
 				assert.Nil(GinkgoT(), reterr)
 			})
 		})
