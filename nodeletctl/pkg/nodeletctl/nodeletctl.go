@@ -333,10 +333,14 @@ func ParseBootstrapConfig(cfgPath string) (*BootstrapConfig, error) {
 	}
 
 	if len(bootstrapConfig.DNS.InlineHosts) > 0 {
+		// If custom hosts are specified, save to /etc/pf9/hosts and upload to each node to use core CoreDNS
 		bootstrapConfig.DNS.HostsFile, err = WriteHostsFileForEntries(bootstrapConfig.ClusterId, bootstrapConfig.DNS.InlineHosts)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to generate custom hosts file: %s", err)
 		}
+	} else if bootstrapConfig.DNS.HostsFile == "" {
+		// If custom hosts and custom file are both empty, use local /etc/hosts as default
+		bootstrapConfig.DNS.HostsFile = "/etc/hosts"
 	}
 
 	return bootstrapConfig, nil
