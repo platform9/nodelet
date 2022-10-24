@@ -123,10 +123,10 @@ func CreateCluster(cfgPath string) error {
 		return fmt.Errorf("Failed to Parse Cluster Config: %s", err)
 	}
 
-	clusterStateDir := filepath.Join(ClusterStateDir, clusterCfg.ClusterId)
-	if _, err := os.Stat(clusterStateDir); err == nil {
-		zap.S().Warnf("Found pre-existing cluster state directory %s, re-using certs. Consider removing or scale or upgrade operations", clusterStateDir)
-		fmt.Printf("Found pre-existing cluster state directory %s, re-using certs. Consider removing or scale or upgrade operations", clusterStateDir)
+	clusterStateCertsDir := filepath.Join(ClusterStateDir, clusterCfg.ClusterId, "certs")
+	if _, err := os.Stat(clusterStateCertsDir); err == nil {
+		zap.S().Warnf("Found pre-existing certs directory %s, re-using certs. Consider removing or scale or upgrade operations", clusterStateCertsDir)
+		fmt.Printf("Found pre-existing certs directory %s, re-using certs. Consider removing or scale or upgrade operations", clusterStateCertsDir)
 	}
 
 	masters, err := GetCurrentMasters(clusterCfg)
