@@ -27,7 +27,7 @@ func New() NetInterface {
 	return &NetImpl{}
 }
 
-//AddrConv generates <pos> th IP from hostCIDR
+// AddrConv generates <pos> th IP from hostCIDR
 func (n *NetImpl) AddrConv(hostCIDR string, pos int) (string, error) {
 
 	_, ipnet, errCidr := net.ParseCIDR(hostCIDR)
@@ -58,7 +58,7 @@ func (n *NetImpl) GetNodeIdentifier(cfg config.Config) (string, error) {
 
 	var err error
 	var nodeIdentifier string
-	if cfg.CloudProviderType == constants.LocalCloudProvider && cfg.UseHostname {
+	if cfg.CloudProviderType == constants.LocalCloudProvider && cfg.UseHostname == constants.TrueString {
 		nodeIdentifier, err = os.Hostname()
 		if err != nil {
 			return nodeIdentifier, errors.Wrap(err, "failed to get hostName for node identification")

@@ -109,7 +109,7 @@ func (k *KubeletImpl) EnsureKubeletRunning(cfg config.Config) error {
 	}
 
 	// if CLOUD_PROVIDER_TYPE is not local i.e. AWS, Azure, etc. or if it is local but USE_HOSTNAME is not true then use the node_endpoint (IP address).
-	if cfg.CloudProviderType != "local" || (cfg.CloudProviderType == "local" && cfg.UseHostname != "true") {
+	if cfg.CloudProviderType != "local" || (cfg.CloudProviderType == "local" && cfg.UseHostname != constants.TrueString) {
 		// if --hostname-override is not specified hostname of the node is used by default
 		// in case --hostname-override is specified along with cloud provider then cloud provider determines
 		// the hostname
@@ -117,7 +117,7 @@ func (k *KubeletImpl) EnsureKubeletRunning(cfg config.Config) error {
 		kubeletArgs += " --hostname-override=" + nodeName
 	}
 
-	nodeIP, err := k.NetUtils.GetNodeIP()
+	nodeIP, err := k.NetUtils.GetNodeIP(false)
 	if err != nil {
 		zap.S().Errorf("failed to fetch NodeIP %s", err)
 		return err
