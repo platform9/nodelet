@@ -191,12 +191,6 @@ var (
 
 	ContainerdConfigFile = fmt.Sprintf("%s/config.toml", EtcContainerdDir)
 
-	ContainerdCgroup = "systemd"
-
-	Pf9User = "pf9"
-
-	Pf9Group = "pf9group"
-
 	// Phase orders of all the phases
 	NoRolePhaseOrder                   = 10
 	GenCertsPhaseOrder                 = 20
