@@ -14,8 +14,8 @@ DOCKER_BUILD_CMD=${DOCKER} build
 DOCKER_RMI_CMD=${DOCKER} rmi
 RM=rm
 REPEAT_TESTS ?= "1"
-GITBRANCH=$(shell git symbolic-ref --short HEAD)
-GITCOMMIT=$(shell git rev-parse HEAD)
+WGET_CMD ?= "wget"
+
 
 # Using PWD is not guaranteed to be the directory of the Makefile. Use these instead:
 MAKE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
@@ -45,8 +45,9 @@ GOLANG_DOCKER_MARKER := ${NODELET_BUILD_DIR}/${COMPILE_IMAGE}.marker
 .PHONY: nodelet-setup nodelet nodelet-test nodelet-clean
 .DEFAULT_GOAL:= nodelet
 
+
 # Download/create build envs
-nodelet-setup: ${NODELET_BIN_DIR} ${GOLANG_DOCKER_MARKER}
+nodelet-setup: ${NODELET_BIN_DIR} ${GOLANG_DOCKER_MARKER} 
 	echo "setting up env for nodeletd"
 	cd ${NODELET_SRC_DIR} && go mod vendor || true
 

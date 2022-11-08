@@ -392,3 +392,14 @@ EOF
     systemctl daemon-reload
     systemctl restart containerd
 }
+
+function install_keepalived()
+{
+  echo "Removing keepalived"
+  # remove keepalived
+  yum erase -y keepalived
+
+  echo "Installing keepalived"
+  # install keepalived
+  yum install -y $KEEPALIVED_PACKAGE_DIR/keepalived-2.1.3-1.el7.x86_64.rpm
+}

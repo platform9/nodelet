@@ -281,7 +281,7 @@ DEB_SRC_ROOT := $(PF9_KUBE_SRCDIR)/debsrc
 .PHONY: cni-plugins
 ARCH := linux-amd64
 
-# To pull new cni plugin binaries, update the CNI_PLUGINS_VERSION tag to the reqired version
+#To pull new cni plugin binaries, update the CNI_PLUGINS_VERSION tag to the reqired version
 CNI_PLUGINS_BASE_DIR := $(BUILD_DIR)/cni-plugins
 CNI_PLUGINS_DIR := $(CNI_PLUGINS_BASE_DIR)/$(CNI_PLUGINS_VERSION)
 CNI_PLUGINS_FILE := cni-plugins-${ARCH}-${CNI_PLUGINS_VERSION}.tgz
@@ -299,12 +299,58 @@ $(CNI_PLUGINS_DIR): | $(CNI_PLUGINS_BASE_DIR)
 
 cni-plugins: $(CNI_PLUGINS_DIR)
 
+
+#################################
+# Containerd Binaries and runc
+
+.PHONY: containerd
+# Download containerd
+CONTAINERD_BASE_DIR := $(BUILD_DIR)/runtime/containerd
+CONTAINERD_DIR := $(CONTAINERD_BASE_DIR)/$(CONTAINERD_VERSION)
+CONTAINERD_FILE := containerd-${CONTAINERD_VERSION}-linux-amd64.tar.gz
+CONTAINERD_URL := https://github.com/containerd/containerd/releases/download/v${CONTAINERD_VERSION}/${CONTAINERD_FILE}
+
+$(CONTAINERD_BASE_DIR):
+	echo "make CONTAINERD_BASE_DIR: $(CONTAINERD_BASE_DIR)"
+	mkdir -p $@
+
+$(CONTAINERD_DIR): | $(CONTAINERD_BASE_DIR)
+	echo "make CONTAINERD_DIR: $(CONTAINERD_DIR)"
+	mkdir -p $@
+	cd $@ && \
+	${WGET_CMD} ${CONTAINERD_URL}  -qO- | tar -zx
+
+containerd: $(CONTAINERD_DIR)
+
+
+.PHONY: runc
+# Download runc
+RUNC_BASE_DIR := $(BUILD_DIR)/runtime/runc
+RUNC_DIR := $(RUNC_BASE_DIR)/$(RUNC_VERSION)
+RUNC_FILE_NAME := runc.amd64
+RUNC_FILE := $(RUNC_DIR)/runc
+RUNC_URL := https://github.com/opencontainers/runc/releases/download/v${RUNC_VERSION}/${RUNC_FILE_NAME}
+
+$(RUNC_BASE_DIR):
+	echo "make RUNC_BASE_DIR: $(RUNC_BASE_DIR)"
+	mkdir -p $@
+
+$(RUNC_DIR): | $(RUNC_BASE_DIR)
+	echo "make RUNC_DIR: $(RUNC_DIR)"
+	mkdir -p $@
+	cd $@ && \
+	${WGET_CMD} ${RUNC_URL}  -O ${RUNC_FILE}
+	chmod +x ${RUNC_FILE}
+
+runc: $(RUNC_DIR)
+
+
 # CONTAINERD CLI
 
 # NERDCTL install
 .PHONY: nerdctl
 NERDCTL_CLI := "nerdctl"
-NERDCTL_CLI_VERSION := "0.10.0"
+NERDCTL_CLI_VERSION := "0.22.0"
 NERDCTL_URL := https://github.com/containerd/nerdctl/releases/download/v${NERDCTL_CLI_VERSION}/nerdctl-${NERDCTL_CLI_VERSION}-linux-amd64.tar.gz
 NERDCTL_DIR := "nerdctl"
 
@@ -314,6 +360,22 @@ nerdctl:
 	mkdir -p ${NERDCTL_DIR} && \
     curl --output ${NERDCTL_DIR}/nerdctl-${NERDCTL_CLI_VERSION}-linux-amd64.tar.gz -L ${NERDCTL_URL} && \
     tar -C ${NERDCTL_DIR} -xvf ${NERDCTL_DIR}/nerdctl-${NERDCTL_CLI_VERSION}-linux-amd64.tar.gz
+
+# Keealived packages download
+.PHONY: keepalived
+KEEPALIVED_DEB_U20 := https://github.com/hnakamur/keepalived-deb/releases/download/debian%2F1%252.1.3-1ubuntu1ppa1-focal/keepalived_2.1.3-1ubuntu1ppa1.focal_amd64.deb
+KEEPALIVED_DEB_U18 := https://github.com/hnakamur/keepalived-deb/releases/download/debian%2F1%252.1.3-1ubuntu1ppa1-bionic/keepalived_2.1.3-1ubuntu1ppa1.bionic_amd64.deb
+KEEPALIVED_RPM_CENTOS7 := https://github.com/hnakamur/keepalived-rpm/releases/download/2.1.3-1/keepalived-2.1.3-1.el7.x86_64.rpm
+
+keepalived:
+	echo "Downloading Keepalived packages"
+	mkdir -p $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/keepalived_packages/
+	curl --output $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/keepalived_packages/keepalived_2.1.3-1ubuntu1ppa1.focal_amd64.deb -L ${KEEPALIVED_DEB_U20}
+	curl --output $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/keepalived_packages/keepalived_2.1.3-1ubuntu1ppa1.bionic_amd64.deb -L ${KEEPALIVED_DEB_U18}
+	curl --output $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/keepalived_packages/keepalived-2.1.3-1.el7.x86_64.rpm -L ${KEEPALIVED_RPM_CENTOS7}
+	# Download Ubuntu 18.04 dependency packages as well
+	curl --output $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/keepalived_packages/libjansson4_2.11-1_amd64.deb -L http://archive.ubuntu.com/ubuntu/pool/main/j/jansson/libjansson4_2.11-1_amd64.deb
+	curl --output $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/keepalived_packages/libnftnl7_1.0.9-2_amd64.deb -L http://archive.ubuntu.com/ubuntu/pool/universe/libn/libnftnl/libnftnl7_1.0.9-2_amd64.deb
 
 
 # CRICTL install
@@ -478,7 +540,7 @@ jq:
 	${WGET_CMD} -O jq -L https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 && \
 	chmod u=rwx,og=rx jq
 
-$(COMMON_SRC_ROOT): easyrsa $(AUTHBS_SRC_DIR) bouncer-docker-image kubernetes nodelet cni-plugins nerdctl crictl calicoctl etcdctl etcd_raft_checker pf9kube-addr-conv pf9kube-ip_type virtctl jq
+$(COMMON_SRC_ROOT): easyrsa $(AUTHBS_SRC_DIR) bouncer-docker-image kubernetes nodelet cni-plugins containerd runc nerdctl crictl calicoctl etcdctl etcd_raft_checker pf9kube-addr-conv pf9kube-ip_type virtctl jq keepalived
 	echo "make COMMON_SRC_ROOT $(COMMON_SRC_ROOT)"
 	echo "COMMON_SRC_ROOT is $(COMMON_SRC_ROOT)" # i.e. /vagrant/build/pf9-kube/pf9-kube-src/common
 	echo "AGENT_SRC_DIR is $(AGENT_SRC_DIR)" # cp -a /vagrant/agent/root/* /vagrant/build/pf9-kube/pf9-kube-src/common/
@@ -507,6 +569,10 @@ $(COMMON_SRC_ROOT): easyrsa $(AUTHBS_SRC_DIR) bouncer-docker-image kubernetes no
 	cp -a $(BOUNCER_IMAGE_TARBALL) $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/images/
 	mkdir -p $(COMMON_SRC_ROOT)/opt/cni/bin
 	cp -a $(CNI_PLUGINS_DIR)/* $(COMMON_SRC_ROOT)/opt/cni/bin/
+	mkdir -p $(COMMON_SRC_ROOT)/usr/local
+	cp -ar $(CONTAINERD_DIR)/* $(COMMON_SRC_ROOT)/usr/local
+	mkdir -p $(COMMON_SRC_ROOT)/usr/local/sbin
+	cp -a $(RUNC_DIR)/* $(COMMON_SRC_ROOT)/usr/local/sbin
 	mkdir -p $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/conf/networkapps
 	mv -f $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/conf/networkapps/calico.yaml $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/conf/networkapps/calico-${KUBERNETES_VERSION}.yaml
 	mv -f $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/conf/networkapps/canal.yaml $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/conf/networkapps/canal-${KUBERNETES_VERSION}.yaml
@@ -554,7 +620,7 @@ $(PF9_KUBE_DEB_FILE): $(DEB_SRC_ROOT)
 		--description "Platform9 kubernetes(Nodelet) deb package. Built on git hash $(GITHASH)" \
 		-v $(PF9_KUBE_VERSION)-$(PF9_KUBE_RELEASE) --provides nodelet --provides pf9app \
 		--license "Commercial" --architecture all --url "http://www.platform9.net" --vendor Platform9 \
-		-d curl -d gzip -d net-tools -d socat -d keepalived -d cgroup-tools \
+		-d curl -d gzip -d net-tools -d cgroup-tools \
 		--after-install $(AGENT_SRC_DIR)/pf9-kube-after-install.sh \
 		--before-remove $(AGENT_SRC_DIR)/pf9-kube-before-remove.sh \
 		--after-remove ${AGENT_SRC_DIR}/pf9-kube-after-remove.sh \

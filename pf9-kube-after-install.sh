@@ -17,6 +17,7 @@ mkdir -p /etc/pf9/kube.d
 mkdir -p /etc/cni/net.d
 mkdir -p /var/log/pf9/kubelet
 mkdir -p /var/opt/pf9/kube/apiserver-config
+
 # Enable calling iptables for packets ingress/egress'ing bridges
 # See IAAS-7747
 sysctl net/bridge/bridge-nf-call-iptables > /etc/pf9/kube.d/bridge-nf-call-iptables.old
@@ -31,6 +32,7 @@ chown -R pf9:pf9group /opt/pf9/hostagent/extensions/fetch_pf9_kube_status.py
 chown -R pf9:pf9group /opt/pf9/hostagent/extensions/fetch_pod_info.py
 chown -R pf9:pf9group /var/opt/pf9
 chown -R pf9:pf9group /etc/pf9
+chown -R pf9:pf9group /etc/containerd/config.toml
 
 # Clear any docker network configuration before installation of
 # any network plugin.
@@ -69,6 +71,31 @@ if [ -f /var/opt/pf9/kube_interface ]; then
     rm -f /var/opt/pf9/kube_interface || true
 fi
 
+
+# set containerd sysctl params
+mkdir -p /etc/sysctl.d/
+cat <<EOF | sudo tee /etc/sysctl.d/pf9-kubernetes-cri.conf
+net.bridge.bridge-nf-call-iptables  = 1
+net.ipv4.ip_forward                 = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+EOF
+sysctl --system
+
+# load containerd kernel modules
+mkdir -p /etc/modules-load.d/
+modprobe overlay
+modprobe br_netfilter
+cat <<EOF | sudo tee /etc/modules-load.d/containerd.conf
+overlay
+br_netfilter
+EOF
+
+chmod 0660 /etc/containerd/config.toml
+
+# Enable containerd 
+systemctl daemon-reload
+systemctl enable --now containerd
+
 # Make all pf9-kube files non-writable by pf9 user
 # To prevent files from being written using vim + :wq! make the root user owner of all files
 chown -R root:pf9group /opt/pf9/pf9-kube || true
@@ -76,3 +103,6 @@ chown -R root:pf9group /opt/pf9/pf9-kube || true
 chmod -w -R /opt/pf9/pf9-kube || true
 # Add write and execute permissions /opt/pf9/pf9-kube/conf to allow templates to be rendered
 chmod 0770 -R /opt/pf9/pf9-kube/conf/
+
+systemctl enable pf9-nodeletd
+

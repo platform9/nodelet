@@ -16,6 +16,8 @@ else
     exit 1
 fi
 
+export KEEPALIVED_PACKAGE_DIR="/opt/pf9/pf9-kube/keepalived_packages"
+
 function ensure_runtime_installed_and_stopped()
 {
     ensure_runtime_repo_installed
@@ -175,4 +177,36 @@ function prepare_docker_daemon_json()
         -e "s|__DOCKER_DEBUG_FLAG__|${DEBUG}|g" \
         -e "s|__DOCKER_LIVE_RESTORE_ENABLED__|${DOCKER_LIVE_RESTORE_ENABLED}|g" \
         -e "s|__DOCKER_REGISTRY_MIRRORS__|${DOCKER_REGISTRY_MIRRORS}|g"
+}
+
+function ensure_keepalived_installed()
+{
+  IS_KEEPALIVED_INSTALLED=-1
+  check_keepalived_installed
+  if [ $IS_KEEPALIVED_INSTALLED == 0 ]; then
+    echo "Expected Keepalived is not found, so (re)installing"
+    install_keepalived
+  fi
+}
+
+function check_keepalived_installed()
+{
+  local keepalived_status=$(hash keepalived 2>/dev/null; echo $?)
+  if [ $keepalived_status -eq 0 ]; then
+    echo "Keepalived found, checking version"
+    local keepalived_version_installed=$(keepalived --version 2>&1 >/dev/null | head -1 | cut -d " " -f 2)
+    echo "keepalived installed version = ${keepalived_version_installed}"
+    if [ ${keepalived_version_installed} == ${KEEPALIVED_VERSION} ]; then
+      echo "Expected Keepalived version is installed"
+      IS_KEEPALIVED_INSTALLED=1
+      return
+    fi
+    echo "Keepalived version ${KEEPALIVED_VERSION} expected but ${keepalived_version_installed} is found"
+    IS_KEEPALIVED_INSTALLED=0
+    return
+  fi
+
+  echo "Keepalived is not installed"
+  IS_KEEPALIVED_INSTALLED=0
+  return
 }

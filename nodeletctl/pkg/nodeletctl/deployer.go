@@ -45,14 +45,15 @@ func NewNodeletDeployer(cfg *BootstrapConfig, sshClient ssh.Client,
 	return deployer
 }
 
-func GetNodeletDeployer(cfg *BootstrapConfig, clusterStatus *ClusterStatus, nodeletCfg *NodeletConfig, nodeName, nodeletSrcFile string) (*NodeletDeployer, error) {
-	local, err := isLocal(nodeName)
+func GetNodeletDeployer(cfg *BootstrapConfig, clusterStatus *ClusterStatus, nodeletCfg *NodeletConfig, nodeletSrcFile string) (*NodeletDeployer, error) {
+	nodeName := nodeletCfg.HostIp
+	local, err := IsLocal(nodeName)
 	if err != nil {
 		return nil, err
 	}
 	var sshClient ssh.Client
 	if local {
-		sshClient = getLocalClient()
+		sshClient = GetLocalClient()
 	} else {
 		sshKey, err := ioutil.ReadFile(cfg.SSHPrivateKeyFile)
 		if err != nil {
@@ -68,7 +69,7 @@ func GetNodeletDeployer(cfg *BootstrapConfig, clusterStatus *ClusterStatus, node
 	return deployer, nil
 }
 
-func isLocal(nodeName string) (bool, error) {
+func IsLocal(nodeName string) (bool, error) {
 	name, err := os.Hostname()
 	if err != nil {
 		return false, fmt.Errorf("failed to get hostname: %s", err)
@@ -394,6 +395,11 @@ func (nd *NodeletDeployer) InstallNodelet() error {
 	}
 
 	if stdOut, stdErr, err := nd.client.RunCommand(installCmd); err != nil {
+		alreadyInstalled := "does not update installed package"
+		if strings.Contains(string(stdOut), alreadyInstalled) {
+			zap.S().Warnf("Found matching nodelet package already installed, re-using...\n")
+			return nil
+		}
 		return fmt.Errorf("Failed to run %s: %s: %s: %s", installCmd, err, stdErr, stdOut)
 	}
 
@@ -603,7 +609,7 @@ func (nd *NodeletDeployer) UploadUserImages() error {
 }
 
 func (nd *NodeletDeployer) UploadCoreDNSHostsFile() error {
-	if nd.nodeletCfg.CoreDNSHostsFile != "" {
+	if nd.nodeletCfg.CoreDNSHostsFile == "" {
 		zap.S().Infof("No custom hosts file specified, skipping upload")
 		return nil
 	}

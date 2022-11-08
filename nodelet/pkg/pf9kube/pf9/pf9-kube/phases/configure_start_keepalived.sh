@@ -13,6 +13,7 @@ source master_utils.sh
 
 function start() {
     if [ "${MASTER_VIP_ENABLED}" == "true" ]; then
+        ensure_keepalived_installed
         ensure_keepalived_configured
         start_keepalived
     fi
@@ -26,6 +27,13 @@ function stop() {
 
 function status() {
     if [ "${MASTER_VIP_ENABLED}" == "true" ]; then
+        # Check if correct version of keepalived installed
+        IS_KEEPALIVED_INSTALLED=-1
+        check_keepalived_installed
+        if [ $IS_KEEPALIVED_INSTALLED == 0 ]; then
+          exit 1
+        fi
+        # check if keepalived is running
         keepalived_running
     fi
 }

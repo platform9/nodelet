@@ -49,34 +49,34 @@ func (mr *MockNetInterfaceMockRecorder) AddrConv(arg0, arg1 interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddrConv", reflect.TypeOf((*MockNetInterface)(nil).AddrConv), arg0, arg1)
 }
 
-// GetIPv4ForInterfaceName mocks base method.
-func (m *MockNetInterface) GetIPv4ForInterfaceName(arg0 string) (string, error) {
+// GetHostPrimaryIp mocks base method.
+func (m *MockNetInterface) GetHostPrimaryIp(arg0 int) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetIPv4ForInterfaceName", arg0)
+	ret := m.ctrl.Call(m, "GetHostPrimaryIp", arg0)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetIPv4ForInterfaceName indicates an expected call of GetIPv4ForInterfaceName.
-func (mr *MockNetInterfaceMockRecorder) GetIPv4ForInterfaceName(arg0 interface{}) *gomock.Call {
+// GetHostPrimaryIp indicates an expected call of GetHostPrimaryIp.
+func (mr *MockNetInterfaceMockRecorder) GetHostPrimaryIp(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetIPv4ForInterfaceName", reflect.TypeOf((*MockNetInterface)(nil).GetIPv4ForInterfaceName), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHostPrimaryIp", reflect.TypeOf((*MockNetInterface)(nil).GetHostPrimaryIp), arg0)
 }
 
 // GetNodeIP mocks base method.
-func (m *MockNetInterface) GetNodeIP() (string, error) {
+func (m *MockNetInterface) GetNodeIP(arg0 bool) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetNodeIP")
+	ret := m.ctrl.Call(m, "GetNodeIP", arg0)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetNodeIP indicates an expected call of GetNodeIP.
-func (mr *MockNetInterfaceMockRecorder) GetNodeIP() *gomock.Call {
+func (mr *MockNetInterfaceMockRecorder) GetNodeIP(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNodeIP", reflect.TypeOf((*MockNetInterface)(nil).GetNodeIP))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNodeIP", reflect.TypeOf((*MockNetInterface)(nil).GetNodeIP), arg0)
 }
 
 // GetNodeIdentifier mocks base method.
@@ -92,21 +92,6 @@ func (m *MockNetInterface) GetNodeIdentifier(arg0 config.Config) (string, error)
 func (mr *MockNetInterfaceMockRecorder) GetNodeIdentifier(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNodeIdentifier", reflect.TypeOf((*MockNetInterface)(nil).GetNodeIdentifier), arg0)
-}
-
-// GetRoutedNetworkInterFace mocks base method.
-func (m *MockNetInterface) GetRoutedNetworkInterFace() (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRoutedNetworkInterFace")
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetRoutedNetworkInterFace indicates an expected call of GetRoutedNetworkInterFace.
-func (mr *MockNetInterfaceMockRecorder) GetRoutedNetworkInterFace() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRoutedNetworkInterFace", reflect.TypeOf((*MockNetInterface)(nil).GetRoutedNetworkInterFace))
 }
 
 // IpForHttp mocks base method.

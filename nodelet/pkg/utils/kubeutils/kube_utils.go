@@ -308,6 +308,13 @@ func (u *UtilsImpl) K8sApiAvailable(cfg config.Config) error {
 	}
 
 	res, err := client.Get(healthzUrl)
+
+	defer func() {
+		if res != nil && res.Body != nil {
+			res.Body.Close()
+		}
+	}()
+
 	if err != nil {
 		return errors.Wrap(err, "could not get to healthz")
 	}
@@ -435,7 +442,6 @@ func (u *UtilsImpl) EnsureAppCatalog() error {
 
 // ApplyYamlConfigFiles applies the yaml files
 func (u *UtilsImpl) ApplyYamlConfigFiles(files []string) error {
-
 	flags := genericclioptions.NewConfigFlags(false)
 	flags.KubeConfig = &constants.KubeConfig
 	cfg := kube.NewConfig(flags)

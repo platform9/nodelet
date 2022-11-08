@@ -95,6 +95,7 @@ type Config struct {
 	GRPCRetryTimeoutSeconds   int     `mapstructure:"GRPC_RETRY_TIMEOUT_SECONDS"`
 	NumCmdOutputLinesToLog    int     `mapstructure:"NUM_CMD_OP_LINES_TO_LOG"`
 	CloudProviderType         string  `mapstructure:"CLOUD_PROVIDER_TYPE"`
+	UseHostname               bool    `mapstructure:"USE_HOSTNAME"`
 	MasterIp                  string  `mapstructure:"MASTER_IP"`
 	K8sApiPort                string  `mapstructure:"K8S_API_PORT"`
 	MasterSchedulable         bool    `mapstructure:"ALLOW_WORKLOADS_ON_MASTER"`
@@ -114,6 +115,7 @@ type Config struct {
 	CPUManagerPolicy          string  `mapstructure:"CPU_MANAGER_POLICY"`
 	TopologyManagerPolicy     string  `mapstructure:"TOPOLOGY_MANAGER_POLICY"`
 	ReservedCPUs              string  `mapstructure:"RESERVED_CPUS"`
+	IPv6Enabled               bool    `mapstructure:"IPV6_ENABLED"`
 }
 
 // ToStringMap converts the Config struct to a map of strings

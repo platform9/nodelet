@@ -1,6 +1,7 @@
 package nodeletctl
 
 import (
+	"bufio"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -26,15 +27,29 @@ type BootstrapConfig struct {
 	MasterVipEnabled       bool                   `json:"masterVipEnabled,omitempty"`
 	MasterVipInterface     string                 `json:"masterVipInterface,omitempty"`
 	MasterVipVrouterId     int                    `json:"masterVipVrouterId,omitempty"`
-	CalicoV4Interface      string                 `json:"calicoV4Interface,omitempty"`
-	CalicoV6Interface      string                 `json:"calicoV6Interface,omitempty"`
 	MTU                    string                 `json:"mtu,omitempty"`
 	Privileged             string                 `json:"privileged,omitempty"`
 	ContainerRuntime       ContainerRuntimeConfig `json:"containerRuntime,omitempty"`
 	UserImages             []string               `json:"userImages,omitempty"`
 	DNS                    CoreDNSConfig          `json:"dns,omitempty"`
+	UseHostname            bool                   `json:"useHostname,omitempty"`
+	IPv6Enabled            bool                   `json:"ipv6,omitempty"`
+	Calico                 CalicoConfig           `json:"calico,omitempty"`
+	ServicesCidr           string                 `json:"servicesCidr,omitempty"`
 	MasterNodes            []HostConfig           `json:"masterNodes"`
 	WorkerNodes            []HostConfig           `json:"workerNodes"`
+}
+
+type CalicoConfig struct {
+	V4Interface      string `json:"v4Interface,omitempty"`
+	V6Interface      string `json:"v6Interface,omitempty"`
+	V4ContainersCidr string `json:"v4ContainersCidr,omitempty"`
+	V6ContainersCidr string `json:"v6ContainersCidr,omitempty"`
+	V4BlockSize      int    `json:"v4BlockSize,omitempty"`
+	V6BlockSize      int    `json:"v6BlockSize,omitempty"`
+	V4NATOutgoing    bool   `json:"v4NATOutgoing,omitempty"`
+	V6NATOutgoing    bool   `json:"v6NATOutgoing,omitempty"`
+	V4IpIpMode       string `json:"v4IpIpMode,omitempty"`
 }
 
 type CoreDNSConfig struct {
@@ -74,6 +89,19 @@ type NodeletConfig struct {
 	NodeletRole            string
 	UserImages             []string
 	CoreDNSHostsFile       string
+	IPv6Enabled            bool
+	UseHostname            bool
+	CalicoIP4              string
+	CalicoIP6              string
+	CalicoV4BlockSize      int
+	CalicoV6BlockSize      int
+	CalicoV6ContainersCidr string
+	CalicoV4ContainersCidr string
+	CalicoV4NATOutgoing    bool
+	CalicoV6NATOutgoing    bool
+	CalicoV4IpIpMode       string
+	ContainersCidr         string
+	ServicesCidr           string
 }
 
 type ClusterStatus struct {
@@ -93,6 +121,19 @@ func CreateCluster(cfgPath string) error {
 	if err != nil {
 		zap.S().Infof("Failed to Parse Cluster Config: %s", err)
 		return fmt.Errorf("Failed to Parse Cluster Config: %s", err)
+	}
+
+	clusterStateCertsDir := filepath.Join(ClusterStateDir, clusterCfg.ClusterId, "certs")
+	if _, err := os.Stat(clusterStateCertsDir); err == nil {
+		zap.S().Warnf("Found pre-existing certs directory %s, re-using certs. Consider removing or scale or upgrade operations", clusterStateCertsDir)
+		fmt.Printf("Found pre-existing certs directory %s, re-using certs. Consider removing or scale or upgrade operations", clusterStateCertsDir)
+	}
+
+	masters, err := GetCurrentMasters(clusterCfg)
+	if err == nil {
+		if len(masters) > 0 {
+			return fmt.Errorf("Found an already active cluster with masters: %v\nUse nodeletctl delete first", masters)
+		}
 	}
 
 	if err := DeployCluster(clusterCfg); err != nil {
@@ -146,7 +187,7 @@ func UpgradeCluster(cfgPath string) error {
 	}
 
 	if len(clusterCfg.MasterNodes) != len(masters) {
-		return fmt.Errorf("Masters in the cluster and Bootstrap config doesnt match", err)
+		return fmt.Errorf("Masters in the cluster and Bootstrap config doesnt match")
 	}
 	newMasters, oldMasters, _ := getDiffNodes(clusterCfg.MasterNodes, masters)
 	if len(newMasters) != 0 || len(oldMasters) != 0 {
@@ -154,7 +195,7 @@ func UpgradeCluster(cfgPath string) error {
 	}
 
 	if len(clusterCfg.WorkerNodes) != len(workers) {
-		return fmt.Errorf("Workers in the cluster and Bootstrap config doesnt match", err)
+		return fmt.Errorf("Workers in the cluster and Bootstrap config doesnt match")
 	}
 	newWorkers, oldWorkers, _ := getDiffNodes(clusterCfg.WorkerNodes, workers)
 	if len(newWorkers) != 0 || len(oldWorkers) != 0 {
@@ -184,7 +225,7 @@ func UpgradeCluster(cfgPath string) error {
 		}
 		zap.S().Debugf("master nodeletsrc file %s", nodeletSrcFile)
 
-		deployer, err := GetNodeletDeployer(clusterCfg, globalClusterStatus, nodeletCfg, nodeletCfg.HostIp, nodeletSrcFile)
+		deployer, err := GetNodeletDeployer(clusterCfg, globalClusterStatus, nodeletCfg, nodeletSrcFile)
 		if err != nil {
 			zap.S().Errorf("failed to get nodelet deployer: %v", err)
 			return fmt.Errorf("failed to get nodelet deployer: %v", err)
@@ -217,13 +258,18 @@ func UpgradeWorkers(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus) e
 		nodeletCfg := new(NodeletConfig)
 		setNodeletClusterCfg(clusterCfg, nodeletCfg)
 		nodeletCfg.HostId = host.NodeName
+		if host.NodeIP != nil {
+			nodeletCfg.HostIp = *host.NodeIP
+		} else {
+			nodeletCfg.HostIp = host.NodeName
+		}
 		nodeletCfg.NodeletRole = "worker"
 		nodeletSrcFile, err := GenNodeletConfigLocal(nodeletCfg, workerNodeletConfigTmpl)
 		if err != nil {
 			zap.S().Infof("Failed to generate config: %s", err)
 			return fmt.Errorf("Failed to generate config: %s", err)
 		}
-		deployer, err := GetNodeletDeployer(clusterCfg, clusterStatus, nodeletCfg, host.NodeName, nodeletSrcFile)
+		deployer, err := GetNodeletDeployer(clusterCfg, clusterStatus, nodeletCfg, nodeletSrcFile)
 		if err != nil {
 			zap.S().Errorf("failed to get nodelet deployer: %s", err)
 			return fmt.Errorf("failed to get nodelet deployer: %s", err)
@@ -237,11 +283,21 @@ func UpgradeWorkers(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus) e
 	wg.Wait()
 	return nil
 }
+
 func InitBootstrapConfig() *BootstrapConfig {
+	calicoConfig := CalicoConfig{}
+	calicoConfig.V4BlockSize = 26
+	calicoConfig.V6BlockSize = 122
+	calicoConfig.V4ContainersCidr = DefaultCalicoV4Cidr
+	calicoConfig.V6ContainersCidr = DefaultCalicoV6Cidr
+	calicoConfig.V4NATOutgoing = true
+	calicoConfig.V6NATOutgoing = false
+	calicoConfig.V4IpIpMode = "Always"
+	calicoConfig.V4Interface = "first-found"
+	calicoConfig.V6Interface = "first-found"
+
 	bootstrapCfg := &BootstrapConfig{
 		AllowWorkloadsOnMaster: false,
-		CalicoV4Interface:      "first-found",
-		CalicoV6Interface:      "first-found",
 		ClusterId:              DefaultClusterName,
 		ContainerRuntime:       ContainerRuntimeConfig{"containerd", "systemd"},
 		SSHUser:                "root",
@@ -251,7 +307,11 @@ func InitBootstrapConfig() *BootstrapConfig {
 		K8sApiPort:             "443",
 		MasterVipEnabled:       false,
 		MTU:                    "1440",
+		IPv6Enabled:            false,
+		UseHostname:            false,
+		Calico:                 calicoConfig,
 	}
+
 	return bootstrapCfg
 }
 
@@ -272,6 +332,17 @@ func ParseBootstrapConfig(cfgPath string) (*BootstrapConfig, error) {
 		return nil, fmt.Errorf("Invalid cluster config: %s", err)
 	}
 
+	if len(bootstrapConfig.DNS.InlineHosts) > 0 {
+		// If custom hosts are specified, save to /etc/pf9/hosts and upload to each node to use core CoreDNS
+		bootstrapConfig.DNS.HostsFile, err = WriteHostsFileForEntries(bootstrapConfig.ClusterId, bootstrapConfig.DNS.InlineHosts)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to generate custom hosts file: %s", err)
+		}
+	} else if bootstrapConfig.DNS.HostsFile == "" {
+		// If custom hosts and custom file are both empty, use local /etc/hosts as default
+		bootstrapConfig.DNS.HostsFile = "/etc/hosts"
+	}
+
 	return bootstrapConfig, nil
 }
 
@@ -283,6 +354,12 @@ func DeployCluster(clusterCfg *BootstrapConfig) error {
 			return fmt.Errorf("Cert generation failed: %s\n", err)
 		}
 		clusterCfg.CertsDir = certsDir
+	}
+
+	err := trustCA(clusterCfg.CertsDir)
+	if err != nil {
+		zap.S().Errorf("error adding nodelet Root CA as trusted certs: %s\n", err)
+		return fmt.Errorf("error adding nodelet Root CA as trusted certs: %s\n", err)
 	}
 
 	if err := GenKubeconfig(clusterCfg); err != nil {
@@ -321,7 +398,7 @@ func DeployCluster(clusterCfg *BootstrapConfig) error {
 			return fmt.Errorf("Failed to generate config: %s", err)
 		}
 		zap.S().Debugf("master nodeletsrc file %s", nodeletSrcFile)
-		deployer, err := GetNodeletDeployer(clusterCfg, globalClusterStatus, nodeletCfg, nodeletCfg.HostIp, nodeletSrcFile)
+		deployer, err := GetNodeletDeployer(clusterCfg, globalClusterStatus, nodeletCfg, nodeletSrcFile)
 		if err != nil {
 			zap.S().Errorf("failed to get nodelet deployer: %v", err)
 			return fmt.Errorf("failed to get nodelet deployer: %v", err)
@@ -378,8 +455,6 @@ func SyncAndRetry(clusterCfg *BootstrapConfig, nodeletStatus *ClusterStatus, nod
 
 func setNodeletClusterCfg(cfg *BootstrapConfig, nodelet *NodeletConfig) {
 	nodelet.AllowWorkloadsOnMaster = cfg.AllowWorkloadsOnMaster
-	nodelet.CalicoV4Interface = cfg.CalicoV4Interface
-	nodelet.CalicoV6Interface = cfg.CalicoV6Interface
 	nodelet.ClusterId = cfg.ClusterId
 	nodelet.ContainerRuntime = cfg.ContainerRuntime
 	nodelet.K8sApiPort = cfg.K8sApiPort
@@ -391,13 +466,55 @@ func setNodeletClusterCfg(cfg *BootstrapConfig, nodelet *NodeletConfig) {
 	nodelet.Privileged = cfg.Privileged
 	nodelet.UserImages = cfg.UserImages
 	nodelet.CoreDNSHostsFile = cfg.DNS.HostsFile
+	nodelet.IPv6Enabled = cfg.IPv6Enabled
+
+	//Set default Calico opts first
+	nodelet.CalicoV4Interface = cfg.Calico.V4Interface
+	nodelet.CalicoV4BlockSize = cfg.Calico.V4BlockSize
+	nodelet.CalicoV4IpIpMode = cfg.Calico.V4IpIpMode
+	nodelet.CalicoV4NATOutgoing = cfg.Calico.V4NATOutgoing
+	nodelet.ContainersCidr = cfg.Calico.V4ContainersCidr
+	nodelet.CalicoV6Interface = cfg.Calico.V6Interface
+	nodelet.CalicoV6BlockSize = cfg.Calico.V6BlockSize
+	nodelet.CalicoV6NATOutgoing = cfg.Calico.V6NATOutgoing
+	nodelet.CalicoV6ContainersCidr = cfg.Calico.V6ContainersCidr
+
+	if cfg.IPv6Enabled {
+		// Always use hostname as node identifier for IPv6
+		nodelet.UseHostname = true
+		// Disable IPv4 as dualstack not yet supported
+		nodelet.CalicoIP4 = "none"
+		nodelet.CalicoIP6 = "autodetect"
+
+		// Need to set this field for v6, as it is used to set kube-proxy arg
+		nodelet.ContainersCidr = cfg.Calico.V6ContainersCidr
+		if cfg.ServicesCidr == "" {
+			nodelet.ServicesCidr = DefaultV6ServicesCidr
+			cfg.ServicesCidr = DefaultV6ServicesCidr
+		} else {
+			nodelet.ServicesCidr = cfg.ServicesCidr
+		}
+	} else {
+		// IPv4 only
+		nodelet.UseHostname = cfg.UseHostname
+		nodelet.CalicoIP4 = "autodetect"
+		nodelet.CalicoIP6 = "none"
+		if cfg.ServicesCidr == "" {
+			nodelet.ServicesCidr = DefaultV4ServicesCidr
+			cfg.ServicesCidr = DefaultV4ServicesCidr
+		} else {
+			nodelet.ServicesCidr = cfg.ServicesCidr
+		}
+	}
 }
 
 func GenNodeletConfigLocal(host *NodeletConfig, templateName string) (string, error) {
 	nodeStateDir := filepath.Join(ClusterStateDir, host.ClusterId, host.HostId)
 	if _, err := os.Stat(nodeStateDir); os.IsNotExist(err) {
 		zap.S().Infof("Creating node state dir: %s\n", nodeStateDir)
-		os.MkdirAll(nodeStateDir, 0777)
+		if err := os.MkdirAll(nodeStateDir, 0777); err != nil {
+			return "", fmt.Errorf("Failed to create node state dir for host %s: %s", host.HostId, err)
+		}
 	}
 
 	nodeletCfgFile := filepath.Join(nodeStateDir, NodeletConfigFile)
@@ -429,7 +546,14 @@ func DeleteCluster(cfgPath string) error {
 	deleteFailed := false
 
 	for _, host := range allNodes {
-		deployer, err := GetNodeletDeployer(clusterCfg, nil, nil, host.NodeName, "")
+		nodeletCfg := new(NodeletConfig)
+		setNodeletClusterCfg(clusterCfg, nodeletCfg)
+		if host.NodeIP != nil {
+			nodeletCfg.HostIp = *host.NodeIP
+		} else {
+			nodeletCfg.HostIp = host.NodeName
+		}
+		deployer, err := GetNodeletDeployer(clusterCfg, nil, nodeletCfg, "")
 		if err != nil {
 			zap.S().Errorf("failed to get nodelet deployer: %v", err)
 			return fmt.Errorf("failed to get nodelet deployer: %v", err)
@@ -463,7 +587,7 @@ func GetClusterNodeletStatus(clusterCfg *BootstrapConfig, nodes *[]HostConfig) (
 			nodeletCfg.HostIp = host.NodeName
 		}
 
-		deployer, err := GetNodeletDeployer(clusterCfg, nodeletStatus, nodeletCfg, nodeletCfg.HostIp, "")
+		deployer, err := GetNodeletDeployer(clusterCfg, nodeletStatus, nodeletCfg, "")
 		if err != nil {
 			zap.S().Errorf("failed to get nodelet deployer: %v", err)
 			return nil, fmt.Errorf("failed to get nodelet deployer: %v", err)
@@ -622,7 +746,7 @@ func AddMasters(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus, currM
 		}
 		zap.S().Debugf("nodelet src file %s", nodeletSrcFile)
 
-		deployer, err := GetNodeletDeployer(clusterCfg, clusterStatus, nodeletCfg, nodeletCfg.HostIp, nodeletSrcFile)
+		deployer, err := GetNodeletDeployer(clusterCfg, clusterStatus, nodeletCfg, nodeletSrcFile)
 		if err != nil {
 			zap.S().Errorf("failed to get nodelet deployer: %v", err)
 			return fmt.Errorf("failed to get nodelet deployer: %v", err)
@@ -660,7 +784,7 @@ func RemoveMasters(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus, cu
 			return fmt.Errorf("Failed to remove nodes %+v from etcd members: %s", host, err)
 		}
 
-		deployer, err := GetNodeletDeployer(clusterCfg, nil, nil, host.NodeName, "")
+		deployer, err := GetNodeletDeployer(clusterCfg, nil, nodeletCfg, "")
 		if err != nil {
 			zap.S().Errorf("failed to get nodelet deployer: %v", err)
 			return fmt.Errorf("failed to get nodelet deployer: %v", err)
@@ -693,13 +817,18 @@ func DeployWorkers(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus, wo
 		nodeletCfg := new(NodeletConfig)
 		setNodeletClusterCfg(clusterCfg, nodeletCfg)
 		nodeletCfg.HostId = host.NodeName
+		if host.NodeIP != nil {
+			nodeletCfg.HostIp = *host.NodeIP
+		} else {
+			nodeletCfg.HostIp = host.NodeName
+		}
 		nodeletCfg.NodeletRole = "worker"
 		nodeletSrcFile, err := GenNodeletConfigLocal(nodeletCfg, workerNodeletConfigTmpl)
 		if err != nil {
 			zap.S().Infof("Failed to generate config: %s", err)
 			return fmt.Errorf("Failed to generate config: %s", err)
 		}
-		deployer, err := GetNodeletDeployer(clusterCfg, clusterStatus, nodeletCfg, host.NodeName, nodeletSrcFile)
+		deployer, err := GetNodeletDeployer(clusterCfg, clusterStatus, nodeletCfg, nodeletSrcFile)
 		if err != nil {
 			zap.S().Errorf("failed to get nodelet deployer: %s", err)
 			return fmt.Errorf("failed to get nodelet deployer: %s", err)
@@ -718,7 +847,15 @@ func DeployWorkers(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus, wo
 
 func DeleteWorkers(clusterCfg *BootstrapConfig, oldNodes []HostConfig) error {
 	for _, host := range oldNodes {
-		deployer, err := GetNodeletDeployer(clusterCfg, nil, nil, host.NodeName, "")
+		nodeletCfg := new(NodeletConfig)
+		setNodeletClusterCfg(clusterCfg, nodeletCfg)
+		nodeletCfg.HostId = host.NodeName
+		if host.NodeIP != nil {
+			nodeletCfg.HostIp = *host.NodeIP
+		} else {
+			nodeletCfg.HostIp = host.NodeName
+		}
+		deployer, err := GetNodeletDeployer(clusterCfg, nil, nodeletCfg, "")
 		if err != nil {
 			zap.S().Errorf("failed to get nodelet deployer: %v", err)
 			return fmt.Errorf("failed to get nodelet deployer: %v", err)
@@ -743,6 +880,12 @@ func RegenClusterCerts(cfgPath string) error {
 	if err != nil {
 		zap.S().Errorf("Failed to regenerate new CA: %s", err)
 		return fmt.Errorf("Failed to regenerate new CA: %s", err)
+	}
+
+	err = trustCA(clusterCfg.CertsDir)
+	if err != nil {
+		zap.S().Errorf("error adding nodelet Root CA as trusted certs: %s\n", err)
+		return fmt.Errorf("error adding nodelet Root CA as trusted certs: %s\n", err)
 	}
 
 	clusterStatus := new(ClusterStatus)
@@ -782,7 +925,7 @@ func regenCertsForHosts(clusterCfg *BootstrapConfig, nodes []HostConfig) error {
 			nodeletCfg.HostIp = host.NodeName
 		}
 
-		deployer, err := GetNodeletDeployer(clusterCfg, nil, nodeletCfg, nodeletCfg.HostIp, "")
+		deployer, err := GetNodeletDeployer(clusterCfg, nil, nodeletCfg, "")
 		if err != nil {
 			zap.S().Errorf("failed to get nodelet deployer: %s", err)
 			return fmt.Errorf("failed to get nodelet deployer: %s", err)
@@ -814,10 +957,17 @@ func ConfigClusterDNS(cfgPath string) error {
 }
 
 func UploadHostsFile(clusterCfg *BootstrapConfig) error {
-	allNodes := append(clusterCfg.WorkerNodes, clusterCfg.MasterNodes...)
 	failed := false
-	for _, host := range allNodes {
-		deployer, err := GetNodeletDeployer(clusterCfg, nil, nil, host.NodeName, "")
+	for _, host := range clusterCfg.MasterNodes {
+		nodeletCfg := new(NodeletConfig)
+		setNodeletClusterCfg(clusterCfg, nodeletCfg)
+		nodeletCfg.HostId = host.NodeName
+		if host.NodeIP != nil {
+			nodeletCfg.HostIp = *host.NodeIP
+		} else {
+			nodeletCfg.HostIp = host.NodeName
+		}
+		deployer, err := GetNodeletDeployer(clusterCfg, nil, nodeletCfg, "")
 		if err != nil {
 			zap.S().Errorf("failed to get nodelet deployer: %v", err)
 			return fmt.Errorf("failed to get nodelet deployer: %v", err)
@@ -839,6 +989,34 @@ func UploadHostsFile(clusterCfg *BootstrapConfig) error {
 		return fmt.Errorf("Failed to upload custom hosts file or restart nodelet. Check node for details")
 	}
 	return nil
+}
+
+func WriteHostsFileForEntries(clusterName string, entries []string) (string, error) {
+	clusterDir := filepath.Join(ClusterStateDir, clusterName)
+	if _, err := os.Stat(clusterDir); os.IsNotExist(err) {
+		zap.S().Infof("Creating node state dir: %s\n", clusterDir)
+		if err := os.MkdirAll(clusterDir, 0777); err != nil {
+			return "", fmt.Errorf("Failed to create dir: %s", err)
+		}
+	}
+
+	hostsFile := filepath.Join(clusterDir, "hosts")
+	fd, err := os.OpenFile(hostsFile, os.O_TRUNC|os.O_CREATE|os.O_RDWR, 0644)
+	if err != nil {
+		zap.S().Errorf("Failed to open hosts file %s for writing: %s", hostsFile, err)
+		return "", err
+	}
+
+	writer := bufio.NewWriter(fd)
+	for _, line := range entries {
+		_, err := writer.WriteString(line + "\n")
+		if err != nil {
+			fmt.Printf("Failed to write line %s\n", line)
+			return "", err
+		}
+	}
+	writer.Flush()
+	return hostsFile, nil
 }
 
 func SyncNodes(clusterCfg *BootstrapConfig, nodes *[]HostConfig) error {

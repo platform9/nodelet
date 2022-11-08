@@ -24,5 +24,10 @@ pf9     ALL = NOPASSWD: /opt/pf9/pf9-kube/setup_env_and_run_script.sh /opt/pf9/p
           NOPASSWD: /usr/bin/touch /run/systemd/system/pf9-kubelet.service, \
           NOPASSWD: /bin/chown pf9\:pf9group /run/systemd/system/pf9-kubelet.service, \
           NOPASSWD: /bin/chmod 770 /run/systemd/system/pf9-kubelet.service
+          NOPASSWD: /usr/bin/systemctl start containerd, \
+          NOPASSWD: /usr/bin/systemctl stop containerd, \
+          NOPASSWD: /usr/bin/systemctl is-active containerd, \
+          NOPASSWD: /usr/bin/chown pf9\:pf9group /run/containerd/containerd.sock, \
+          NOPASSWD: /usr/bin/rm -rf /var/lib/nerdctl
 
 Defaults:pf9 !requiretty

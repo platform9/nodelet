@@ -93,15 +93,35 @@ func (l *LoadImagePhase) Start(ctx context.Context, cfg config.Config) error {
 	}
 
 	checksumFile := fmt.Sprintf("%s/checksum/sha256sums.txt", cfg.UserImagesDir)
-	if _, err := os.Stat(checksumFile); os.IsNotExist(err) {
+	_, err := os.Stat(checksumFile)
+	if err == nil {
+		l.log.Infof("Previous image bundle checksum exists: %s\n", checksumFile)
+		match, err := l.fileUtils.VerifyChecksum(cfg.UserImagesDir)
+		if err != nil {
+			l.log.Error(err.Error())
+			phaseutils.SetHostStatus(l.HostPhase, constants.FailedState, err.Error())
+			return err
+		}
+		if match {
+			l.log.Infof("Checksum matches, not reloading image bundle")
+			phaseutils.SetHostStatus(l.HostPhase, constants.RunningState, "")
+			return nil
+		}
+	} else if os.IsNotExist(err) {
+		l.log.Infof("Checksum file does not exist, loading image bundle")
 		err := l.fileUtils.GenerateChecksum(cfg.UserImagesDir)
 		if err != nil {
 			l.log.Error(err.Error())
 			phaseutils.SetHostStatus(l.HostPhase, constants.FailedState, err.Error())
 			return err
 		}
+	} else {
+		l.log.Errorf("Error opening checksum file %s: %s", checksumFile, err)
+		phaseutils.SetHostStatus(l.HostPhase, constants.FailedState, err.Error())
+		return err
 	}
-	err := l.imageUtils.LoadImagesFromDir(ctx, cfg.UserImagesDir, constants.K8sNamespace)
+
+	err = l.imageUtils.LoadImagesFromDir(ctx, cfg.UserImagesDir, constants.K8sNamespace)
 	if err != nil {
 		l.log.Error(err.Error())
 		phaseutils.SetHostStatus(l.HostPhase, constants.FailedState, err.Error())

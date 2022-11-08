@@ -1,7 +1,9 @@
 package fileio
 
 import (
+	"archive/tar"
 	"bufio"
+	"compress/gzip"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
@@ -48,6 +50,7 @@ type FileInterface interface {
 	NewYamlFromTemplateYaml(string, string, interface{}) error
 	ListFilesWithPatterns(string, []string) ([]string, error)
 	WriteToFileWithBase64Decoding(string, string) error
+	Extract(string, string) error
 }
 
 // TouchFile creates an empty file
@@ -411,5 +414,67 @@ func (f *Pf9FileIO) WriteToFileWithBase64Decoding(destFile string, srcFile strin
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+// extract the targz file to the destination directory
+func (f *Pf9FileIO) Extract(tgzFile string, destDir string) error {
+
+	fl, err := os.Open(tgzFile)
+	if err != nil {
+		return fmt.Errorf("error opening tgz file: %v", err)
+	}
+	defer fl.Close()
+
+	gzf, err := gzip.NewReader(fl)
+	if err != nil {
+		return fmt.Errorf("error creating gzip reader: %v", err)
+	}
+
+	defer gzf.Close()
+	tarReader := tar.NewReader(gzf)
+
+	for {
+		f, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil {
+			return fmt.Errorf("error reading tar file: %v", err)
+		}
+		fpath := filepath.Join(destDir, f.Name)
+		fi := f.FileInfo()
+		mode := fi.Mode()
+		switch {
+		case mode.IsDir():
+			err = os.MkdirAll(fpath, 0770)
+			if err != nil {
+				return fmt.Errorf("error creating directory: %s %v", fpath, err)
+			}
+		case mode.IsRegular():
+			// this is redundant
+			err = os.MkdirAll(filepath.Dir(fpath), 0770)
+			if err != nil {
+				return fmt.Errorf("error creating directory: %s %v", filepath.Dir(fpath), err)
+			}
+			destFile, err := os.OpenFile(fpath, os.O_CREATE|os.O_RDWR, 0770)
+			defer destFile.Close()
+			if err != nil {
+				return fmt.Errorf("error creating file: %s %v", fpath, err)
+			}
+			n, err := io.Copy(destFile, tarReader)
+
+			if err != nil {
+				return fmt.Errorf("error copying file: %s %v", fpath, err)
+			}
+
+			if n != f.Size {
+				return fmt.Errorf("error copying file size written not equal: expected %d, got %d, %s %v", f.Size, n, fpath, err)
+			}
+
+		}
+	}
+
 	return nil
 }

@@ -453,6 +453,14 @@ staticPodPath: "${STATIC_POD_PATH}"
 tlsCertFile: "${TLS_CERT_FILE}"
 tlsPrivateKeyFile: "${TLS_PRIVATE_KEY_FILE}"
 tlsCipherSuites: ${TLS_CIPHER_SUITES}
+imageMinimumGCAge: 24h
+imageGCHighThresholdPercent: 99
+imageGCLowThresholdPercent: 95
+evictionHard:
+  nodefs.available: "0%"
+  nodefs.inodesFree: "0%"
+  imagefs.available: "0%"
+  imagefs.inodesFree: "0%"
 EOF
 
     if [ "$CONTAINERD_CGROUP" = "systemd" ]; then
@@ -532,7 +540,7 @@ function ensure_kubelet_running()
     local kubeconfig="/etc/pf9/kube.d/kubeconfigs/kubelet.yaml"
     local log_dir_path="/var/log/pf9/kubelet/"
     local k8s_registry="${K8S_PRIVATE_REGISTRY:-k8s.gcr.io}"
-    local pause_img="${k8s_registry}/pause:3.2"
+    local pause_img="${k8s_registry}/pause:3.6"
 
     prepare_kubelet_bootstrap_config
 
@@ -1143,6 +1151,11 @@ function teardown_certs()
     if [ -d "$CERTS_DIR" ]; then
         echo "Removing the certs directory"
         rm -rf "$CERTS_DIR" ;
+    fi
+
+    if [ -f $CERTS_SERIAL_FILE ]; then
+        echo "Removing certs serial file"
+        rm -f $CERTS_SERIAL_FILE
     fi
 }
 

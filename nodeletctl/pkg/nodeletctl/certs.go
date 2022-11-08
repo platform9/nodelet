@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"math/big"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"text/template"
 	"time"
@@ -32,7 +33,7 @@ func GenCALocal(clusterName string) (string, error) {
 	certsDir := filepath.Join(ClusterStateDir, clusterName, "certs")
 	if CertsExist(clusterName) {
 		zap.S().Infof("Certs already exist, using preexisting: %s\n", certsDir)
-		return "", nil
+		return certsDir, nil
 	}
 	if err := os.MkdirAll(certsDir, 0755); err != nil {
 		return "", err
@@ -44,9 +45,13 @@ func GenCALocal(clusterName string) (string, error) {
 }
 
 func genCA(certsDir string) error {
+	serialNumber, err := getPseudoRandomSerial()
+	if err != nil {
+		return nil
+	}
+
 	ca := &x509.Certificate{
-		// TODO: What is SerialNumber, does this need to be unique, randomized?
-		SerialNumber: big.NewInt(2022),
+		SerialNumber: serialNumber,
 		Subject: pkix.Name{
 			Organization: []string{"Platform9."},
 			Country:      []string{"USA"},
@@ -86,12 +91,12 @@ func genCA(certsDir string) error {
 	caFile := filepath.Join(certsDir, RootCACRT)
 	keyFile := filepath.Join(certsDir, RootCAKey)
 
-	err = ioutil.WriteFile(caFile, caCertPEM.Bytes(), os.ModeAppend)
+	err = ioutil.WriteFile(caFile, caCertPEM.Bytes(), 0644)
 	if err != nil {
 		return fmt.Errorf("Failed to write CA cert: %s", err)
 	}
 
-	err = ioutil.WriteFile(keyFile, caPrivKeyPEM.Bytes(), 0644)
+	err = ioutil.WriteFile(keyFile, caPrivKeyPEM.Bytes(), 0600)
 	if err != nil {
 		return fmt.Errorf("Failed to write CA private key: %s", err)
 	}
@@ -152,9 +157,14 @@ func GenKubeconfig(cfg *BootstrapConfig) error {
 		Bytes: x509.MarshalPKCS1PrivateKey(adminPrivKey),
 	})
 
+	serialNumber, err := getPseudoRandomSerial()
+	if err != nil {
+		return err
+	}
+
 	clientCert := &x509.Certificate{
 		// TODO: What is SerialNumber, does this need to be unique, randomized?
-		SerialNumber: big.NewInt(2022),
+		SerialNumber: serialNumber,
 		Subject: pkix.Name{
 			CommonName:   "admin",
 			Organization: []string{"system:masters"},
@@ -187,7 +197,7 @@ func GenKubeconfig(cfg *BootstrapConfig) error {
 		return fmt.Errorf("Failed to write admin client cert: %s", err)
 	}
 
-	err = ioutil.WriteFile(adminKeyFile, adminPrivKeyPEM.Bytes(), 0644)
+	err = ioutil.WriteFile(adminKeyFile, adminPrivKeyPEM.Bytes(), 0600)
 	if err != nil {
 		return fmt.Errorf("Failed to write admin private key: %s", err)
 	}
@@ -198,11 +208,16 @@ func GenKubeconfig(cfg *BootstrapConfig) error {
 
 	kubeconfigArgs := &KubeConfigData{
 		ClusterId:      cfg.ClusterId,
-		MasterIp:       cfg.MasterIp,
 		K8sApiPort:     cfg.K8sApiPort,
 		CACertData:     CACertB64,
 		ClientCertData: adminCertB64,
 		ClientKeyData:  adminKeyB64,
+	}
+
+	if cfg.IPv6Enabled {
+		kubeconfigArgs.MasterIp = "[" + cfg.MasterIp + "]"
+	} else {
+		kubeconfigArgs.MasterIp = cfg.MasterIp
 	}
 
 	if err := writeKubeconfigFile(kubeconfigArgs); err != nil {
@@ -229,6 +244,10 @@ func writeKubeconfigFile(args *KubeConfigData) error {
 	if err != nil {
 		zap.S().Infof("template.Execute failed for file: %s err: %s\n", kubeconfigFile, err)
 		return fmt.Errorf("template.Execute failed for file: %s err: %s\n", kubeconfigFile, err)
+	}
+
+	if err = os.Chmod(kubeconfigFile, 0600); err != nil {
+		return fmt.Errorf("Failed to chmod 600 kubeconfig: %s", err)
 	}
 
 	zap.S().Infof("Wrote kubeconfig to %s\n", kubeconfigFile)
@@ -275,6 +294,49 @@ func RegenCA(cfg *BootstrapConfig) error {
 	err = GenKubeconfig(cfg)
 	if err != nil {
 		return fmt.Errorf("Failed to regen kubeconfig with new CA: %s", err)
+	}
+	return nil
+}
+
+func getPseudoRandomSerial() (*big.Int, error) {
+	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 2048)
+	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to generate random serial number: %s", err)
+	}
+	return serialNumber, err
+}
+
+func trustCA(certsDir string) error {
+	trustCmd := exec.Command("update-ca-trust", "force-enable")
+	output, err := trustCmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to enable ca trust: %v - %s", err, string(output))
+	}
+
+	srcFile := filepath.Join(certsDir, RootCACRT)
+	dstFile := CAPath
+
+	// clean up any previous ca
+	err = os.Remove(dstFile)
+	if err != nil {
+		zap.S().Warnf("failed to remove %s: %v", dstFile, err)
+	}
+
+	readB, err := os.ReadFile(srcFile)
+	if err != nil {
+		return fmt.Errorf("failed to read %s: %v", srcFile, err)
+	}
+
+	err = os.WriteFile(dstFile, readB, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write %s: %v", srcFile, err)
+	}
+
+	extractCmd := exec.Command("update-ca-trust", "extract")
+	output, err = extractCmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to extract ca: %v - %s", err, string(output))
 	}
 	return nil
 }

@@ -62,6 +62,20 @@ func (mr *MockFileInterfaceMockRecorder) DeleteFile(arg0 interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFile", reflect.TypeOf((*MockFileInterface)(nil).DeleteFile), arg0)
 }
 
+// Extract mocks base method.
+func (m *MockFileInterface) Extract(arg0, arg1 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Extract", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Extract indicates an expected call of Extract.
+func (mr *MockFileInterfaceMockRecorder) Extract(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Extract", reflect.TypeOf((*MockFileInterface)(nil).Extract), arg0, arg1)
+}
+
 // GenerateChecksum mocks base method.
 func (m *MockFileInterface) GenerateChecksum(arg0 string) error {
 	m.ctrl.T.Helper()
