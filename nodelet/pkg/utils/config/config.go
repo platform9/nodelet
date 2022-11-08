@@ -58,6 +58,7 @@ var DefaultConfig = Config{
 	TopologyManagerPolicy:   constants.TopologyManagerPolicy,
 	ReservedCPUs:            constants.ReservedCPUs,
 	KubeletCloudConfig:      constants.KubeletCloudConfig,
+	ServicesCIDR:            constants.ServicesCIDR,
 }
 
 // Config a struct to load the values from viper for future use.

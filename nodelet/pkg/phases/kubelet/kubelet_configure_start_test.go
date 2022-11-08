@@ -67,13 +67,13 @@ var _ = Describe("Test Kubelet Configure Start Phase", func() {
 	Context("validate start command", func() {
 		It("should fail if it is not able to ensure kubelet is running", func() {
 			err := fmt.Errorf("fake error")
-			fakeKubeletUtils.EXPECT().EnsureKubeletRunning(fakeCfg).Return(err).Times(1)
+			fakeKubeletUtils.EXPECT().EnsureKubeletRunning(*fakeCfg).Return(err).Times(1)
 			retErr := fakePhase.Start(ctx, *fakeCfg)
 			Expect(retErr).ToNot(BeNil())
 			Expect(retErr).To(Equal(err))
 		})
 		It("should succeed if it can ensure kubelet is running", func() {
-			fakeKubeletUtils.EXPECT().EnsureKubeletRunning(fakeCfg).Return(nil).Times(1)
+			fakeKubeletUtils.EXPECT().EnsureKubeletRunning(*fakeCfg).Return(nil).Times(1)
 			retErr := fakePhase.Start(ctx, *fakeCfg)
 			Expect(retErr).To(BeNil())
 		})
@@ -83,13 +83,13 @@ var _ = Describe("Test Kubelet Configure Start Phase", func() {
 		It("should fail if it is not able to ensure kubelet is stopped", func() {
 			err := fmt.Errorf("fake error")
 			fakeKubeletUtils.EXPECT().EnsureKubeletStopped().Return(err).Times(1)
-			retErr := fakePhase.Start(ctx, *fakeCfg)
+			retErr := fakePhase.Stop(ctx, *fakeCfg)
 			Expect(retErr).ToNot(BeNil())
 			Expect(retErr).To(Equal(err))
 		})
 		It("should succeed if it can ensure kubelet is stopped", func() {
 			fakeKubeletUtils.EXPECT().EnsureKubeletStopped().Return(nil).Times(1)
-			retErr := fakePhase.Start(ctx, *fakeCfg)
+			retErr := fakePhase.Stop(ctx, *fakeCfg)
 			Expect(retErr).To(BeNil())
 		})
 	})

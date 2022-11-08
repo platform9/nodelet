@@ -47,17 +47,17 @@ func (mr *MockKubeletUtilsInterfaceMockRecorder) ConfigureKubeletHttpProxy() *go
 }
 
 // EnsureDirReadableByPf9 mocks base method.
-func (m *MockKubeletUtilsInterface) EnsureDirReadableByPf9(dir string) error {
+func (m *MockKubeletUtilsInterface) EnsureDirReadableByPf9(arg0 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "EnsureDirReadableByPf9", dir)
+	ret := m.ctrl.Call(m, "EnsureDirReadableByPf9", arg0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // EnsureDirReadableByPf9 indicates an expected call of EnsureDirReadableByPf9.
-func (mr *MockKubeletUtilsInterfaceMockRecorder) EnsureDirReadableByPf9(dir interface{}) *gomock.Call {
+func (mr *MockKubeletUtilsInterfaceMockRecorder) EnsureDirReadableByPf9(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnsureDirReadableByPf9", reflect.TypeOf((*MockKubeletUtilsInterface)(nil).EnsureDirReadableByPf9), dir)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnsureDirReadableByPf9", reflect.TypeOf((*MockKubeletUtilsInterface)(nil).EnsureDirReadableByPf9), arg0)
 }
 
 // EnsureKubeletRunning mocks base method.
@@ -119,17 +119,17 @@ func (mr *MockKubeletUtilsInterfaceMockRecorder) FetchAwsInstanceId() *gomock.Ca
 }
 
 // GenerateKubeletSystemdUnit mocks base method.
-func (m *MockKubeletUtilsInterface) GenerateKubeletSystemdUnit(kubeletArgs string) error {
+func (m *MockKubeletUtilsInterface) GenerateKubeletSystemdUnit(arg0 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateKubeletSystemdUnit", kubeletArgs)
+	ret := m.ctrl.Call(m, "GenerateKubeletSystemdUnit", arg0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // GenerateKubeletSystemdUnit indicates an expected call of GenerateKubeletSystemdUnit.
-func (mr *MockKubeletUtilsInterfaceMockRecorder) GenerateKubeletSystemdUnit(kubeletArgs interface{}) *gomock.Call {
+func (mr *MockKubeletUtilsInterfaceMockRecorder) GenerateKubeletSystemdUnit(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateKubeletSystemdUnit", reflect.TypeOf((*MockKubeletUtilsInterface)(nil).GenerateKubeletSystemdUnit), kubeletArgs)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateKubeletSystemdUnit", reflect.TypeOf((*MockKubeletUtilsInterface)(nil).GenerateKubeletSystemdUnit), arg0)
 }
 
 // IsKubeletRunning mocks base method.
@@ -147,17 +147,17 @@ func (mr *MockKubeletUtilsInterfaceMockRecorder) IsKubeletRunning() *gomock.Call
 }
 
 // KubeletSetup mocks base method.
-func (m *MockKubeletUtilsInterface) KubeletSetup(kubeletArgs string) error {
+func (m *MockKubeletUtilsInterface) KubeletSetup(arg0 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "KubeletSetup", kubeletArgs)
+	ret := m.ctrl.Call(m, "KubeletSetup", arg0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // KubeletSetup indicates an expected call of KubeletSetup.
-func (mr *MockKubeletUtilsInterfaceMockRecorder) KubeletSetup(kubeletArgs interface{}) *gomock.Call {
+func (mr *MockKubeletUtilsInterfaceMockRecorder) KubeletSetup(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "KubeletSetup", reflect.TypeOf((*MockKubeletUtilsInterface)(nil).KubeletSetup), kubeletArgs)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "KubeletSetup", reflect.TypeOf((*MockKubeletUtilsInterface)(nil).KubeletSetup), arg0)
 }
 
 // KubeletStart mocks base method.
@@ -203,15 +203,15 @@ func (mr *MockKubeletUtilsInterfaceMockRecorder) PrepareKubeletBootstrapConfig(c
 }
 
 // TrimSans mocks base method.
-func (m *MockKubeletUtilsInterface) TrimSans(str string) string {
+func (m *MockKubeletUtilsInterface) TrimSans(arg0 string) string {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TrimSans", str)
+	ret := m.ctrl.Call(m, "TrimSans", arg0)
 	ret0, _ := ret[0].(string)
 	return ret0
 }
 
 // TrimSans indicates an expected call of TrimSans.
-func (mr *MockKubeletUtilsInterfaceMockRecorder) TrimSans(str interface{}) *gomock.Call {
+func (mr *MockKubeletUtilsInterfaceMockRecorder) TrimSans(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TrimSans", reflect.TypeOf((*MockKubeletUtilsInterface)(nil).TrimSans), str)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TrimSans", reflect.TypeOf((*MockKubeletUtilsInterface)(nil).TrimSans), arg0)
 }

@@ -9,8 +9,6 @@ const (
 	ConfigDir = "/etc/pf9/nodelet/"
 	// DefaultConfigFileName is the default filename to use when writing config to ConfigDir.
 	DefaultConfigFileName = "config.yaml"
-	// KubeEnvPath contains the default path to look for the kube.env config file.
-	KubeEnvPath = "/etc/pf9/kube.env"
 	// ExtensionOutputFile : File that will be used by hostagent extension
 	ExtensionOutputFile = "/var/opt/pf9/kube_status"
 	// ErrorState : String depicting host in error state
@@ -129,6 +127,8 @@ var (
 	KubeletConfigDir        = "/var/opt/pf9/kube/kubelet-config"
 	KubeletDynamicConfigDir = KubeletConfigDir + "/dynamic-config"
 	KubeletBootstrapConfig  = KubeletConfigDir + "/bootstrap-config.yaml"
+	// KubeEnvPath contains the default path to look for the kube.env config file.
+	KubeEnvPath = "/etc/pf9/kube.env"
 	// AWSMetadataIp # 169.254.169.254 belongs to the 169.254/16 range of IPv4 Link-Local addresses (https://tools.ietf.org/html/rfc3927).
 	//# This IP address in particular is significant because Amazon Web Services uses this IP address
 	//# for instance metadata (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html)
@@ -164,6 +164,7 @@ var (
 	KubeletTlsPrivateKeyFile      = "/etc/pf9/kube.d/certs/kubelet/server/request.key"
 	KubeletTlsCipherSuites        = "[TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256]"
 	KubeletCloudConfig            = ""
+	ServicesCIDR                  = "10.21.0.0/22"
 
 	ConfigSrcDir = "/opt/pf9/pf9-kube/conf"
 	// CoreDNSTemplate is template file for coredns

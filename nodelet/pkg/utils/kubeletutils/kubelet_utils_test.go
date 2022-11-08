@@ -27,21 +27,18 @@ var _ = Describe("Test Kubelet Utils", func() {
 	var (
 		ctx              context.Context
 		mockCtrl         *gomock.Controller
-		kubeletUtils     KubeletImpl
+		fakeKubeletUtils KubeletImpl
 		fakeCfg          *config.Config
-		fakeKubeletUtils *mocks.MockKubeletUtilsInterface
 		fakeCmd          *mocks.MockCLI
 		fakeNetUtils     *mocks.MockNetInterface
 	)
 
 	BeforeEach(func() {
 		mockCtrl = gomock.NewController(GinkgoT())
-
-		fakeKubeletUtils = mocks.NewMockKubeletUtilsInterface(mockCtrl)
 		fakeCmd = mocks.NewMockCLI(mockCtrl)
-		kubeletUtils.Cmd = fakeCmd
+		fakeKubeletUtils.Cmd = fakeCmd
 		fakeNetUtils = mocks.NewMockNetInterface(mockCtrl)
-		kubeletUtils.NetUtils = fakeNetUtils
+		fakeKubeletUtils.NetUtils = fakeNetUtils
 		ctx = context.TODO()
 		// Setup Config
 		var err error
@@ -56,25 +53,34 @@ var _ = Describe("Test Kubelet Utils", func() {
 
 	Context("validate ensure kubelet stopped method", func() {
 		It("should fail with error if pf9-kubelet is running and kubelet stop returns error", func() {
-			err := fmt.Errorf("fake err")
-			fakeKubeletUtils.EXPECT().IsKubeletRunning().Return(true).Times(1)
-			fakeKubeletUtils.EXPECT().KubeletStop().Return(err).Times(1)
+			fakeErr := fmt.Errorf("fake error")
+			fakeStdErr := []string{"fakeStderr"}
+			fakeStdOut := []string{"fakeStdout"}
+			fakeCmd.EXPECT().RunCommandWithStdOutStdErr(context.Background(), nil, 0, "", "sudo", "systemctl", "is-active", "pf9-kubelet").Return(0, fakeStdOut, fakeStdErr, fakeErr).Times(1)
+			fakeCmd.EXPECT().RunCommandWithStdErr(context.Background(), nil, 0, "", "sudo", "systemctl", "stop", "pf9-kubelet").Return(0, fakeStdErr, fakeErr).Times(1)
 
 			retErr := fakeKubeletUtils.EnsureKubeletStopped()
 			Expect(retErr).ToNot(BeNil())
-			Expect(retErr).To(BeIdenticalTo(err))
+			Expect(retErr).To(BeIdenticalTo(fakeErr))
 		})
 
 		It("should succeed without error if pf9-kubelet is running and kubelet stop does not return error", func() {
-			fakeKubeletUtils.EXPECT().IsKubeletRunning().Return(true).Times(1)
-			fakeKubeletUtils.EXPECT().KubeletStop().Return(nil).Times(1)
+			fakeErr := fmt.Errorf("fake error")
+			fakeStdErr := []string{""}
+			fakeStdOut := []string{"fakeStdout"} // anything but inactive which indicates that kubelet is inactive
+			fakeCmd.EXPECT().RunCommandWithStdOutStdErr(context.Background(), nil, 0, "", "sudo", "systemctl", "is-active", "pf9-kubelet").Return(0, fakeStdOut, fakeStdErr, fakeErr).Times(1)
+			fakeCmd.EXPECT().RunCommandWithStdErr(context.Background(), nil, 0, "", "sudo", "systemctl", "stop", "pf9-kubelet").Return(0, fakeStdErr, nil).Times(1)
 
 			retErr := fakeKubeletUtils.EnsureKubeletStopped()
 			Expect(retErr).To(BeNil())
 		})
 
 		It("should succeed without error if pf9-kubelet is not running", func() {
-			fakeKubeletUtils.EXPECT().IsKubeletRunning().Return(false).Times(1)
+			fakeErrStr := "fake error"
+			fakeErr := fmt.Errorf(fakeErrStr)
+			fakeStdOut := []string{"inactive"}
+			fakeStdErr := []string{"fake stderr"}
+			fakeCmd.EXPECT().RunCommandWithStdOutStdErr(context.Background(), nil, 0, "", "sudo", "systemctl", "is-active", "pf9-kubelet").Return(0, fakeStdOut, fakeStdErr, fakeErr).Times(1)
 			ret := fakeKubeletUtils.EnsureKubeletStopped()
 			Expect(ret).To(BeNil())
 		})
@@ -134,15 +140,14 @@ var _ = Describe("Test Kubelet Utils", func() {
 	Context("validate prepare kubelet bootstrap config", func() {
 		BeforeEach(func() {
 			constants.KubeletConfigDir = "testdata" + constants.KubeletConfigDir
+			constants.KubeletBootstrapConfig = "testdata" + constants.KubeletBootstrapConfig
 		})
 		AfterEach(func() {
-			err := os.RemoveAll("testdata")
+			err := os.RemoveAll("testdata/var")
 			Expect(err).To(BeNil())
 		})
 
 		It("should succeed without error and prepare default kubelet bootstrap config", func() {
-			// expect and actual
-			// fakeCfg loads the default config
 			expectedDnsIp, err := netutils.New().AddrConv(fakeCfg.ServicesCIDR, 10)
 			Expect(err).To(BeNil())
 			expectedKubeletBootstrapConfig := "apiVersion: kubelet.config.k8s.io/v1beta1\n" +
@@ -154,7 +159,7 @@ var _ = Describe("Test Kubelet Utils", func() {
 				"  webhook:\n" +
 				"    enabled: true\n" +
 				"  x509:\n" +
-				"    clientCAFile:" + constants.KubeletClientCaFile + "\n" +
+				"    clientCAFile: " + constants.KubeletClientCaFile + "\n" +
 				"authorization:\n" +
 				"  mode: AlwaysAllow\n" +
 				"clusterDNS:\n" +
@@ -183,13 +188,21 @@ var _ = Describe("Test Kubelet Utils", func() {
 				expectedKubeletBootstrapConfig += "failSwapOn: false\n"
 			}
 
+			fakeStdOut := []string{"fake stdout"}
+			fakeStdErr := []string{"fake stderr"}
+			usrgrp := constants.Pf9User + ":" + constants.Pf9Group
+			dir := constants.KubeletConfigDir
+			fakeCmd.EXPECT().RunCommandWithStdOutStdErr(context.Background(), nil, 0, "", "sudo", "chown", "-R", usrgrp, dir).Return(0, fakeStdOut, fakeStdErr, nil).Times(1)
+			fakeNetUtils.EXPECT().AddrConv(fakeCfg.ServicesCIDR, 10).Return(expectedDnsIp, nil)
+
+			// fakeCfg loads the default config
 			err = fakeKubeletUtils.PrepareKubeletBootstrapConfig(*fakeCfg)
 			Expect(err).To(BeNil())
 
 			Expect(constants.KubeletBootstrapConfig).To(BeAnExistingFile())
 			actualKubeletBootstrapConfig, err := os.ReadFile(constants.KubeletBootstrapConfig)
 			Expect(err).To(BeNil())
-			Expect(actualKubeletBootstrapConfig).To(BeIdenticalTo([]byte(expectedKubeletBootstrapConfig)))
+			Expect(string(actualKubeletBootstrapConfig)).To(BeIdenticalTo(expectedKubeletBootstrapConfig))
 		})
 
 		It("should succeed without error and prepare kubelet bootstrap config with cgroupdriver as cgroupfs, clusterrole as master and allow swap", func() {
@@ -209,7 +222,7 @@ var _ = Describe("Test Kubelet Utils", func() {
 				"  webhook:\n" +
 				"    enabled: true\n" +
 				"  x509:\n" +
-				"    clientCAFile:" + constants.KubeletClientCaFile + "\n" +
+				"    clientCAFile: " + constants.KubeletClientCaFile + "\n" +
 				"authorization:\n" +
 				"  mode: AlwaysAllow\n" +
 				"clusterDNS:\n" +
@@ -238,47 +251,90 @@ var _ = Describe("Test Kubelet Utils", func() {
 				expectedKubeletBootstrapConfig += "failSwapOn: false\n"
 			}
 
+			fakeStdOut := []string{"fake stdout"}
+			fakeStdErr := []string{"fake stderr"}
+			usrgrp := constants.Pf9User + ":" + constants.Pf9Group
+			dir := constants.KubeletConfigDir
+			fakeCmd.EXPECT().RunCommandWithStdOutStdErr(context.Background(), nil, 0, "", "sudo", "chown", "-R", usrgrp, dir).Return(0, fakeStdOut, fakeStdErr, nil).Times(1)
+			fakeNetUtils.EXPECT().AddrConv(fakeCfg.ServicesCIDR, 10).Return(expectedDnsIp, nil)
+
 			err = fakeKubeletUtils.PrepareKubeletBootstrapConfig(*fakeCfg)
 			Expect(err).To(BeNil())
 
 			Expect(constants.KubeletBootstrapConfig).To(BeAnExistingFile())
 			actualKubeletBootstrapConfig, err := os.ReadFile(constants.KubeletBootstrapConfig)
 			Expect(err).To(BeNil())
-			Expect(actualKubeletBootstrapConfig).To(BeIdenticalTo([]byte(expectedKubeletBootstrapConfig)))
+			Expect(string(actualKubeletBootstrapConfig)).To(BeIdenticalTo(expectedKubeletBootstrapConfig))
 		})
 	})
 
 	Context("validate kubelet setup", func() {
+		constants.KubeEnvPath = "testdata" + constants.KubeEnvPath
+		constants.Pf9KubeletSystemdUnitTemplate = "testdata" + constants.Pf9KubeletSystemdUnitTemplate
+
+		constants.KubeletEnvPath = "testdata" + constants.KubeletEnvPath
+		constants.SystemdRuntimeUnitDir = "testdata" + constants.SystemdRuntimeUnitDir
+
 		It("should succeed without error and do kubelet setup", func() {
-			fakeKubeletArgs := "args"
-			fakeKubeletUtils.EXPECT().GenerateKubeletSystemdUnit(fakeKubeletArgs).Return(nil).Times(1)
+			err := os.MkdirAll(constants.SystemdRuntimeUnitDir, 0777)
+			Expect(err).To(BeNil())
+
+			fakeKubeletArgs := "fakeKubeletArgs"
+			fakeStdOut := []string{"fake stdout"}
+			fakeStdErr := []string{"fake stderr"}
+			fakeCmd.EXPECT().RunCommandWithStdErr(context.Background(), nil, 0, "", "sudo", "touch", constants.SystemdRuntimeUnitDir+"/pf9-kubelet.service").Return(0, fakeStdErr, nil).Times(1)
+			usrgrp := constants.Pf9User + ":" + constants.Pf9Group
+			fakeCmd.EXPECT().RunCommandWithStdOutStdErr(context.Background(), nil, 0, "", "sudo", "chown", usrgrp, constants.SystemdRuntimeUnitDir+"/pf9-kubelet.service").Return(0, fakeStdOut, fakeStdErr, nil).Times(1)
+			fakeCmd.EXPECT().RunCommandWithStdOutStdErr(context.Background(), nil, 0, "", "sudo", "chmod", "770", constants.SystemdRuntimeUnitDir+"/pf9-kubelet.service").Return(0, fakeStdOut, fakeStdErr, nil).Times(1)
+
 			fakeCmd.EXPECT().RunCommandWithStdErr(ctx, nil, 0, "", "sudo", "systemctl", "daemon-reload").Return(0, nil, nil).Times(1)
 
-			err := fakeKubeletUtils.KubeletSetup(fakeKubeletArgs)
+			err = fakeKubeletUtils.KubeletSetup(fakeKubeletArgs)
+			Expect(err).To(BeNil())
+
+			err = os.Remove(constants.KubeletEnvPath)
+			Expect(err).To(BeNil())
+			err = os.RemoveAll("testdata/run")
 			Expect(err).To(BeNil())
 		})
 
 		It("should fail with error if generation of kubelet systemd unit fails and returns err", func() {
-			fakeKubeletArgs := "args"
-			fakeErr := "fake error"
-			fakeKubeletUtils.EXPECT().GenerateKubeletSystemdUnit(fakeKubeletArgs).Return(fakeErr).Times(1)
-			fakeCmd.EXPECT().RunCommandWithStdErr(ctx, nil, 0, "", "sudo", "systemctl", "daemon-reload").Return(0, nil, nil).Times(1)
+			fakeKubeletArgs := "fakeKubeletArgs"
+			fakeErr := fmt.Errorf("fakeErr")
+			fakeStdErr := []string{"fake stderr"}
+			fakeCmd.EXPECT().RunCommandWithStdErr(context.Background(), nil, 0, "", "sudo", "touch", constants.SystemdRuntimeUnitDir+"/pf9-kubelet.service").Return(0, fakeStdErr, fakeErr).Times(1)
 
 			retErr := fakeKubeletUtils.KubeletSetup(fakeKubeletArgs)
 			Expect(retErr).ToNot(BeNil())
 			Expect(retErr).To(BeIdenticalTo(fakeErr))
+
+			err := os.Remove(constants.KubeletEnvPath)
+			Expect(err).To(BeNil())
 		})
 
 		It("should fail with error if it fails to reload the daemon", func() {
-			fakeKubeletArgs := "args"
-			fakeErr := "fake error"
-			fakeStdError := "fake standard error"
-			fakeKubeletUtils.EXPECT().GenerateKubeletSystemdUnit(fakeKubeletArgs).Return(nil).Times(1)
-			fakeCmd.EXPECT().RunCommandWithStdErr(ctx, nil, 0, "", "sudo", "systemctl", "daemon-reload").Return(0, fakeStdError, fakeErr).Times(1)
+			err := os.MkdirAll(constants.SystemdRuntimeUnitDir, 0777)
+			Expect(err).To(BeNil())
+
+			fakeKubeletArgs := "fakeKubeletArgs"
+			fakeErr := fmt.Errorf("fake error")
+			fakeStdOut := []string{"fake stdout"}
+			fakeStdErr := []string{"fake stderr"}
+			fakeCmd.EXPECT().RunCommandWithStdErr(context.Background(), nil, 0, "", "sudo", "touch", constants.SystemdRuntimeUnitDir+"/pf9-kubelet.service").Return(0, fakeStdErr, nil).Times(1)
+			usrgrp := constants.Pf9User + ":" + constants.Pf9Group
+			fakeCmd.EXPECT().RunCommandWithStdOutStdErr(context.Background(), nil, 0, "", "sudo", "chown", usrgrp, constants.SystemdRuntimeUnitDir+"/pf9-kubelet.service").Return(0, fakeStdOut, fakeStdErr, nil).Times(1)
+			fakeCmd.EXPECT().RunCommandWithStdOutStdErr(context.Background(), nil, 0, "", "sudo", "chmod", "770", constants.SystemdRuntimeUnitDir+"/pf9-kubelet.service").Return(0, fakeStdOut, fakeStdErr, nil).Times(1)
+
+			fakeCmd.EXPECT().RunCommandWithStdErr(ctx, nil, 0, "", "sudo", "systemctl", "daemon-reload").Return(0, fakeStdErr, fakeErr).Times(1)
 
 			retErr := fakeKubeletUtils.KubeletSetup(fakeKubeletArgs)
 			Expect(retErr).ToNot(BeNil())
 			Expect(retErr).To(BeIdenticalTo(fakeErr))
+
+			err = os.Remove(constants.KubeletEnvPath)
+			Expect(err).To(BeNil())
+			err = os.RemoveAll("testdata/run")
+			Expect(err).To(BeNil())
 		})
 	})
 
