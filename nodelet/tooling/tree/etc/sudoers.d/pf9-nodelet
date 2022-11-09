@@ -11,11 +11,23 @@ pf9     ALL = NOPASSWD: /opt/pf9/pf9-kube/setup_env_and_run_script.sh /opt/pf9/p
           NOPASSWD: /usr/bin/cgcreate -a pf9\:pf9group -t pf9\:pf9group -g cpu\:pf9-kube-status, \
           NOPASSWD: /usr/bin/cgset -r * pf9-kube-status, \
           NOPASSWD: /usr/bin/cgget -g cpu\:pf9-kube-status, \
+          NOPASSWD: /usr/bin/systemctl daemon-reload, \
+          NOPASSWD: /usr/bin/systemctl start pf9-kubelet, \
+          NOPASSWD: /usr/bin/systemctl stop pf9-kubelet, \
+          NOPASSWD: /usr/bin/systemctl is-active pf9-kubelet, \
+          NOPASSWD: /bin/systemctl daemon-reload, \
+          NOPASSWD: /bin/systemctl start pf9-kubelet, \
+          NOPASSWD: /bin/systemctl stop pf9-kubelet, \
+          NOPASSWD: /bin/systemctl is-active pf9-kubelet, \
+          NOPASSWD: /bin/chown -R pf9\:pf9group /var/opt/pf9/kube/kubelet-config, \
+          NOPASSWD: /bin/mkdir -p /var/lib/kubelet, \
+          NOPASSWD: /usr/bin/touch /run/systemd/system/pf9-kubelet.service, \
+          NOPASSWD: /bin/chown pf9\:pf9group /run/systemd/system/pf9-kubelet.service, \
+          NOPASSWD: /bin/chmod 770 /run/systemd/system/pf9-kubelet.service
           NOPASSWD: /usr/bin/systemctl start containerd, \
           NOPASSWD: /usr/bin/systemctl stop containerd, \
           NOPASSWD: /usr/bin/systemctl is-active containerd, \
           NOPASSWD: /usr/bin/chown pf9\:pf9group /run/containerd/containerd.sock, \
           NOPASSWD: /usr/bin/rm -rf /var/lib/nerdctl
-
 
 Defaults:pf9 !requiretty

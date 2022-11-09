@@ -232,7 +232,7 @@ line 3`,
 			cfg, err := config.ConvertHostToKubeEnvMap(host).ToConfig()
 			Expect(err).To(BeNil())
 			cfg.Debug = "" // Exception, because the debug field is always filled because of the difference in type.
-			cfg.UseHostname = false
+			cfg.UseHostname = ""
 			cfg.K8sApiPort = ""
 			Expect(*cfg).To(BeZero())
 		})

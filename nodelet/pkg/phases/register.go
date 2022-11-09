@@ -23,18 +23,18 @@ import (
 
 func GetMasterPhases() ([]PhaseInterface, error) {
 	masterPhaseList := []PhaseInterface{
-		certs.NewGenCertsPhase(constants.PhaseBaseDir),                // Order 20
-		kubeconfig.NewPrepareKubeconfigsPhase(constants.PhaseBaseDir), // Order 30
-		containerruntime.NewContainerdConfigPhase(),                   // Order 40
-		containerruntime.NewContainerdRunPhase(),                      // Order 45
-		containerruntime.NewLoadImagePhase(),                          // Order 48
-		etcd.NewConfigureEtcdPhase(constants.PhaseBaseDir),            // Order 50
-		etcd.NewStartEtcdPhase(constants.PhaseBaseDir),                // Order 55
-		network.NewConfigureNetworkPhase(constants.PhaseBaseDir),      // Order 60
-		network.NewConfigureCNIPhase(constants.PhaseBaseDir),          // Order 65
-		authwebhhook.NewAuthWebhookPhase(constants.PhaseBaseDir),      // Order 70
-		misc.NewMiscPhase(), // Order 75
-		kubelet.NewKubeletConfigureStartPhase(constants.PhaseBaseDir),       // Order 80
+		certs.NewGenCertsPhase(constants.PhaseBaseDir),                      // Order 20
+		kubeconfig.NewPrepareKubeconfigsPhase(constants.PhaseBaseDir),       // Order 30
+		containerruntime.NewContainerdConfigPhase(),                         // Order 40
+		containerruntime.NewContainerdRunPhase(),                            // Order 45
+		containerruntime.NewLoadImagePhase(),                                // Order 48
+		etcd.NewConfigureEtcdPhase(constants.PhaseBaseDir),                  // Order 50
+		etcd.NewStartEtcdPhase(constants.PhaseBaseDir),                      // Order 55
+		network.NewConfigureNetworkPhase(constants.PhaseBaseDir),            // Order 60
+		network.NewConfigureCNIPhase(constants.PhaseBaseDir),                // Order 65
+		authwebhhook.NewAuthWebhookPhase(constants.PhaseBaseDir),            // Order 70
+    misc.NewMiscPhase(),                                                 // Order 75
+		kubelet.NewKubeletConfigureStartPhase(),                             // Order 80
 		kubeproxy.NewKubeProxyStartPhase(constants.PhaseBaseDir),            // Order 90
 		misc.NewWaitForK8sSvcPhase(constants.PhaseBaseDir),                  // Order 100
 		misc.NewLabelTaintNodePhase(),                                       // Order 110
@@ -61,7 +61,7 @@ func GetWorkerPhases() ([]PhaseInterface, error) {
 		network.NewConfigureNetworkPhase(constants.PhaseBaseDir),      // Order 60
 		network.NewConfigureCNIPhase(constants.PhaseBaseDir),          // Order 65
 		misc.NewMiscPhase(),                                           // Order 75
-		kubelet.NewKubeletConfigureStartPhase(constants.PhaseBaseDir), // Order 80
+		kubelet.NewKubeletConfigureStartPhase(),                       // Order 80
 		kubeproxy.NewKubeProxyStartPhase(constants.PhaseBaseDir),      // Order 90
 		misc.NewWaitForK8sSvcPhase(constants.PhaseBaseDir),            // Order 100
 		misc.NewLabelTaintNodePhase(),                                 // Order 110

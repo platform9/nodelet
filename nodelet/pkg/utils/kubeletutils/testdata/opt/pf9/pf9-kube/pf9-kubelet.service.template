@@ -1,0 +1,16 @@
+[Unit]
+Description=Platform9 Kubelet Agent
+ConditionPathExists=__KUBELET_BIN__
+After=network.target
+
+[Service]
+EnvironmentFile=/opt/pf9/pf9-kube/defaults.env
+EnvironmentFile=/etc/pf9/kubelet.env
+Type=simple
+ExecStart=__KUBELET_BIN__ \
+__KUBELET_ARGS__
+RestartSec=15
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

@@ -21,6 +21,7 @@ import (
 // DefaultConfig contains sane defaults for nodelet service
 var DefaultConfig = Config{
 	Debug:                   "false",
+	UseHostname:             constants.UseHostname,
 	ClusterRole:             constants.RoleNone,
 	KubeServiceState:        constants.ServiceStateIgnore,
 	TransportURL:            "localhost:8111",
@@ -44,12 +45,28 @@ var DefaultConfig = Config{
 	GRPCRetryTimeoutSeconds: 5,
 	NumCmdOutputLinesToLog:  10, // 0 indicates no command lines to be logged
 	UserImagesDir:           constants.UserImagesDir,
-	CoreDNSHostsFile:        "/etc/hosts",
+	CoreDNSHostsFile:        constants.CoreDNSHostsFile,
+	K8sPrivateRegistry:      constants.K8sRegistry,
+	Runtime:                 constants.Runtime,
+	DockerLogMaxFile:        constants.DockerLogMaxFile,
+	ContainerLogMaxFiles:    constants.ContainerLogMaxFiles,
+	ContainerLogMaxSize:     constants.ContainerLogMaxSize,
+	EnableCAS:               constants.EnableCAS,
+	ContainerdCgroup:        constants.ContainerdCgroup,
+	AllowSwap:               constants.AllowSwap,
+	CPUManagerPolicy:        constants.CPUManagerPolicy,
+	TopologyManagerPolicy:   constants.TopologyManagerPolicy,
+	ReservedCPUs:            constants.ReservedCPUs,
+	KubeletCloudConfig:      constants.KubeletCloudConfig,
+	ServicesCIDR:            constants.ServicesCIDR,
 }
 
 // Config a struct to load the values from viper for future use.
 type Config struct {
-	Debug                     string  `mapstructure:"DEBUG"`
+	// FIXME The fields below are used in both script and golang code; after the dependency is removed, convert them to booleans.
+	Debug       string `mapstructure:"DEBUG"`
+	UseHostname string `mapstructure:"USE_HOSTNAME"`
+
 	ClusterRole               string  `mapstructure:"ROLE"`
 	ClusterID                 string  `mapstructure:"CLUSTER_ID"`
 	HostID                    string  `mapstructure:"HOSTID"`
@@ -78,7 +95,6 @@ type Config struct {
 	GRPCRetryTimeoutSeconds   int     `mapstructure:"GRPC_RETRY_TIMEOUT_SECONDS"`
 	NumCmdOutputLinesToLog    int     `mapstructure:"NUM_CMD_OP_LINES_TO_LOG"`
 	CloudProviderType         string  `mapstructure:"CLOUD_PROVIDER_TYPE"`
-	UseHostname               bool    `mapstructure:"USE_HOSTNAME"`
 	MasterIp                  string  `mapstructure:"MASTER_IP"`
 	K8sApiPort                string  `mapstructure:"K8S_API_PORT"`
 	MasterSchedulable         bool    `mapstructure:"ALLOW_WORKLOADS_ON_MASTER"`
@@ -88,6 +104,16 @@ type Config struct {
 	AppCatalogEnabled         bool    `mapstructure:"APP_CATALOG_ENABLED"`
 	KubeletCloudConfig        string  `mapstructure:"KUBELET_CLOUD_CONFIG"`
 	CoreDNSHostsFile          string  `mapstructure:"COREDNS_HOSTS_FILE"`
+	Runtime                   string  `mapstructure:"RUNTIME"`
+	DockerLogMaxFile          string  `maptructure:"DOCKER_LOG_MAX_FILE"`
+	ContainerLogMaxFiles      string  `mapstructure:"CONTAINER_LOG_MAX_FILES"`
+	ContainerLogMaxSize       string  `mapstructure:"CONTAINER_LOG_MAX_SIZE"`
+	EnableCAS                 bool    `mapstructure:"ENABLE_CAS"`
+	ContainerdCgroup          string  `mapstructure:"CONTAINERD_CGROUP"`
+	AllowSwap                 bool    `mapstructure:"ALLOW_SWAP"`
+	CPUManagerPolicy          string  `mapstructure:"CPU_MANAGER_POLICY"`
+	TopologyManagerPolicy     string  `mapstructure:"TOPOLOGY_MANAGER_POLICY"`
+	ReservedCPUs              string  `mapstructure:"RESERVED_CPUS"`
 	IPv6Enabled               bool    `mapstructure:"IPV6_ENABLED"`
 }
 
@@ -130,7 +156,8 @@ func getDefaultConfig() *Config {
 
 /*
 GetConfigFromDir : Tries to load YAML config files from configDir i.e. /etc/pf9/nodelet directory.
-			This function returns an error if the directory is inaccessible or if no config files could be loaded
+
+	This function returns an error if the directory is inaccessible or if no config files could be loaded
 */
 func GetConfigFromDir(configDir string) (*Config, error) {
 	pf9File := fileio.New()

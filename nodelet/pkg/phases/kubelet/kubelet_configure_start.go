@@ -1,20 +1,79 @@
 package kubelet
 
 import (
-	"path"
-
-	bashscript "github.com/platform9/nodelet/nodelet/pkg/phases/bash_script_based_phases"
+	"context"
+	"fmt"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
 	"github.com/platform9/nodelet/nodelet/pkg/utils/constants"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/kubeletutils"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/netutils"
+	"github.com/platform9/nodelet/nodelet/pkg/utils/phaseutils"
 	sunpikev1alpha1 "github.com/platform9/pf9-qbert/sunpike/apiserver/pkg/apis/sunpike/v1alpha1"
+	"go.uber.org/zap"
 )
 
-func NewKubeletConfigureStartPhase(baseDir string) *bashscript.Phase {
-	kubeletConfigurePhase := &bashscript.Phase{
-		Filename: path.Join(baseDir, "kubelet_configure_start.sh"),
+type KubeletConfigureStartPhase struct {
+	HostPhase    *sunpikev1alpha1.HostPhase
+	log          *zap.SugaredLogger
+	kubeletUtils kubeletutils.KubeletUtilsInterface
+	netUtils     netutils.NetInterface
+}
+
+func NewKubeletConfigureStartPhase() *KubeletConfigureStartPhase {
+	return &KubeletConfigureStartPhase{
 		HostPhase: &sunpikev1alpha1.HostPhase{
-			Name:  "Configure and start kubelet",
+			Name:  "Configure and Start kubelet",
 			Order: int32(constants.ConfigureKubeletPhaseOrder),
 		},
+		log:          zap.S(),
+		kubeletUtils: kubeletutils.New(),
+		netUtils:     netutils.New(),
 	}
-	return kubeletConfigurePhase
+}
+
+func (k *KubeletConfigureStartPhase) GetHostPhase() sunpikev1alpha1.HostPhase {
+	return *k.HostPhase
+}
+
+func (k *KubeletConfigureStartPhase) GetPhaseName() string {
+	return k.HostPhase.Name
+}
+
+func (k *KubeletConfigureStartPhase) GetOrder() int {
+	return int(k.HostPhase.Order)
+}
+
+func (k *KubeletConfigureStartPhase) Status(ctx context.Context, cfg config.Config) error {
+
+	k.log.Infof("Running Status of phase: %s", k.HostPhase.Name)
+	if !k.kubeletUtils.IsKubeletRunning() {
+		err := fmt.Errorf("pf9-kubelet is not active")
+		phaseutils.SetHostStatus(k.HostPhase, constants.FailedState, err.Error())
+		return err
+	}
+
+	phaseutils.SetHostStatus(k.HostPhase, constants.RunningState, "")
+	return nil
+}
+
+func (k *KubeletConfigureStartPhase) Start(ctx context.Context, cfg config.Config) error {
+	k.log.Infof("Running Status of phase: %s", k.HostPhase.Name)
+	err := k.kubeletUtils.EnsureKubeletRunning(cfg)
+	if err != nil {
+		phaseutils.SetHostStatus(k.HostPhase, constants.FailedState, err.Error())
+		return err
+	}
+	phaseutils.SetHostStatus(k.HostPhase, constants.RunningState, "")
+	return nil
+}
+
+func (k *KubeletConfigureStartPhase) Stop(ctx context.Context, cfg config.Config) error {
+	k.log.Infof("Running Status of phase: %s", k.HostPhase.Name)
+	err := k.kubeletUtils.EnsureKubeletStopped()
+	if err != nil {
+		phaseutils.SetHostStatus(k.HostPhase, constants.FailedState, err.Error())
+		return err
+	}
+	phaseutils.SetHostStatus(k.HostPhase, constants.StoppedState, "")
+	return nil
 }

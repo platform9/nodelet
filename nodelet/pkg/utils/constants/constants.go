@@ -9,8 +9,6 @@ const (
 	ConfigDir = "/etc/pf9/nodelet/"
 	// DefaultConfigFileName is the default filename to use when writing config to ConfigDir.
 	DefaultConfigFileName = "config.yaml"
-	// KubeEnvPath contains the default path to look for the kube.env config file.
-	KubeEnvPath = "/etc/pf9/kube.env"
 	// ExtensionOutputFile : File that will be used by hostagent extension
 	ExtensionOutputFile = "/var/opt/pf9/kube_status"
 	// ErrorState : String depicting host in error state
@@ -132,6 +130,54 @@ var (
 	// K8sRegistry represents registry for official images for kubernetes
 	K8sRegistry = "k8s.gcr.io"
 
+	// Kubelet related variables from defaults.env
+	KubeletDataDir          = "/var/lib/kubelet"
+	KubeletKubeconfig       = "/etc/pf9/kube.d/kubeconfigs/kubelet.yaml"
+	KubeletLogDirPath       = "/var/log/pf9/kubelet/"
+	CNIConfigDir            = "/etc/cni/net.d"
+	CNIBinDir               = "/opt/cni/bin"
+	KubeletConfigDir        = "/var/opt/pf9/kube/kubelet-config"
+	KubeletDynamicConfigDir = KubeletConfigDir + "/dynamic-config"
+	KubeletBootstrapConfig  = KubeletConfigDir + "/bootstrap-config.yaml"
+	// KubeEnvPath contains the default path to look for the kube.env config file.
+	KubeEnvPath = "/etc/pf9/kube.env"
+	// AWSMetadataIp # 169.254.169.254 belongs to the 169.254/16 range of IPv4 Link-Local addresses (https://tools.ietf.org/html/rfc3927).
+	//# This IP address in particular is significant because Amazon Web Services uses this IP address
+	//# for instance metadata (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html)
+	AWSMetadataIp          = "169.254.169.254"
+	AWSInstanceIdLoc       = "/var/lib/cloud/data/instance-id"
+	AWSAvailabilityZoneURL = "http://" + AWSMetadataIp + "/latest/meta-data/placement/availability-zone"
+	OpenstackMetadataIp    = "169.254.169.254"
+	Runtime                = "containerd"
+	ContainerdCgroup       = "systemd"
+	UseHostname            = "false"
+	DockerLogMaxFile       = "10"
+	ContainerLogMaxFiles   = DockerLogMaxFile
+	// ContainerLogMaxSize
+	// Why not use DOCKER_LOG_MAX_SIZE variable?
+	// The formatting for docker config is 10m while kubelet expects 10Mi. To avoid implement string manipulation in bash just hardcoding
+	// the same default as docker config for now.
+	ContainerLogMaxSize           = "10Mi"
+	EnableCAS                     = false
+	AllowSwap                     = false
+	KubeletBin                    = "/opt/pf9/pf9-kube/bin/kubelet"
+	Pf9KubeletSystemdUnitTemplate = "/opt/pf9/pf9-kube/pf9-kubelet.service.template"
+	SystemdRuntimeUnitDir         = "/run/systemd/system"
+	Pf9User                       = "pf9"
+	Pf9Group                      = "pf9group"
+	DnsDomain                     = "cluster.local"
+	CPUManagerPolicy              = "none"
+	TopologyManagerPolicy         = "none"
+	ReservedCPUs                  = ""
+	KubeletEnvPath                = "/etc/pf9/kubelet.env"
+	KubeletStaticPodPath          = "/etc/pf9/kube.d/master.yaml"
+	KubeletClientCaFile           = "/etc/pf9/kube.d/certs/kubelet/server/ca.crt"
+	KubeletTlsCertFile            = "/etc/pf9/kube.d/certs/kubelet/server/request.crt"
+	KubeletTlsPrivateKeyFile      = "/etc/pf9/kube.d/certs/kubelet/server/request.key"
+	KubeletTlsCipherSuites        = "[TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256]"
+	KubeletCloudConfig            = ""
+	ServicesCIDR                  = "10.21.0.0/22"
+
 	ConfigSrcDir = "/opt/pf9/pf9-kube/conf"
 	// CoreDNSTemplate is template file for coredns
 	CoreDNSTemplate = fmt.Sprintf("%s/networkapps/coredns.yaml", ConfigSrcDir)
@@ -144,12 +190,6 @@ var (
 	EtcContainerdDir = "/etc/containerd"
 
 	ContainerdConfigFile = fmt.Sprintf("%s/config.toml", EtcContainerdDir)
-
-	ContainerdCgroup = "systemd"
-
-	Pf9User = "pf9"
-
-	Pf9Group = "pf9group"
 
 	// Phase orders of all the phases
 	NoRolePhaseOrder                   = 10
