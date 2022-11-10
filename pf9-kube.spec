@@ -177,6 +177,8 @@ EOF
     chmod 0770 -R /opt/pf9/pf9-kube/conf/
     mkdir -p /var/opt/pf9/kube/apiserver-config
     chown -R pf9:pf9group /var/opt/pf9 /etc/pf9
+
+    systemctl enable pf9-nodeletd
 fi
 
 %preun
