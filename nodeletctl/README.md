@@ -103,15 +103,29 @@ type BootstrapConfig struct {
 	MasterVipEnabled       bool                   `json:"masterVipEnabled,omitempty"`
 	MasterVipInterface     string                 `json:"masterVipInterface,omitempty"`
 	MasterVipVrouterId     int                    `json:"masterVipVrouterId,omitempty"`
-	CalicoV4Interface      string                 `json:"calicoV4Interface,omitempty"`
-	CalicoV6Interface      string                 `json:"calicoV6Interface,omitempty"`
 	MTU                    string                 `json:"mtu,omitempty"`
 	Privileged             string                 `json:"privileged,omitempty"`
 	ContainerRuntime       ContainerRuntimeConfig `json:"containerRuntime,omitempty"`
 	UserImages             []string               `json:"userImages,omitempty"`
 	DNS                    CoreDNSConfig          `json:"dns,omitempty"`
+	UseHostname            bool                   `json:"useHostname,omitempty"`
+	IPv6Enabled            bool                   `json:"ipv6,omitempty"`
+	Calico                 CalicoConfig           `json:"calico,omitempty"`
+	ServicesCidr           string                 `json:"servicesCidr,omitempty"`
 	MasterNodes            []HostConfig           `json:"masterNodes"`
 	WorkerNodes            []HostConfig           `json:"workerNodes"`
+}
+
+type CalicoConfig struct {
+	V4Interface      string `json:"v4Interface,omitempty"`
+	V6Interface      string `json:"v6Interface,omitempty"`
+	V4ContainersCidr string `json:"v4ContainersCidr,omitempty"`
+	V6ContainersCidr string `json:"v6ContainersCidr,omitempty"`
+	V4BlockSize      int    `json:"v4BlockSize,omitempty"`
+	V6BlockSize      int    `json:"v6BlockSize,omitempty"`
+	V4NATOutgoing    bool   `json:"v4NATOutgoing,omitempty"`
+	V6NATOutgoing    bool   `json:"v6NATOutgoing,omitempty"`
+	V4IpIpMode       string `json:"v4IpIpMode,omitempty"`
 }
 
 type CoreDNSConfig struct {
@@ -147,11 +161,28 @@ masterVipVrouterId:     [pseudo-random-number], // Not used if MasterVipEnabled 
 allowWorkloadsOnMaster: false,
 containerRuntime:       ContainerRuntimeConfig{"containerd", "systemd"},
 
+CalicoConfig
+-------------------------------------------
 // For more info please see Manifest configuration of IP_AUTODETECTION_METHOD:
 // https://projectcalico.docs.tigera.io/networking/ip-autodetection#change-the-autodetection-method
+// As an example, on a multi-NIC setup it is recommended to be explicit: "interface=eno2"
 calicoV4Interface:      "first-found",
 calicoV6Interface:      "first-found",
+calicoConfig.V4BlockSize = 26
+calicoConfig.V6BlockSize = 122
+calicoConfig.V4ContainersCidr = DefaultCalicoV4Cidr
+calicoConfig.V6ContainersCidr = DefaultCalicoV6Cidr
+calicoConfig.V4NATOutgoing = true
+calicoConfig.V6NATOutgoing = false
+calicoConfig.V4IpIpMode = "Always"
+calicoConfig.V4Interface = "first-found"
+calicoConfig.V6Interface = "first-found"
 MTU:                    "1440",
+
+ContainerRuntime
+-------------------------------------------
+The default runtime is containerd
+CgroupDriver: systemd
 ```
 
 Only the Calico CNI is supported. For more information on configuring the Calico options, please see: https://projectcalico.docs.tigera.io/networking/ip-autodetection
