@@ -40,7 +40,7 @@ function ipv4_address_of_interface_label()
     return 2
 }
 
-function ip_address_of_default_gw_nic()
+function ipv4_address_of_node()
 {
     ipv4_ip=`ipv4_address_of_default_gw_nic`
     local ret=$?
@@ -50,7 +50,10 @@ function ip_address_of_default_gw_nic()
             return ${ret}
         fi
     fi
+}
 
+function ipv6_address_of_node()
+{
     ipv6_ip=`ipv6_address_of_default_gw_nic`
     local ret=$?
     if [ $ret -ne 0 ]; then
@@ -208,12 +211,16 @@ function get_node_name()
         result=$(curl --silent --show-error http://169.254.169.254/latest/meta-data/local-hostname)
         # Returns lowercase local-hostname
         echo ${result,,}
-    elif [ "${CLOUD_PROVIDER_TYPE}" == "azure" ] || [ "${IPV6_ENABLED}" == "true" ] || [[ $CLOUD_PROVIDER_TYPE == "local" && $USE_HOSTNAME == "true" ]]; then
+    elif [ "${CLOUD_PROVIDER_TYPE}" == "azure" ] || [[ $CLOUD_PROVIDER_TYPE == "local" && $USE_HOSTNAME == "true" ]]; then
         result=$(hostname)
         # Returns lowercase hostname
         echo ${result,,}
     else
-        ip_address_of_default_gw_nic
+        if [ "$IPV6_ENABLED" == true]; then
+            echo $NODE_IPV6
+        else
+            echo $NODE_IP
+        fi
     fi
 }
 
@@ -596,7 +603,12 @@ function ensure_kubelet_running()
 
     # Make sure that node IP is selected based on the interface specified in kube_interface cache files when nodename is set as the hostname.
     if [[ $CLOUD_PROVIDER_TYPE == "local" && $USE_HOSTNAME == "true" ]]; then
-        kubelet_args+=" --node-ip=${NODE_IP}"
+        if [[ $DUALSTACK == "true" ]]; then
+            kubelet_args+=" --node-ip=${NODE_IP},${NODE_IPV6}"
+        else
+            # For single stack IPV6, NODE_IP == NODE_IPV6 to avoid risk
+            kubelet_args+=" --node-ip=${NODE_IP}"
+        fi
     fi
 
     if [[ "${CLOUD_PROVIDER_TYPE}" == "aws" ]]; then
@@ -711,12 +723,21 @@ function ensure_proxy_running()
     local container_name="proxy"
     local container_img="${k8s_registry}/kube-proxy:$KUBERNETES_VERSION"
 
+    PROXY_CLUSTER_CIDRS = ""
+    if [ "$DUALSTACK" == "true" ]; then
+        PROXY_CLUSTER_CIDRS="$CONTAINERS_CIDR,$CONTAINERS_CIDR_V6"
+    elif [ "$IPV6_ENABLED" == "true" ]; then
+        PROXY_CLUSTER_CIDRS="$CONTAINERS_CIDR_V6"
+    else
+        PROXY_CLUSTER_CIDRS="$CONTAINERS_CIDR"
+    fi
+
     local container_cmd="kube-proxy"
     local container_cmd_args="--kubeconfig=${kubeconfig_in_container} \
                               --v=2 \
                               --hostname-override=${node_name//:/-} \
                               --proxy-mode ${KUBE_PROXY_MODE} \
-                              --cluster-cidr ${CONTAINERS_CIDR} \
+                              --cluster-cidr ${PROXY_CLUSTER_CIDRS} \
                               --bind-address ${bind_address}"
 
     if [ ! -z "${MAX_NAT_CONN}" ]; then
@@ -778,17 +799,26 @@ function check_required_params()
     fi
     echo master IP is $MASTER_IP
 
-    if [ "$CONTAINERS_CIDR" == "" ]; then
+    if [ "$IPV4_ENABLED" == "true" && "$CONTAINERS_CIDR" == "" ]; then
         echo CONTAINERS_CIDR not defined
         exit 1
     fi
+
+    if [ "$IPV6_ENABLED" == "true" && "$CONTAINERS_CIDR_V6" == "" ]; then
+        echo CONTAINERS_CIDR_V6 not defined
+        exit 1
+    fi
+
     echo containers CIDR is $CONTAINERS_CIDR
+    echo containers CIDR V6 is $CONTAINERS_CIDR_V6
 
     if [ "$SERVICES_CIDR" == "" ]; then
-        echo SERVICES_CIDR not defined
+        if [ "$SERVICES_CIDR_V6" == "" ]; then
+            echo SERVICES_CIDR nor SERVICES_CIDR_V6 not defined
         exit 1
     fi
     echo services CIDR is $SERVICES_CIDR
+    echo services CIDR v6 is $SERVICES_CIDR_V6
 }
 
 function set_sysctl_params()
@@ -1273,6 +1303,9 @@ function ensure_http_proxy_configured()
     add_no_proxy "$(get_node_endpoint)"
     add_no_proxy "${EXTERNAL_DNS_NAME:+$EXTERNAL_DNS_NAME,}${MASTER_IP}"
     add_no_proxy ".${DNS_DOMAIN}"
+    if [ "$IPV6_ENABLED" == "true" ]; then
+        add_no_proxy "${CONTAINERS_CIDR_V6}"
+    fi
     add_no_proxy "${CONTAINERS_CIDR}"
     add_no_proxy "${SERVICES_CIDR}"
     add_no_proxy ".svc,.svc.cluster.local"
