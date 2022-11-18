@@ -433,10 +433,15 @@ function prepare_master_pod()
     ALLOCATE_NODE_CIDRS=""
     CLUSTER_CIDR=""
 
-    if [ "${PF9_NETWORK_PLUGIN}" == "canal" ] || [ "${PF9_NETWORK_PLUGIN}" == "calico" ]; then
+    if [ "${PF9_NETWORK_PLUGIN}" == "calico" ]; then
         ALLOCATE_NODE_CIDRS="true"
-        CLUSTER_CIDR="${CONTAINERS_CIDR}"
-    fi
+        if [ "$DUALSTACK" == "true" ]; then
+            CLUSTER_CIDR="$CONTAINERS_CIDR,$CONTAINERS_CIDR_V6"
+        elif [ "$IPV6_ENABLED" == "true" ]; then
+            CLUSTER_CIDR="$CONTAINERS_CIDR_V6"
+        else
+            CLUSTER_CIDR="$CONTAINERS_CIDR"
+        fi
 
     DEBUG_LEVEL=2
 
@@ -444,8 +449,17 @@ function prepare_master_pod()
         DEBUG_LEVEL=8
     fi
 
+    API_SERVICES_POOL = ""
+    if [ "$DUALSTACK" == "true" ]; then
+        API_SERVICES_POOL="$SERVICES_CIDR,$SERVICES_CIDR_V6"
+    elif [ "$IPV6_ENABLED" == "true" ]; then
+        API_SERVICES_POOL="$SERVICES_CIDR_V6"
+    else
+        API_SERVICES_POOL="$SERVICES_CIDR"
+    fi
+
     sed -e "s/__KUBERNETES_VERSION__/${KUBERNETES_VERSION}/g" \
-        -e "s|__SERVICES_CIDR__|${SERVICES_CIDR}|g" \
+        -e "s|__SERVICES_CIDR__|${API_SERVICES_POOL}|g" \
         -e "s|__PRIVILEGED__|${PRIVILEGED}|g" \
         -e "s|__AUTHZ_MODE__|${AUTHZ_MODE}|g" \
         -e "$(sub_or_delete_line __CLOUD_PROVIDER__ ${CLOUD_PROVIDER})" \
@@ -570,6 +584,10 @@ function prepare_certs()
     if [ "${MASTER_VIP_ENABLED}" == "true" ]; then
         apiserver_sans="${apiserver_sans}, IP:${MASTER_IP}"
         etcd_sans="${etcd_sans}, IP:${MASTER_IP}"
+    fi
+
+    if [ "${DUALSTACK}" == "true" ]; then
+        apiserver_sans="${apiserver_sans}, IP:${API_SERVICE_IPV6}"
     fi
 
     trimmed_etcd_sans=$(trim_sans "$etcd_sans")

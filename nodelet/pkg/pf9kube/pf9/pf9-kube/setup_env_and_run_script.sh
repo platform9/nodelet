@@ -70,9 +70,42 @@ else
     # Export proxy settings to make them available to all phase scripts.
     ensure_http_proxy_configured >> /dev/null
     export NODE_NAME_TYPE=$(get_node_name_type)
-    export NODE_IP=$(ip_address_of_default_gw_nic)
-    export NODE_NAME=$(get_node_name)
     export HOSTNAME=`hostname`
+
+    export DUALSTACK="false"
+    if [[ "$IPV4_ENABLED" == "true" && "$IPV6_ENABLED" == "true" ]]; then
+        export DUALSTACK="true"
+        export NODE_IP=$(ipv4_address_of_node)
+        export NODE_IPV6=$(ipv6_address_of_node)
+        export API_SERVICE_IPV6=`bin/addr_conv -cidr "$SERVICES_CIDR" -pos 1`
+        export DNS_IP=`bin/addr_conv -cidr "$SERVICES_CIDR" -pos 10`
+        export API_SERVICE_IPV6=`bin/addr_conv -cidr "$SERVICES_CIDR_V6" -pos 1`
+        export DNS_IPV6=`bin/addr_conv -cidr "$SERVICES_CIDR_V6" -pos 10`
+    elif [ "$IPV6_ENABLED" == "true" ]; then
+        #Ideally we should unset NODE_IP to be explicit, but for backwards compat
+        # and to prevent breakage if we miss a change, set NODE_IP to v6
+        # since it already works
+        export NODE_IP=$(ipv6_address_of_node)
+        export NODE_IPV6=$(ipv6_address_of_node)
+        export API_SERVICE_IP=`bin/addr_conv -cidr "$SERVICES_CIDR_V6" -pos 1`
+        export DNS_IP=`bin/addr_conv -cidr "$SERVICES_CIDR_V6" -pos 10`
+        export API_SERVICE_IPV6=`bin/addr_conv -cidr "$SERVICES_CIDR_V6" -pos 1`
+        export DNS_IPV6=`bin/addr_conv -cidr "$SERVICES_CIDR_V6" -pos 10`
+    else
+        # Assume default case is IPv4 even if IPV4_ENABLED is not set
+        # because this is a new field and not (yet) set by Sunpike or Qbert
+        # Currently only set by nodeletctl/airctl
+        export NODE_IP=$(ipv4_address_of_node)
+        export API_SERVICE_IP=`bin/addr_conv -cidr "$SERVICES_CIDR_V6" -pos 1`
+        export DNS_IP=`bin/addr_conv -cidr "$SERVICES_CIDR_V6" -pos 10`
+        export API_SERVICE_IPV6=`bin/addr_conv -cidr "$SERVICES_CIDR_V6" -pos 1`
+        export DNS_IPV6=`bin/addr_conv -cidr "$SERVICES_CIDR_V6" -pos 10`
+    fi
+    export NODE_NAME=$(get_node_name)
+
+    if [ "$IPV6_ENABLED" == "true" ]; then
+        export CONTAINERS_CIDR_V6="${CALICO_IPV6POOL_CIDR}"
+    fi
 
     do_cmd $1 $2 $3
 fi

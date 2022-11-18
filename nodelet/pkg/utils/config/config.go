@@ -59,6 +59,8 @@ var DefaultConfig = Config{
 	ReservedCPUs:            constants.ReservedCPUs,
 	KubeletCloudConfig:      constants.KubeletCloudConfig,
 	ServicesCIDR:            constants.ServicesCIDR,
+	ServicesCIDRv6:          constants.ServicesCIDRv6,
+	Dualstack:               false,
 }
 
 // Config a struct to load the values from viper for future use.
@@ -96,6 +98,7 @@ type Config struct {
 	NumCmdOutputLinesToLog    int     `mapstructure:"NUM_CMD_OP_LINES_TO_LOG"`
 	CloudProviderType         string  `mapstructure:"CLOUD_PROVIDER_TYPE"`
 	MasterIp                  string  `mapstructure:"MASTER_IP"`
+	MasterIPv6                string  `mapstructure:"MASTER_IPV6"`
 	K8sApiPort                string  `mapstructure:"K8S_API_PORT"`
 	MasterSchedulable         bool    `mapstructure:"ALLOW_WORKLOADS_ON_MASTER"`
 	UserImagesDir             string  `mapstructure:"USER_IMAGES_DIR"`
@@ -115,6 +118,9 @@ type Config struct {
 	TopologyManagerPolicy     string  `mapstructure:"TOPOLOGY_MANAGER_POLICY"`
 	ReservedCPUs              string  `mapstructure:"RESERVED_CPUS"`
 	IPv6Enabled               bool    `mapstructure:"IPV6_ENABLED"`
+	IPv4Enabled               bool    `mapstructure:"IPV4_ENABLED"`
+	Dualstack                 bool    `mapstructure:"DUALSTACK"`
+	ServicesCIDRv6            string  `mapstructure:"SERVICES_CIDR_V6"`
 }
 
 // ToStringMap converts the Config struct to a map of strings

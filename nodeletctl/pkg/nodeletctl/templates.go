@@ -44,19 +44,18 @@ ETCD_ENV: |-
   ETCD_STRICT_RECONFIG_CHECK=true
   ETCD_INITIAL_CLUSTER_TOKEN={{ .ClusterId }}
   ETCD_INITIAL_CLUSTER_STATE={{ .EtcdClusterState }}
-  {{ if .IPv6Enabled -}}
+  {{ if and ((.IPv6Enabled) (not .Dualstack))-}}
   ETCD_INITIAL_CLUSTER={{- range $MasterName, $MasterIp := .MasterList }}{{ $MasterName }}=https://[{{ $MasterIp }}]:2380,{{ end }}
   ETCD_INITIAL_ADVERTISE_PEER_URLS=https://[{{ .HostIp }}]:2380
   ETCD_LISTEN_PEER_URLS=https://[{{ .HostIp }}]:2380
   ETCD_ADVERTISE_CLIENT_URLS=https://[{{ .HostIp }}]:4001
-  ETCD_LISTEN_CLIENT_URLS=https://0.0.0.0:4001,http://127.0.0.1:2379,http://[::1]:2379
   {{ else -}}
   ETCD_INITIAL_CLUSTER={{- range $MasterName, $MasterIp := .MasterList }}{{ $MasterName }}=https://{{ $MasterIp }}:2380,{{ end }}
   ETCD_INITIAL_ADVERTISE_PEER_URLS=https://{{ .HostIp }}:2380
   ETCD_LISTEN_PEER_URLS=https://{{ .HostIp }}:2380
   ETCD_ADVERTISE_CLIENT_URLS=https://{{ .HostIp }}:4001
-  ETCD_LISTEN_CLIENT_URLS=https://0.0.0.0:4001,http://127.0.0.1:2379
   {{ end -}}
+  ETCD_LISTEN_CLIENT_URLS=https://[::]:4001,http://127.0.0.1:2379,http://[::1]:2379
   ETCD_DATA_DIR=/var/etcd/data
   ETCD_CERT_FILE=/certs/etcd/client/request.crt
   ETCD_KEY_FILE=/certs/etcd/client/request.key
@@ -74,6 +73,7 @@ EXTRA_OPTS: ""
 FELIX_IPV6SUPPORT: {{ .IPv6Enabled }}
 GCR_PRIVATE_REGISTRY: ""
 HOSTID: {{ .HostId }}
+IPV4_ENABLED: {{ .IPv4Enabled }}
 IPV6_ENABLED: {{ .IPv6Enabled }}
 K8S_API_PORT: {{ .K8sApiPort }}
 K8S_PRIVATE_REGISTRY: ""
@@ -83,6 +83,7 @@ KUBE_PROXY_MODE: ipvs
 KUBE_SERVICE_STATE: "true"
 KUBELET_CLOUD_CONFIG: ""
 MASTER_IP: {{ .MasterIp }}
+MASTER_IPV6: {{ .MasterIpv6 }}
 MASTER_VIP_ENABLED: {{ .MasterVipEnabled }}
 MASTER_VIP_IFACE: {{ .MasterVipInterface }}
 MASTER_VIP_PRIORITY: ""
@@ -105,6 +106,7 @@ DOCKER_CGROUP: {{ .ContainerRuntime.CgroupDriver }}
 RUNTIME_CONFIG: ""
 SCHEDULER_FLAGS: ""
 SERVICES_CIDR: {{ .ServicesCidr }}
+SERVICES_CIDR_V6: {{ .ServicesCidrV6 }}
 TOPOLOGY_MANAGER_POLICY: none
 USE_HOSTNAME: {{ .UseHostname }}
 STANDALONE: "true"
@@ -160,6 +162,7 @@ EXTRA_OPTS: ""
 FELIX_IPV6SUPPORT: {{ .IPv6Enabled }}
 GCR_PRIVATE_REGISTRY: ""
 HOSTID: {{ .HostId }}
+IPV4_ENABLED: {{ .IPv4Enabled }}
 IPV6_ENABLED: {{ .IPv6Enabled }}
 K8S_API_PORT: {{ .K8sApiPort }}
 K8S_PRIVATE_REGISTRY: ""
@@ -169,6 +172,7 @@ KUBE_PROXY_MODE: ipvs
 KUBE_SERVICE_STATE: "true"
 KUBELET_CLOUD_CONFIG: ""
 MASTER_IP: {{ .MasterIp }}
+MASTER_IPV6: {{ .MasterIpv6 }}
 MASTER_VIP_ENABLED: {{ .MasterVipEnabled }}
 MASTER_VIP_IFACE: {{ .MasterVipInterface }}
 MASTER_VIP_PRIORITY: ""
@@ -191,6 +195,7 @@ DOCKER_CGROUP: {{ .ContainerRuntime.CgroupDriver }}
 RUNTIME_CONFIG: ""
 SCHEDULER_FLAGS: ""
 SERVICES_CIDR: {{ .ServicesCidr }}
+SERVICES_CIDR_V6: {{ .ServicesCidrV6 }}
 TOPOLOGY_MANAGER_POLICY: none
 USE_HOSTNAME: {{ .UseHostname }}
 STANDALONE: "true"

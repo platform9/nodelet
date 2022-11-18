@@ -177,6 +177,7 @@ var (
 	KubeletTlsCipherSuites        = "[TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256]"
 	KubeletCloudConfig            = ""
 	ServicesCIDR                  = "10.21.0.0/22"
+	ServicesCIDRv6                = "fd00:102::/116"
 
 	ConfigSrcDir = "/opt/pf9/pf9-kube/conf"
 	// CoreDNSTemplate is template file for coredns
