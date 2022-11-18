@@ -44,7 +44,11 @@ var DefaultConfig = Config{
 	GRPCRetryTimeoutSeconds: 5,
 	NumCmdOutputLinesToLog:  10, // 0 indicates no command lines to be logged
 	UserImagesDir:           constants.UserImagesDir,
-	CoreDNSHostsFile:        "/etc/hosts",
+	CoreDNSHostsFile:        constants.CoreDNSHostsFile,
+	K8sPrivateRegistry:      constants.K8sRegistry,
+	ServicesCIDR:            constants.ServicesCIDR,
+	ServicesCIDRv6:          constants.ServicesCIDRv6,
+	Dualstack:               false,
 }
 
 // Config a struct to load the values from viper for future use.
@@ -80,6 +84,7 @@ type Config struct {
 	CloudProviderType         string  `mapstructure:"CLOUD_PROVIDER_TYPE"`
 	UseHostname               bool    `mapstructure:"USE_HOSTNAME"`
 	MasterIp                  string  `mapstructure:"MASTER_IP"`
+	MasterIPv6                string  `mapstructure:"MASTER_IPV6"`
 	K8sApiPort                string  `mapstructure:"K8S_API_PORT"`
 	MasterSchedulable         bool    `mapstructure:"ALLOW_WORKLOADS_ON_MASTER"`
 	UserImagesDir             string  `mapstructure:"USER_IMAGES_DIR"`
@@ -89,6 +94,9 @@ type Config struct {
 	KubeletCloudConfig        string  `mapstructure:"KUBELET_CLOUD_CONFIG"`
 	CoreDNSHostsFile          string  `mapstructure:"COREDNS_HOSTS_FILE"`
 	IPv6Enabled               bool    `mapstructure:"IPV6_ENABLED"`
+	IPv4Enabled               bool    `mapstructure:"IPV4_ENABLED"`
+	Dualstack                 bool    `mapstructure:"DUALSTACK"`
+	ServicesCIDRv6            string  `mapstructure:"SERVICES_CIDR_V6"`
 }
 
 // ToStringMap converts the Config struct to a map of strings

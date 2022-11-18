@@ -50,14 +50,6 @@ function deploy_calico_daemonset()
     local mtu_size=$((${MTU_SIZE}))
 
     local CALICO_IPV4POOL_CIDR=${CONTAINERS_CIDR}
-    local IPV4_ENABLED="true"
-    # disable IPV4 (no dualstack support yet)
-    if [[ "${IPV6_ENABLED}" == "true" ]]; then
-          CALICO_IPV4POOL_CIDR=""
-          IPV4_ENABLED="false"
-    fi
-
-
 
     # Replace configuration values in calico spec with user input
     sed -e "s|__CALICO_IPV4POOL_CIDR__|${CALICO_IPV4POOL_CIDR}|g" \

@@ -23,6 +23,7 @@ type BootstrapConfig struct {
 	AllowWorkloadsOnMaster bool                   `json:"allowWorkloadsOnMaster,omitempty"`
 	K8sApiPort             string                 `json:"k8sApiPort,omitempty"`
 	MasterIp               string                 `json:"masterIp,omitempty"`
+	MasterIpv6             string                 `json:"masterIpV6,omitempty"`
 	MasterVipEnabled       bool                   `json:"masterVipEnabled,omitempty"`
 	MasterVipInterface     string                 `json:"masterVipInterface,omitempty"`
 	MasterVipVrouterId     int                    `json:"masterVipVrouterId,omitempty"`
@@ -32,9 +33,11 @@ type BootstrapConfig struct {
 	UserImages             []string               `json:"userImages,omitempty"`
 	DNS                    CoreDNSConfig          `json:"dns,omitempty"`
 	UseHostname            bool                   `json:"useHostname,omitempty"`
+	IPv4Enabled            bool                   `json:"ipv4,omitempty"`
 	IPv6Enabled            bool                   `json:"ipv6,omitempty"`
 	Calico                 CalicoConfig           `json:"calico,omitempty"`
 	ServicesCidr           string                 `json:"servicesCidr,omitempty"`
+	ServicesCidrV6         string                 `json:"servicesCidrV6,omitempty"`
 	MasterNodes            []HostConfig           `json:"masterNodes"`
 	WorkerNodes            []HostConfig           `json:"workerNodes"`
 }
@@ -103,6 +106,7 @@ func InitBootstrapConfig() *BootstrapConfig {
 		K8sApiPort:             "443",
 		MasterVipEnabled:       false,
 		MTU:                    "1440",
+		IPv4Enabled:            true,
 		IPv6Enabled:            false,
 		UseHostname:            false,
 		Calico:                 calicoConfig,
