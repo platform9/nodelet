@@ -175,6 +175,16 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*AWSOpts)(nil), (*sunpike.AWSOpts)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha2_AWSOpts_To_sunpike_AWSOpts(a.(*AWSOpts), b.(*sunpike.AWSOpts), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*sunpike.AWSOpts)(nil), (*AWSOpts)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_sunpike_AWSOpts_To_v1alpha2_AWSOpts(a.(*sunpike.AWSOpts), b.(*AWSOpts), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*AWSScalingConfig)(nil), (*sunpike.AWSScalingConfig)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1alpha2_AWSScalingConfig_To_sunpike_AWSScalingConfig(a.(*AWSScalingConfig), b.(*sunpike.AWSScalingConfig), scope)
 	}); err != nil {
@@ -192,6 +202,66 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*sunpike.AWSVPC)(nil), (*AWSVPC)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_sunpike_AWSVPC_To_v1alpha2_AWSVPC(a.(*sunpike.AWSVPC), b.(*AWSVPC), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*AddonOperatorOpts)(nil), (*sunpike.AddonOperatorOpts)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha2_AddonOperatorOpts_To_sunpike_AddonOperatorOpts(a.(*AddonOperatorOpts), b.(*sunpike.AddonOperatorOpts), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*sunpike.AddonOperatorOpts)(nil), (*AddonOperatorOpts)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_sunpike_AddonOperatorOpts_To_v1alpha2_AddonOperatorOpts(a.(*sunpike.AddonOperatorOpts), b.(*AddonOperatorOpts), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*AddonOperatorVersion)(nil), (*sunpike.AddonOperatorVersion)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha2_AddonOperatorVersion_To_sunpike_AddonOperatorVersion(a.(*AddonOperatorVersion), b.(*sunpike.AddonOperatorVersion), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*sunpike.AddonOperatorVersion)(nil), (*AddonOperatorVersion)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_sunpike_AddonOperatorVersion_To_v1alpha2_AddonOperatorVersion(a.(*sunpike.AddonOperatorVersion), b.(*AddonOperatorVersion), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*AddonOperatorVersionList)(nil), (*sunpike.AddonOperatorVersionList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha2_AddonOperatorVersionList_To_sunpike_AddonOperatorVersionList(a.(*AddonOperatorVersionList), b.(*sunpike.AddonOperatorVersionList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*sunpike.AddonOperatorVersionList)(nil), (*AddonOperatorVersionList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_sunpike_AddonOperatorVersionList_To_v1alpha2_AddonOperatorVersionList(a.(*sunpike.AddonOperatorVersionList), b.(*AddonOperatorVersionList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*AddonTypeVersion)(nil), (*sunpike.AddonTypeVersion)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha2_AddonTypeVersion_To_sunpike_AddonTypeVersion(a.(*AddonTypeVersion), b.(*sunpike.AddonTypeVersion), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*sunpike.AddonTypeVersion)(nil), (*AddonTypeVersion)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_sunpike_AddonTypeVersion_To_v1alpha2_AddonTypeVersion(a.(*sunpike.AddonTypeVersion), b.(*AddonTypeVersion), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*AddonVersion)(nil), (*sunpike.AddonVersion)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha2_AddonVersion_To_sunpike_AddonVersion(a.(*AddonVersion), b.(*sunpike.AddonVersion), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*sunpike.AddonVersion)(nil), (*AddonVersion)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_sunpike_AddonVersion_To_v1alpha2_AddonVersion(a.(*sunpike.AddonVersion), b.(*AddonVersion), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*AddonVersionList)(nil), (*sunpike.AddonVersionList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha2_AddonVersionList_To_sunpike_AddonVersionList(a.(*AddonVersionList), b.(*sunpike.AddonVersionList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*sunpike.AddonVersionList)(nil), (*AddonVersionList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_sunpike_AddonVersionList_To_v1alpha2_AddonVersionList(a.(*sunpike.AddonVersionList), b.(*AddonVersionList), scope)
 	}); err != nil {
 		return err
 	}
@@ -365,6 +435,46 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*ClusterAgent)(nil), (*sunpike.ClusterAgent)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha2_ClusterAgent_To_sunpike_ClusterAgent(a.(*ClusterAgent), b.(*sunpike.ClusterAgent), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*sunpike.ClusterAgent)(nil), (*ClusterAgent)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_sunpike_ClusterAgent_To_v1alpha2_ClusterAgent(a.(*sunpike.ClusterAgent), b.(*ClusterAgent), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ClusterAgentList)(nil), (*sunpike.ClusterAgentList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha2_ClusterAgentList_To_sunpike_ClusterAgentList(a.(*ClusterAgentList), b.(*sunpike.ClusterAgentList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*sunpike.ClusterAgentList)(nil), (*ClusterAgentList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_sunpike_ClusterAgentList_To_v1alpha2_ClusterAgentList(a.(*sunpike.ClusterAgentList), b.(*ClusterAgentList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ClusterAgentSpec)(nil), (*sunpike.ClusterAgentSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha2_ClusterAgentSpec_To_sunpike_ClusterAgentSpec(a.(*ClusterAgentSpec), b.(*sunpike.ClusterAgentSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*sunpike.ClusterAgentSpec)(nil), (*ClusterAgentSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_sunpike_ClusterAgentSpec_To_v1alpha2_ClusterAgentSpec(a.(*sunpike.ClusterAgentSpec), b.(*ClusterAgentSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ClusterAgentStatus)(nil), (*sunpike.ClusterAgentStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha2_ClusterAgentStatus_To_sunpike_ClusterAgentStatus(a.(*ClusterAgentStatus), b.(*sunpike.ClusterAgentStatus), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*sunpike.ClusterAgentStatus)(nil), (*ClusterAgentStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_sunpike_ClusterAgentStatus_To_v1alpha2_ClusterAgentStatus(a.(*sunpike.ClusterAgentStatus), b.(*ClusterAgentStatus), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*ClusterAutoScalerOpts)(nil), (*sunpike.ClusterAutoScalerOpts)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1alpha2_ClusterAutoScalerOpts_To_sunpike_ClusterAutoScalerOpts(a.(*ClusterAutoScalerOpts), b.(*sunpike.ClusterAutoScalerOpts), scope)
 	}); err != nil {
@@ -512,6 +622,36 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*sunpike.ClusterStatus)(nil), (*ClusterStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_sunpike_ClusterStatus_To_v1alpha2_ClusterStatus(a.(*sunpike.ClusterStatus), b.(*ClusterStatus), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ClusterVersion)(nil), (*sunpike.ClusterVersion)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha2_ClusterVersion_To_sunpike_ClusterVersion(a.(*ClusterVersion), b.(*sunpike.ClusterVersion), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*sunpike.ClusterVersion)(nil), (*ClusterVersion)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_sunpike_ClusterVersion_To_v1alpha2_ClusterVersion(a.(*sunpike.ClusterVersion), b.(*ClusterVersion), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ClusterVersionAddon)(nil), (*sunpike.ClusterVersionAddon)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha2_ClusterVersionAddon_To_sunpike_ClusterVersionAddon(a.(*ClusterVersionAddon), b.(*sunpike.ClusterVersionAddon), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*sunpike.ClusterVersionAddon)(nil), (*ClusterVersionAddon)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_sunpike_ClusterVersionAddon_To_v1alpha2_ClusterVersionAddon(a.(*sunpike.ClusterVersionAddon), b.(*ClusterVersionAddon), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ClusterVersionList)(nil), (*sunpike.ClusterVersionList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha2_ClusterVersionList_To_sunpike_ClusterVersionList(a.(*ClusterVersionList), b.(*sunpike.ClusterVersionList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*sunpike.ClusterVersionList)(nil), (*ClusterVersionList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_sunpike_ClusterVersionList_To_v1alpha2_ClusterVersionList(a.(*sunpike.ClusterVersionList), b.(*ClusterVersionList), scope)
 	}); err != nil {
 		return err
 	}
@@ -675,6 +815,26 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*GoogleCloudProviderCredentials)(nil), (*sunpike.GoogleCloudProviderCredentials)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha2_GoogleCloudProviderCredentials_To_sunpike_GoogleCloudProviderCredentials(a.(*GoogleCloudProviderCredentials), b.(*sunpike.GoogleCloudProviderCredentials), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*sunpike.GoogleCloudProviderCredentials)(nil), (*GoogleCloudProviderCredentials)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_sunpike_GoogleCloudProviderCredentials_To_v1alpha2_GoogleCloudProviderCredentials(a.(*sunpike.GoogleCloudProviderCredentials), b.(*GoogleCloudProviderCredentials), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*GoogleCloudProviderSpec)(nil), (*sunpike.GoogleCloudProviderSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha2_GoogleCloudProviderSpec_To_sunpike_GoogleCloudProviderSpec(a.(*GoogleCloudProviderSpec), b.(*sunpike.GoogleCloudProviderSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*sunpike.GoogleCloudProviderSpec)(nil), (*GoogleCloudProviderSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_sunpike_GoogleCloudProviderSpec_To_v1alpha2_GoogleCloudProviderSpec(a.(*sunpike.GoogleCloudProviderSpec), b.(*GoogleCloudProviderSpec), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*HA)(nil), (*sunpike.HA)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1alpha2_HA_To_sunpike_HA(a.(*HA), b.(*sunpike.HA), scope)
 	}); err != nil {
@@ -682,41 +842,6 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*sunpike.HA)(nil), (*HA)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_sunpike_HA_To_v1alpha2_HA(a.(*sunpike.HA), b.(*HA), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*Host)(nil), (*sunpike.Host)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1alpha2_Host_To_sunpike_Host(a.(*Host), b.(*sunpike.Host), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*sunpike.Host)(nil), (*Host)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_sunpike_Host_To_v1alpha2_Host(a.(*sunpike.Host), b.(*Host), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*HostList)(nil), (*sunpike.HostList)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1alpha2_HostList_To_sunpike_HostList(a.(*HostList), b.(*sunpike.HostList), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*sunpike.HostList)(nil), (*HostList)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_sunpike_HostList_To_v1alpha2_HostList(a.(*sunpike.HostList), b.(*HostList), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*HostPhase)(nil), (*sunpike.HostPhase)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1alpha2_HostPhase_To_sunpike_HostPhase(a.(*HostPhase), b.(*sunpike.HostPhase), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*sunpike.HostPhase)(nil), (*HostPhase)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_sunpike_HostPhase_To_v1alpha2_HostPhase(a.(*sunpike.HostPhase), b.(*HostPhase), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*HostStatus)(nil), (*sunpike.HostStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1alpha2_HostStatus_To_sunpike_HostStatus(a.(*HostStatus), b.(*sunpike.HostStatus), scope)
 	}); err != nil {
 		return err
 	}
@@ -840,16 +965,6 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*NodeletStatus)(nil), (*sunpike.NodeletStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1alpha2_NodeletStatus_To_sunpike_NodeletStatus(a.(*NodeletStatus), b.(*sunpike.NodeletStatus), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*sunpike.NodeletStatus)(nil), (*NodeletStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_sunpike_NodeletStatus_To_v1alpha2_NodeletStatus(a.(*sunpike.NodeletStatus), b.(*NodeletStatus), scope)
-	}); err != nil {
-		return err
-	}
 	if err := s.AddGeneratedConversionFunc((*Override)(nil), (*sunpike.Override)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1alpha2_Override_To_sunpike_Override(a.(*Override), b.(*sunpike.Override), scope)
 	}); err != nil {
@@ -910,18 +1025,13 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
-	if err := s.AddConversionFunc((*sunpike.HostSpec)(nil), (*HostSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_sunpike_HostSpec_To_v1alpha2_HostSpec(a.(*sunpike.HostSpec), b.(*HostSpec), scope)
+	if err := s.AddGeneratedConversionFunc((*Toleration)(nil), (*sunpike.Toleration)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha2_Toleration_To_sunpike_Toleration(a.(*Toleration), b.(*sunpike.Toleration), scope)
 	}); err != nil {
 		return err
 	}
-	if err := s.AddConversionFunc((*sunpike.HostStatus)(nil), (*HostStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_sunpike_HostStatus_To_v1alpha2_HostStatus(a.(*sunpike.HostStatus), b.(*HostStatus), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*HostSpec)(nil), (*sunpike.HostSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1alpha2_HostSpec_To_sunpike_HostSpec(a.(*HostSpec), b.(*sunpike.HostSpec), scope)
+	if err := s.AddGeneratedConversionFunc((*sunpike.Toleration)(nil), (*Toleration)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_sunpike_Toleration_To_v1alpha2_Toleration(a.(*sunpike.Toleration), b.(*Toleration), scope)
 	}); err != nil {
 		return err
 	}
@@ -1372,6 +1482,26 @@ func Convert_sunpike_AWSCluster_To_v1alpha2_AWSCluster(in *sunpike.AWSCluster, o
 	return autoConvert_sunpike_AWSCluster_To_v1alpha2_AWSCluster(in, out, s)
 }
 
+func autoConvert_v1alpha2_AWSOpts_To_sunpike_AWSOpts(in *AWSOpts, out *sunpike.AWSOpts, s conversion.Scope) error {
+	out.ExternalSNAT = in.ExternalSNAT
+	return nil
+}
+
+// Convert_v1alpha2_AWSOpts_To_sunpike_AWSOpts is an autogenerated conversion function.
+func Convert_v1alpha2_AWSOpts_To_sunpike_AWSOpts(in *AWSOpts, out *sunpike.AWSOpts, s conversion.Scope) error {
+	return autoConvert_v1alpha2_AWSOpts_To_sunpike_AWSOpts(in, out, s)
+}
+
+func autoConvert_sunpike_AWSOpts_To_v1alpha2_AWSOpts(in *sunpike.AWSOpts, out *AWSOpts, s conversion.Scope) error {
+	out.ExternalSNAT = in.ExternalSNAT
+	return nil
+}
+
+// Convert_sunpike_AWSOpts_To_v1alpha2_AWSOpts is an autogenerated conversion function.
+func Convert_sunpike_AWSOpts_To_v1alpha2_AWSOpts(in *sunpike.AWSOpts, out *AWSOpts, s conversion.Scope) error {
+	return autoConvert_sunpike_AWSOpts_To_v1alpha2_AWSOpts(in, out, s)
+}
+
 func autoConvert_v1alpha2_AWSScalingConfig_To_sunpike_AWSScalingConfig(in *AWSScalingConfig, out *sunpike.AWSScalingConfig, s conversion.Scope) error {
 	out.MinSize = in.MinSize
 	out.MaxSize = in.MaxSize
@@ -1426,6 +1556,140 @@ func Convert_sunpike_AWSVPC_To_v1alpha2_AWSVPC(in *sunpike.AWSVPC, out *AWSVPC, 
 	return autoConvert_sunpike_AWSVPC_To_v1alpha2_AWSVPC(in, out, s)
 }
 
+func autoConvert_v1alpha2_AddonOperatorOpts_To_sunpike_AddonOperatorOpts(in *AddonOperatorOpts, out *sunpike.AddonOperatorOpts, s conversion.Scope) error {
+	out.ImageTag = in.ImageTag
+	return nil
+}
+
+// Convert_v1alpha2_AddonOperatorOpts_To_sunpike_AddonOperatorOpts is an autogenerated conversion function.
+func Convert_v1alpha2_AddonOperatorOpts_To_sunpike_AddonOperatorOpts(in *AddonOperatorOpts, out *sunpike.AddonOperatorOpts, s conversion.Scope) error {
+	return autoConvert_v1alpha2_AddonOperatorOpts_To_sunpike_AddonOperatorOpts(in, out, s)
+}
+
+func autoConvert_sunpike_AddonOperatorOpts_To_v1alpha2_AddonOperatorOpts(in *sunpike.AddonOperatorOpts, out *AddonOperatorOpts, s conversion.Scope) error {
+	out.ImageTag = in.ImageTag
+	return nil
+}
+
+// Convert_sunpike_AddonOperatorOpts_To_v1alpha2_AddonOperatorOpts is an autogenerated conversion function.
+func Convert_sunpike_AddonOperatorOpts_To_v1alpha2_AddonOperatorOpts(in *sunpike.AddonOperatorOpts, out *AddonOperatorOpts, s conversion.Scope) error {
+	return autoConvert_sunpike_AddonOperatorOpts_To_v1alpha2_AddonOperatorOpts(in, out, s)
+}
+
+func autoConvert_v1alpha2_AddonOperatorVersion_To_sunpike_AddonOperatorVersion(in *AddonOperatorVersion, out *sunpike.AddonOperatorVersion, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	out.KubeVersion = in.KubeVersion
+	out.Versions = *(*[]string)(unsafe.Pointer(&in.Versions))
+	return nil
+}
+
+// Convert_v1alpha2_AddonOperatorVersion_To_sunpike_AddonOperatorVersion is an autogenerated conversion function.
+func Convert_v1alpha2_AddonOperatorVersion_To_sunpike_AddonOperatorVersion(in *AddonOperatorVersion, out *sunpike.AddonOperatorVersion, s conversion.Scope) error {
+	return autoConvert_v1alpha2_AddonOperatorVersion_To_sunpike_AddonOperatorVersion(in, out, s)
+}
+
+func autoConvert_sunpike_AddonOperatorVersion_To_v1alpha2_AddonOperatorVersion(in *sunpike.AddonOperatorVersion, out *AddonOperatorVersion, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	out.KubeVersion = in.KubeVersion
+	out.Versions = *(*[]string)(unsafe.Pointer(&in.Versions))
+	return nil
+}
+
+// Convert_sunpike_AddonOperatorVersion_To_v1alpha2_AddonOperatorVersion is an autogenerated conversion function.
+func Convert_sunpike_AddonOperatorVersion_To_v1alpha2_AddonOperatorVersion(in *sunpike.AddonOperatorVersion, out *AddonOperatorVersion, s conversion.Scope) error {
+	return autoConvert_sunpike_AddonOperatorVersion_To_v1alpha2_AddonOperatorVersion(in, out, s)
+}
+
+func autoConvert_v1alpha2_AddonOperatorVersionList_To_sunpike_AddonOperatorVersionList(in *AddonOperatorVersionList, out *sunpike.AddonOperatorVersionList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]sunpike.AddonOperatorVersion)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_v1alpha2_AddonOperatorVersionList_To_sunpike_AddonOperatorVersionList is an autogenerated conversion function.
+func Convert_v1alpha2_AddonOperatorVersionList_To_sunpike_AddonOperatorVersionList(in *AddonOperatorVersionList, out *sunpike.AddonOperatorVersionList, s conversion.Scope) error {
+	return autoConvert_v1alpha2_AddonOperatorVersionList_To_sunpike_AddonOperatorVersionList(in, out, s)
+}
+
+func autoConvert_sunpike_AddonOperatorVersionList_To_v1alpha2_AddonOperatorVersionList(in *sunpike.AddonOperatorVersionList, out *AddonOperatorVersionList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]AddonOperatorVersion)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_sunpike_AddonOperatorVersionList_To_v1alpha2_AddonOperatorVersionList is an autogenerated conversion function.
+func Convert_sunpike_AddonOperatorVersionList_To_v1alpha2_AddonOperatorVersionList(in *sunpike.AddonOperatorVersionList, out *AddonOperatorVersionList, s conversion.Scope) error {
+	return autoConvert_sunpike_AddonOperatorVersionList_To_v1alpha2_AddonOperatorVersionList(in, out, s)
+}
+
+func autoConvert_v1alpha2_AddonTypeVersion_To_sunpike_AddonTypeVersion(in *AddonTypeVersion, out *sunpike.AddonTypeVersion, s conversion.Scope) error {
+	out.Name = in.Name
+	out.Versions = *(*[]string)(unsafe.Pointer(&in.Versions))
+	return nil
+}
+
+// Convert_v1alpha2_AddonTypeVersion_To_sunpike_AddonTypeVersion is an autogenerated conversion function.
+func Convert_v1alpha2_AddonTypeVersion_To_sunpike_AddonTypeVersion(in *AddonTypeVersion, out *sunpike.AddonTypeVersion, s conversion.Scope) error {
+	return autoConvert_v1alpha2_AddonTypeVersion_To_sunpike_AddonTypeVersion(in, out, s)
+}
+
+func autoConvert_sunpike_AddonTypeVersion_To_v1alpha2_AddonTypeVersion(in *sunpike.AddonTypeVersion, out *AddonTypeVersion, s conversion.Scope) error {
+	out.Name = in.Name
+	out.Versions = *(*[]string)(unsafe.Pointer(&in.Versions))
+	return nil
+}
+
+// Convert_sunpike_AddonTypeVersion_To_v1alpha2_AddonTypeVersion is an autogenerated conversion function.
+func Convert_sunpike_AddonTypeVersion_To_v1alpha2_AddonTypeVersion(in *sunpike.AddonTypeVersion, out *AddonTypeVersion, s conversion.Scope) error {
+	return autoConvert_sunpike_AddonTypeVersion_To_v1alpha2_AddonTypeVersion(in, out, s)
+}
+
+func autoConvert_v1alpha2_AddonVersion_To_sunpike_AddonVersion(in *AddonVersion, out *sunpike.AddonVersion, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	out.KubeVersion = in.KubeVersion
+	out.Addons = *(*[]sunpike.AddonTypeVersion)(unsafe.Pointer(&in.Addons))
+	return nil
+}
+
+// Convert_v1alpha2_AddonVersion_To_sunpike_AddonVersion is an autogenerated conversion function.
+func Convert_v1alpha2_AddonVersion_To_sunpike_AddonVersion(in *AddonVersion, out *sunpike.AddonVersion, s conversion.Scope) error {
+	return autoConvert_v1alpha2_AddonVersion_To_sunpike_AddonVersion(in, out, s)
+}
+
+func autoConvert_sunpike_AddonVersion_To_v1alpha2_AddonVersion(in *sunpike.AddonVersion, out *AddonVersion, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	out.KubeVersion = in.KubeVersion
+	out.Addons = *(*[]AddonTypeVersion)(unsafe.Pointer(&in.Addons))
+	return nil
+}
+
+// Convert_sunpike_AddonVersion_To_v1alpha2_AddonVersion is an autogenerated conversion function.
+func Convert_sunpike_AddonVersion_To_v1alpha2_AddonVersion(in *sunpike.AddonVersion, out *AddonVersion, s conversion.Scope) error {
+	return autoConvert_sunpike_AddonVersion_To_v1alpha2_AddonVersion(in, out, s)
+}
+
+func autoConvert_v1alpha2_AddonVersionList_To_sunpike_AddonVersionList(in *AddonVersionList, out *sunpike.AddonVersionList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]sunpike.AddonVersion)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_v1alpha2_AddonVersionList_To_sunpike_AddonVersionList is an autogenerated conversion function.
+func Convert_v1alpha2_AddonVersionList_To_sunpike_AddonVersionList(in *AddonVersionList, out *sunpike.AddonVersionList, s conversion.Scope) error {
+	return autoConvert_v1alpha2_AddonVersionList_To_sunpike_AddonVersionList(in, out, s)
+}
+
+func autoConvert_sunpike_AddonVersionList_To_v1alpha2_AddonVersionList(in *sunpike.AddonVersionList, out *AddonVersionList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]AddonVersion)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_sunpike_AddonVersionList_To_v1alpha2_AddonVersionList is an autogenerated conversion function.
+func Convert_sunpike_AddonVersionList_To_v1alpha2_AddonVersionList(in *sunpike.AddonVersionList, out *AddonVersionList, s conversion.Scope) error {
+	return autoConvert_sunpike_AddonVersionList_To_v1alpha2_AddonVersionList(in, out, s)
+}
+
 func autoConvert_v1alpha2_AddonsOpts_To_sunpike_AddonsOpts(in *AddonsOpts, out *sunpike.AddonsOpts, s conversion.Scope) error {
 	if err := Convert_v1alpha2_AppCatalogOpts_To_sunpike_AppCatalogOpts(&in.AppCatalog, &out.AppCatalog, s); err != nil {
 		return err
@@ -1443,6 +1707,9 @@ func autoConvert_v1alpha2_AddonsOpts_To_sunpike_AddonsOpts(in *AddonsOpts, out *
 		return err
 	}
 	if err := Convert_v1alpha2_ProfileAgentOpts_To_sunpike_ProfileAgentOpts(&in.ProfileAgent, &out.ProfileAgent, s); err != nil {
+		return err
+	}
+	if err := Convert_v1alpha2_AddonOperatorOpts_To_sunpike_AddonOperatorOpts(&in.AddonOperator, &out.AddonOperator, s); err != nil {
 		return err
 	}
 	return nil
@@ -1470,6 +1737,9 @@ func autoConvert_sunpike_AddonsOpts_To_v1alpha2_AddonsOpts(in *sunpike.AddonsOpt
 		return err
 	}
 	if err := Convert_sunpike_ProfileAgentOpts_To_v1alpha2_ProfileAgentOpts(&in.ProfileAgent, &out.ProfileAgent, s); err != nil {
+		return err
+	}
+	if err := Convert_sunpike_AddonOperatorOpts_To_v1alpha2_AddonOperatorOpts(&in.AddonOperator, &out.AddonOperator, s); err != nil {
 		return err
 	}
 	return nil
@@ -1581,6 +1851,9 @@ func autoConvert_v1alpha2_CNIOpts_To_sunpike_CNIOpts(in *CNIOpts, out *sunpike.C
 	if err := Convert_v1alpha2_FlannelOpts_To_sunpike_FlannelOpts(&in.Flannel, &out.Flannel, s); err != nil {
 		return err
 	}
+	if err := Convert_v1alpha2_AWSOpts_To_sunpike_AWSOpts(&in.AWS, &out.AWS, s); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -1598,6 +1871,9 @@ func autoConvert_sunpike_CNIOpts_To_v1alpha2_CNIOpts(in *sunpike.CNIOpts, out *C
 		return err
 	}
 	if err := Convert_sunpike_FlannelOpts_To_v1alpha2_FlannelOpts(&in.Flannel, &out.Flannel, s); err != nil {
+		return err
+	}
+	if err := Convert_sunpike_AWSOpts_To_v1alpha2_AWSOpts(&in.AWS, &out.AWS, s); err != nil {
 		return err
 	}
 	return nil
@@ -1645,6 +1921,12 @@ func autoConvert_v1alpha2_CalicoOpts_To_sunpike_CalicoOpts(in *CalicoOpts, out *
 	out.IPv6DetectionMethod = in.IPv6DetectionMethod
 	out.RouterID = in.RouterID
 	out.FelixIPv6Support = in.FelixIPv6Support
+	out.NodeCpuLimit = in.NodeCpuLimit
+	out.NodeMemoryLimit = in.NodeMemoryLimit
+	out.TyphaCpuLimit = in.TyphaCpuLimit
+	out.TyphaMemoryLimit = in.TyphaMemoryLimit
+	out.ControllerCpuLimit = in.ControllerCpuLimit
+	out.ControllerMemoryLimit = in.ControllerMemoryLimit
 	return nil
 }
 
@@ -1666,6 +1948,12 @@ func autoConvert_sunpike_CalicoOpts_To_v1alpha2_CalicoOpts(in *sunpike.CalicoOpt
 	out.IPv6DetectionMethod = in.IPv6DetectionMethod
 	out.RouterID = in.RouterID
 	out.FelixIPv6Support = in.FelixIPv6Support
+	out.NodeCpuLimit = in.NodeCpuLimit
+	out.NodeMemoryLimit = in.NodeMemoryLimit
+	out.TyphaCpuLimit = in.TyphaCpuLimit
+	out.TyphaMemoryLimit = in.TyphaMemoryLimit
+	out.ControllerCpuLimit = in.ControllerCpuLimit
+	out.ControllerMemoryLimit = in.ControllerMemoryLimit
 	return nil
 }
 
@@ -1731,6 +2019,7 @@ func Convert_sunpike_CloudProviderList_To_v1alpha2_CloudProviderList(in *sunpike
 func autoConvert_v1alpha2_CloudProviderSpec_To_sunpike_CloudProviderSpec(in *CloudProviderSpec, out *sunpike.CloudProviderSpec, s conversion.Scope) error {
 	out.AWS = (*sunpike.AWSCloudProviderSpec)(unsafe.Pointer(in.AWS))
 	out.Azure = (*sunpike.AzureCloudProviderSpec)(unsafe.Pointer(in.Azure))
+	out.GKE = (*sunpike.GoogleCloudProviderSpec)(unsafe.Pointer(in.GKE))
 	out.Local = (*sunpike.LocalCloudProviderSpec)(unsafe.Pointer(in.Local))
 	return nil
 }
@@ -1743,6 +2032,7 @@ func Convert_v1alpha2_CloudProviderSpec_To_sunpike_CloudProviderSpec(in *CloudPr
 func autoConvert_sunpike_CloudProviderSpec_To_v1alpha2_CloudProviderSpec(in *sunpike.CloudProviderSpec, out *CloudProviderSpec, s conversion.Scope) error {
 	out.AWS = (*AWSCloudProviderSpec)(unsafe.Pointer(in.AWS))
 	out.Azure = (*AzureCloudProviderSpec)(unsafe.Pointer(in.Azure))
+	out.GKE = (*GoogleCloudProviderSpec)(unsafe.Pointer(in.GKE))
 	out.Local = (*LocalCloudProviderSpec)(unsafe.Pointer(in.Local))
 	return nil
 }
@@ -1876,6 +2166,7 @@ func autoConvert_v1alpha2_ClusterAddonSpec_To_sunpike_ClusterAddonSpec(in *Clust
 		return err
 	}
 	out.Watch = in.Watch
+	out.Tolerations = *(*[]sunpike.Toleration)(unsafe.Pointer(&in.Tolerations))
 	return nil
 }
 
@@ -1892,6 +2183,7 @@ func autoConvert_sunpike_ClusterAddonSpec_To_v1alpha2_ClusterAddonSpec(in *sunpi
 		return err
 	}
 	out.Watch = in.Watch
+	out.Tolerations = *(*[]Toleration)(unsafe.Pointer(&in.Tolerations))
 	return nil
 }
 
@@ -1924,6 +2216,106 @@ func autoConvert_sunpike_ClusterAddonStatus_To_v1alpha2_ClusterAddonStatus(in *s
 // Convert_sunpike_ClusterAddonStatus_To_v1alpha2_ClusterAddonStatus is an autogenerated conversion function.
 func Convert_sunpike_ClusterAddonStatus_To_v1alpha2_ClusterAddonStatus(in *sunpike.ClusterAddonStatus, out *ClusterAddonStatus, s conversion.Scope) error {
 	return autoConvert_sunpike_ClusterAddonStatus_To_v1alpha2_ClusterAddonStatus(in, out, s)
+}
+
+func autoConvert_v1alpha2_ClusterAgent_To_sunpike_ClusterAgent(in *ClusterAgent, out *sunpike.ClusterAgent, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	if err := Convert_v1alpha2_ClusterAgentSpec_To_sunpike_ClusterAgentSpec(&in.Spec, &out.Spec, s); err != nil {
+		return err
+	}
+	if err := Convert_v1alpha2_ClusterAgentStatus_To_sunpike_ClusterAgentStatus(&in.Status, &out.Status, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_v1alpha2_ClusterAgent_To_sunpike_ClusterAgent is an autogenerated conversion function.
+func Convert_v1alpha2_ClusterAgent_To_sunpike_ClusterAgent(in *ClusterAgent, out *sunpike.ClusterAgent, s conversion.Scope) error {
+	return autoConvert_v1alpha2_ClusterAgent_To_sunpike_ClusterAgent(in, out, s)
+}
+
+func autoConvert_sunpike_ClusterAgent_To_v1alpha2_ClusterAgent(in *sunpike.ClusterAgent, out *ClusterAgent, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	if err := Convert_sunpike_ClusterAgentSpec_To_v1alpha2_ClusterAgentSpec(&in.Spec, &out.Spec, s); err != nil {
+		return err
+	}
+	if err := Convert_sunpike_ClusterAgentStatus_To_v1alpha2_ClusterAgentStatus(&in.Status, &out.Status, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_sunpike_ClusterAgent_To_v1alpha2_ClusterAgent is an autogenerated conversion function.
+func Convert_sunpike_ClusterAgent_To_v1alpha2_ClusterAgent(in *sunpike.ClusterAgent, out *ClusterAgent, s conversion.Scope) error {
+	return autoConvert_sunpike_ClusterAgent_To_v1alpha2_ClusterAgent(in, out, s)
+}
+
+func autoConvert_v1alpha2_ClusterAgentList_To_sunpike_ClusterAgentList(in *ClusterAgentList, out *sunpike.ClusterAgentList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]sunpike.ClusterAgent)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_v1alpha2_ClusterAgentList_To_sunpike_ClusterAgentList is an autogenerated conversion function.
+func Convert_v1alpha2_ClusterAgentList_To_sunpike_ClusterAgentList(in *ClusterAgentList, out *sunpike.ClusterAgentList, s conversion.Scope) error {
+	return autoConvert_v1alpha2_ClusterAgentList_To_sunpike_ClusterAgentList(in, out, s)
+}
+
+func autoConvert_sunpike_ClusterAgentList_To_v1alpha2_ClusterAgentList(in *sunpike.ClusterAgentList, out *ClusterAgentList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]ClusterAgent)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_sunpike_ClusterAgentList_To_v1alpha2_ClusterAgentList is an autogenerated conversion function.
+func Convert_sunpike_ClusterAgentList_To_v1alpha2_ClusterAgentList(in *sunpike.ClusterAgentList, out *ClusterAgentList, s conversion.Scope) error {
+	return autoConvert_sunpike_ClusterAgentList_To_v1alpha2_ClusterAgentList(in, out, s)
+}
+
+func autoConvert_v1alpha2_ClusterAgentSpec_To_sunpike_ClusterAgentSpec(in *ClusterAgentSpec, out *sunpike.ClusterAgentSpec, s conversion.Scope) error {
+	out.ClusterName = in.ClusterName
+	return nil
+}
+
+// Convert_v1alpha2_ClusterAgentSpec_To_sunpike_ClusterAgentSpec is an autogenerated conversion function.
+func Convert_v1alpha2_ClusterAgentSpec_To_sunpike_ClusterAgentSpec(in *ClusterAgentSpec, out *sunpike.ClusterAgentSpec, s conversion.Scope) error {
+	return autoConvert_v1alpha2_ClusterAgentSpec_To_sunpike_ClusterAgentSpec(in, out, s)
+}
+
+func autoConvert_sunpike_ClusterAgentSpec_To_v1alpha2_ClusterAgentSpec(in *sunpike.ClusterAgentSpec, out *ClusterAgentSpec, s conversion.Scope) error {
+	out.ClusterName = in.ClusterName
+	return nil
+}
+
+// Convert_sunpike_ClusterAgentSpec_To_v1alpha2_ClusterAgentSpec is an autogenerated conversion function.
+func Convert_sunpike_ClusterAgentSpec_To_v1alpha2_ClusterAgentSpec(in *sunpike.ClusterAgentSpec, out *ClusterAgentSpec, s conversion.Scope) error {
+	return autoConvert_sunpike_ClusterAgentSpec_To_v1alpha2_ClusterAgentSpec(in, out, s)
+}
+
+func autoConvert_v1alpha2_ClusterAgentStatus_To_sunpike_ClusterAgentStatus(in *ClusterAgentStatus, out *sunpike.ClusterAgentStatus, s conversion.Scope) error {
+	out.Phase = sunpike.ClusterAgentPhase(in.Phase)
+	out.Message = in.Message
+	out.LastHeartBeat = in.LastHeartBeat
+	out.Version = in.Version
+	return nil
+}
+
+// Convert_v1alpha2_ClusterAgentStatus_To_sunpike_ClusterAgentStatus is an autogenerated conversion function.
+func Convert_v1alpha2_ClusterAgentStatus_To_sunpike_ClusterAgentStatus(in *ClusterAgentStatus, out *sunpike.ClusterAgentStatus, s conversion.Scope) error {
+	return autoConvert_v1alpha2_ClusterAgentStatus_To_sunpike_ClusterAgentStatus(in, out, s)
+}
+
+func autoConvert_sunpike_ClusterAgentStatus_To_v1alpha2_ClusterAgentStatus(in *sunpike.ClusterAgentStatus, out *ClusterAgentStatus, s conversion.Scope) error {
+	out.Phase = ClusterAgentPhase(in.Phase)
+	out.Message = in.Message
+	out.LastHeartBeat = in.LastHeartBeat
+	out.Version = in.Version
+	return nil
+}
+
+// Convert_sunpike_ClusterAgentStatus_To_v1alpha2_ClusterAgentStatus is an autogenerated conversion function.
+func Convert_sunpike_ClusterAgentStatus_To_v1alpha2_ClusterAgentStatus(in *sunpike.ClusterAgentStatus, out *ClusterAgentStatus, s conversion.Scope) error {
+	return autoConvert_sunpike_ClusterAgentStatus_To_v1alpha2_ClusterAgentStatus(in, out, s)
 }
 
 func autoConvert_v1alpha2_ClusterAutoScalerOpts_To_sunpike_ClusterAutoScalerOpts(in *ClusterAutoScalerOpts, out *sunpike.ClusterAutoScalerOpts, s conversion.Scope) error {
@@ -2432,6 +2824,84 @@ func Convert_sunpike_ClusterStatus_To_v1alpha2_ClusterStatus(in *sunpike.Cluster
 	return autoConvert_sunpike_ClusterStatus_To_v1alpha2_ClusterStatus(in, out, s)
 }
 
+func autoConvert_v1alpha2_ClusterVersion_To_sunpike_ClusterVersion(in *ClusterVersion, out *sunpike.ClusterVersion, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	out.Version = in.Version
+	out.KubeVersion = in.KubeVersion
+	out.PMKVersion = in.PMKVersion
+	out.Addons = *(*[]sunpike.ClusterVersionAddon)(unsafe.Pointer(&in.Addons))
+	out.Changelog = in.Changelog
+	out.ReleasedAt = in.ReleasedAt
+	out.Phase = sunpike.ClusterVersionPhase(in.Phase)
+	return nil
+}
+
+// Convert_v1alpha2_ClusterVersion_To_sunpike_ClusterVersion is an autogenerated conversion function.
+func Convert_v1alpha2_ClusterVersion_To_sunpike_ClusterVersion(in *ClusterVersion, out *sunpike.ClusterVersion, s conversion.Scope) error {
+	return autoConvert_v1alpha2_ClusterVersion_To_sunpike_ClusterVersion(in, out, s)
+}
+
+func autoConvert_sunpike_ClusterVersion_To_v1alpha2_ClusterVersion(in *sunpike.ClusterVersion, out *ClusterVersion, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	out.Version = in.Version
+	out.KubeVersion = in.KubeVersion
+	out.PMKVersion = in.PMKVersion
+	out.Addons = *(*[]ClusterVersionAddon)(unsafe.Pointer(&in.Addons))
+	out.Changelog = in.Changelog
+	out.ReleasedAt = in.ReleasedAt
+	out.Phase = ClusterVersionPhase(in.Phase)
+	return nil
+}
+
+// Convert_sunpike_ClusterVersion_To_v1alpha2_ClusterVersion is an autogenerated conversion function.
+func Convert_sunpike_ClusterVersion_To_v1alpha2_ClusterVersion(in *sunpike.ClusterVersion, out *ClusterVersion, s conversion.Scope) error {
+	return autoConvert_sunpike_ClusterVersion_To_v1alpha2_ClusterVersion(in, out, s)
+}
+
+func autoConvert_v1alpha2_ClusterVersionAddon_To_sunpike_ClusterVersionAddon(in *ClusterVersionAddon, out *sunpike.ClusterVersionAddon, s conversion.Scope) error {
+	out.Name = in.Name
+	out.Version = in.Version
+	return nil
+}
+
+// Convert_v1alpha2_ClusterVersionAddon_To_sunpike_ClusterVersionAddon is an autogenerated conversion function.
+func Convert_v1alpha2_ClusterVersionAddon_To_sunpike_ClusterVersionAddon(in *ClusterVersionAddon, out *sunpike.ClusterVersionAddon, s conversion.Scope) error {
+	return autoConvert_v1alpha2_ClusterVersionAddon_To_sunpike_ClusterVersionAddon(in, out, s)
+}
+
+func autoConvert_sunpike_ClusterVersionAddon_To_v1alpha2_ClusterVersionAddon(in *sunpike.ClusterVersionAddon, out *ClusterVersionAddon, s conversion.Scope) error {
+	out.Name = in.Name
+	out.Version = in.Version
+	return nil
+}
+
+// Convert_sunpike_ClusterVersionAddon_To_v1alpha2_ClusterVersionAddon is an autogenerated conversion function.
+func Convert_sunpike_ClusterVersionAddon_To_v1alpha2_ClusterVersionAddon(in *sunpike.ClusterVersionAddon, out *ClusterVersionAddon, s conversion.Scope) error {
+	return autoConvert_sunpike_ClusterVersionAddon_To_v1alpha2_ClusterVersionAddon(in, out, s)
+}
+
+func autoConvert_v1alpha2_ClusterVersionList_To_sunpike_ClusterVersionList(in *ClusterVersionList, out *sunpike.ClusterVersionList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]sunpike.ClusterVersion)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_v1alpha2_ClusterVersionList_To_sunpike_ClusterVersionList is an autogenerated conversion function.
+func Convert_v1alpha2_ClusterVersionList_To_sunpike_ClusterVersionList(in *ClusterVersionList, out *sunpike.ClusterVersionList, s conversion.Scope) error {
+	return autoConvert_v1alpha2_ClusterVersionList_To_sunpike_ClusterVersionList(in, out, s)
+}
+
+func autoConvert_sunpike_ClusterVersionList_To_v1alpha2_ClusterVersionList(in *sunpike.ClusterVersionList, out *ClusterVersionList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]ClusterVersion)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_sunpike_ClusterVersionList_To_v1alpha2_ClusterVersionList is an autogenerated conversion function.
+func Convert_sunpike_ClusterVersionList_To_v1alpha2_ClusterVersionList(in *sunpike.ClusterVersionList, out *ClusterVersionList, s conversion.Scope) error {
+	return autoConvert_sunpike_ClusterVersionList_To_v1alpha2_ClusterVersionList(in, out, s)
+}
+
 func autoConvert_v1alpha2_Condition_To_sunpike_Condition(in *Condition, out *sunpike.Condition, s conversion.Scope) error {
 	out.Type = sunpike.ConditionType(in.Type)
 	out.Status = v1.ConditionStatus(in.Status)
@@ -2922,6 +3392,64 @@ func Convert_sunpike_GKENodePool_To_v1alpha2_GKENodePool(in *sunpike.GKENodePool
 	return autoConvert_sunpike_GKENodePool_To_v1alpha2_GKENodePool(in, out, s)
 }
 
+func autoConvert_v1alpha2_GoogleCloudProviderCredentials_To_sunpike_GoogleCloudProviderCredentials(in *GoogleCloudProviderCredentials, out *sunpike.GoogleCloudProviderCredentials, s conversion.Scope) error {
+	out.Type = in.Type
+	out.ProjectID = in.ProjectID
+	out.PrivateKeyID = in.PrivateKeyID
+	out.PrivateKey = in.PrivateKey
+	out.ClientEmail = in.ClientEmail
+	out.ClientID = in.ClientID
+	out.AuthURI = in.AuthURI
+	out.TokenURI = in.TokenURI
+	out.AuthProviderx509CertURL = in.AuthProviderx509CertURL
+	out.Clientx509CertURL = in.Clientx509CertURL
+	return nil
+}
+
+// Convert_v1alpha2_GoogleCloudProviderCredentials_To_sunpike_GoogleCloudProviderCredentials is an autogenerated conversion function.
+func Convert_v1alpha2_GoogleCloudProviderCredentials_To_sunpike_GoogleCloudProviderCredentials(in *GoogleCloudProviderCredentials, out *sunpike.GoogleCloudProviderCredentials, s conversion.Scope) error {
+	return autoConvert_v1alpha2_GoogleCloudProviderCredentials_To_sunpike_GoogleCloudProviderCredentials(in, out, s)
+}
+
+func autoConvert_sunpike_GoogleCloudProviderCredentials_To_v1alpha2_GoogleCloudProviderCredentials(in *sunpike.GoogleCloudProviderCredentials, out *GoogleCloudProviderCredentials, s conversion.Scope) error {
+	out.Type = in.Type
+	out.ProjectID = in.ProjectID
+	out.PrivateKeyID = in.PrivateKeyID
+	out.PrivateKey = in.PrivateKey
+	out.ClientEmail = in.ClientEmail
+	out.ClientID = in.ClientID
+	out.AuthURI = in.AuthURI
+	out.TokenURI = in.TokenURI
+	out.AuthProviderx509CertURL = in.AuthProviderx509CertURL
+	out.Clientx509CertURL = in.Clientx509CertURL
+	return nil
+}
+
+// Convert_sunpike_GoogleCloudProviderCredentials_To_v1alpha2_GoogleCloudProviderCredentials is an autogenerated conversion function.
+func Convert_sunpike_GoogleCloudProviderCredentials_To_v1alpha2_GoogleCloudProviderCredentials(in *sunpike.GoogleCloudProviderCredentials, out *GoogleCloudProviderCredentials, s conversion.Scope) error {
+	return autoConvert_sunpike_GoogleCloudProviderCredentials_To_v1alpha2_GoogleCloudProviderCredentials(in, out, s)
+}
+
+func autoConvert_v1alpha2_GoogleCloudProviderSpec_To_sunpike_GoogleCloudProviderSpec(in *GoogleCloudProviderSpec, out *sunpike.GoogleCloudProviderSpec, s conversion.Scope) error {
+	out.SecretName = in.SecretName
+	return nil
+}
+
+// Convert_v1alpha2_GoogleCloudProviderSpec_To_sunpike_GoogleCloudProviderSpec is an autogenerated conversion function.
+func Convert_v1alpha2_GoogleCloudProviderSpec_To_sunpike_GoogleCloudProviderSpec(in *GoogleCloudProviderSpec, out *sunpike.GoogleCloudProviderSpec, s conversion.Scope) error {
+	return autoConvert_v1alpha2_GoogleCloudProviderSpec_To_sunpike_GoogleCloudProviderSpec(in, out, s)
+}
+
+func autoConvert_sunpike_GoogleCloudProviderSpec_To_v1alpha2_GoogleCloudProviderSpec(in *sunpike.GoogleCloudProviderSpec, out *GoogleCloudProviderSpec, s conversion.Scope) error {
+	out.SecretName = in.SecretName
+	return nil
+}
+
+// Convert_sunpike_GoogleCloudProviderSpec_To_v1alpha2_GoogleCloudProviderSpec is an autogenerated conversion function.
+func Convert_sunpike_GoogleCloudProviderSpec_To_v1alpha2_GoogleCloudProviderSpec(in *sunpike.GoogleCloudProviderSpec, out *GoogleCloudProviderSpec, s conversion.Scope) error {
+	return autoConvert_sunpike_GoogleCloudProviderSpec_To_v1alpha2_GoogleCloudProviderSpec(in, out, s)
+}
+
 func autoConvert_v1alpha2_HA_To_sunpike_HA(in *HA, out *sunpike.HA, s conversion.Scope) error {
 	if err := Convert_v1alpha2_KeepalivedOpts_To_sunpike_KeepalivedOpts(&in.Keepalived, &out.Keepalived, s); err != nil {
 		return err
@@ -2944,189 +3472,6 @@ func autoConvert_sunpike_HA_To_v1alpha2_HA(in *sunpike.HA, out *HA, s conversion
 // Convert_sunpike_HA_To_v1alpha2_HA is an autogenerated conversion function.
 func Convert_sunpike_HA_To_v1alpha2_HA(in *sunpike.HA, out *HA, s conversion.Scope) error {
 	return autoConvert_sunpike_HA_To_v1alpha2_HA(in, out, s)
-}
-
-func autoConvert_v1alpha2_Host_To_sunpike_Host(in *Host, out *sunpike.Host, s conversion.Scope) error {
-	out.ObjectMeta = in.ObjectMeta
-	if err := Convert_v1alpha2_HostSpec_To_sunpike_HostSpec(&in.Spec, &out.Spec, s); err != nil {
-		return err
-	}
-	if err := Convert_v1alpha2_HostStatus_To_sunpike_HostStatus(&in.Status, &out.Status, s); err != nil {
-		return err
-	}
-	return nil
-}
-
-// Convert_v1alpha2_Host_To_sunpike_Host is an autogenerated conversion function.
-func Convert_v1alpha2_Host_To_sunpike_Host(in *Host, out *sunpike.Host, s conversion.Scope) error {
-	return autoConvert_v1alpha2_Host_To_sunpike_Host(in, out, s)
-}
-
-func autoConvert_sunpike_Host_To_v1alpha2_Host(in *sunpike.Host, out *Host, s conversion.Scope) error {
-	out.ObjectMeta = in.ObjectMeta
-	if err := Convert_sunpike_HostSpec_To_v1alpha2_HostSpec(&in.Spec, &out.Spec, s); err != nil {
-		return err
-	}
-	if err := Convert_sunpike_HostStatus_To_v1alpha2_HostStatus(&in.Status, &out.Status, s); err != nil {
-		return err
-	}
-	return nil
-}
-
-// Convert_sunpike_Host_To_v1alpha2_Host is an autogenerated conversion function.
-func Convert_sunpike_Host_To_v1alpha2_Host(in *sunpike.Host, out *Host, s conversion.Scope) error {
-	return autoConvert_sunpike_Host_To_v1alpha2_Host(in, out, s)
-}
-
-func autoConvert_v1alpha2_HostList_To_sunpike_HostList(in *HostList, out *sunpike.HostList, s conversion.Scope) error {
-	out.ListMeta = in.ListMeta
-	if in.Items != nil {
-		in, out := &in.Items, &out.Items
-		*out = make([]sunpike.Host, len(*in))
-		for i := range *in {
-			if err := Convert_v1alpha2_Host_To_sunpike_Host(&(*in)[i], &(*out)[i], s); err != nil {
-				return err
-			}
-		}
-	} else {
-		out.Items = nil
-	}
-	return nil
-}
-
-// Convert_v1alpha2_HostList_To_sunpike_HostList is an autogenerated conversion function.
-func Convert_v1alpha2_HostList_To_sunpike_HostList(in *HostList, out *sunpike.HostList, s conversion.Scope) error {
-	return autoConvert_v1alpha2_HostList_To_sunpike_HostList(in, out, s)
-}
-
-func autoConvert_sunpike_HostList_To_v1alpha2_HostList(in *sunpike.HostList, out *HostList, s conversion.Scope) error {
-	out.ListMeta = in.ListMeta
-	if in.Items != nil {
-		in, out := &in.Items, &out.Items
-		*out = make([]Host, len(*in))
-		for i := range *in {
-			if err := Convert_sunpike_Host_To_v1alpha2_Host(&(*in)[i], &(*out)[i], s); err != nil {
-				return err
-			}
-		}
-	} else {
-		out.Items = nil
-	}
-	return nil
-}
-
-// Convert_sunpike_HostList_To_v1alpha2_HostList is an autogenerated conversion function.
-func Convert_sunpike_HostList_To_v1alpha2_HostList(in *sunpike.HostList, out *HostList, s conversion.Scope) error {
-	return autoConvert_sunpike_HostList_To_v1alpha2_HostList(in, out, s)
-}
-
-func autoConvert_v1alpha2_HostPhase_To_sunpike_HostPhase(in *HostPhase, out *sunpike.HostPhase, s conversion.Scope) error {
-	out.Name = in.Name
-	out.Order = in.Order
-	out.StartedAt = in.StartedAt
-	out.Operation = in.Operation
-	out.Status = in.Status
-	out.Message = in.Message
-	return nil
-}
-
-// Convert_v1alpha2_HostPhase_To_sunpike_HostPhase is an autogenerated conversion function.
-func Convert_v1alpha2_HostPhase_To_sunpike_HostPhase(in *HostPhase, out *sunpike.HostPhase, s conversion.Scope) error {
-	return autoConvert_v1alpha2_HostPhase_To_sunpike_HostPhase(in, out, s)
-}
-
-func autoConvert_sunpike_HostPhase_To_v1alpha2_HostPhase(in *sunpike.HostPhase, out *HostPhase, s conversion.Scope) error {
-	out.Name = in.Name
-	out.Order = in.Order
-	out.StartedAt = in.StartedAt
-	out.Operation = in.Operation
-	out.Status = in.Status
-	out.Message = in.Message
-	return nil
-}
-
-// Convert_sunpike_HostPhase_To_v1alpha2_HostPhase is an autogenerated conversion function.
-func Convert_sunpike_HostPhase_To_v1alpha2_HostPhase(in *sunpike.HostPhase, out *HostPhase, s conversion.Scope) error {
-	return autoConvert_sunpike_HostPhase_To_v1alpha2_HostPhase(in, out, s)
-}
-
-func autoConvert_v1alpha2_HostSpec_To_sunpike_HostSpec(in *HostSpec, out *sunpike.HostSpec, s conversion.Scope) error {
-	// WARNING: in.ClusterID requires manual conversion: does not exist in peer-type
-	// WARNING: in.ClusterRole requires manual conversion: does not exist in peer-type
-	// WARNING: in.KubeServiceState requires manual conversion: does not exist in peer-type
-	// WARNING: in.Debug requires manual conversion: does not exist in peer-type
-	return nil
-}
-
-func autoConvert_sunpike_HostSpec_To_v1alpha2_HostSpec(in *sunpike.HostSpec, out *HostSpec, s conversion.Scope) error {
-	// WARNING: in.ExtraCfg requires manual conversion: does not exist in peer-type
-	// WARNING: in.PF9Cfg requires manual conversion: does not exist in peer-type
-	// WARNING: in.ClusterCfg requires manual conversion: does not exist in peer-type
-	// WARNING: in.Etcd requires manual conversion: does not exist in peer-type
-	// WARNING: in.ExtraOpts requires manual conversion: does not exist in peer-type
-	// WARNING: in.ServicesCIDR requires manual conversion: does not exist in peer-type
-	// WARNING: in.ContainersCIDR requires manual conversion: does not exist in peer-type
-	// WARNING: in.AllowWorkloadsOnMaster requires manual conversion: does not exist in peer-type
-	// WARNING: in.Kubelet requires manual conversion: does not exist in peer-type
-	// WARNING: in.Docker requires manual conversion: does not exist in peer-type
-	// WARNING: in.DockerPrivateRegistry requires manual conversion: does not exist in peer-type
-	// WARNING: in.QuayPrivateRegistry requires manual conversion: does not exist in peer-type
-	// WARNING: in.GCRPrivateRegistry requires manual conversion: does not exist in peer-type
-	// WARNING: in.K8SPrivateRegistry requires manual conversion: does not exist in peer-type
-	// WARNING: in.ContainerRuntime requires manual conversion: does not exist in peer-type
-	return nil
-}
-
-func autoConvert_v1alpha2_HostStatus_To_sunpike_HostStatus(in *HostStatus, out *sunpike.HostStatus, s conversion.Scope) error {
-	out.HostState = sunpike.HostState(in.HostState)
-	out.ClusterRole = in.ClusterRole
-	out.ServiceState = in.ServiceState
-	out.Hostname = in.Hostname
-	if err := Convert_v1alpha2_NodeletStatus_To_sunpike_NodeletStatus(&in.Nodelet, &out.Nodelet, s); err != nil {
-		return err
-	}
-	out.Phases = *(*[]sunpike.HostPhase)(unsafe.Pointer(&in.Phases))
-	out.PhaseCompleted = in.PhaseCompleted
-	out.LastFailedPhase = in.LastFailedPhase
-	out.StartAttempts = in.StartAttempts
-	out.CurrentPhase = in.CurrentPhase
-	out.AllStatusChecks = *(*[]int32)(unsafe.Pointer(&in.AllStatusChecks))
-	out.LastFailedCheck = in.LastFailedCheck
-	out.LastFailedCheckTime = in.LastFailedCheckTime
-	out.Conditions = *(*sunpike.Conditions)(unsafe.Pointer(&in.Conditions))
-	out.ObservedGeneration = in.ObservedGeneration
-	out.KubeVersion = in.KubeVersion
-	out.PrimaryIP = in.PrimaryIP
-	return nil
-}
-
-// Convert_v1alpha2_HostStatus_To_sunpike_HostStatus is an autogenerated conversion function.
-func Convert_v1alpha2_HostStatus_To_sunpike_HostStatus(in *HostStatus, out *sunpike.HostStatus, s conversion.Scope) error {
-	return autoConvert_v1alpha2_HostStatus_To_sunpike_HostStatus(in, out, s)
-}
-
-func autoConvert_sunpike_HostStatus_To_v1alpha2_HostStatus(in *sunpike.HostStatus, out *HostStatus, s conversion.Scope) error {
-	out.HostState = HostState(in.HostState)
-	out.ClusterRole = in.ClusterRole
-	// WARNING: in.ClusterID requires manual conversion: does not exist in peer-type
-	out.ServiceState = in.ServiceState
-	out.Hostname = in.Hostname
-	if err := Convert_sunpike_NodeletStatus_To_v1alpha2_NodeletStatus(&in.Nodelet, &out.Nodelet, s); err != nil {
-		return err
-	}
-	out.Phases = *(*[]HostPhase)(unsafe.Pointer(&in.Phases))
-	out.PhaseCompleted = in.PhaseCompleted
-	out.LastFailedPhase = in.LastFailedPhase
-	out.StartAttempts = in.StartAttempts
-	out.CurrentPhase = in.CurrentPhase
-	out.AllStatusChecks = *(*[]int32)(unsafe.Pointer(&in.AllStatusChecks))
-	out.LastFailedCheck = in.LastFailedCheck
-	out.LastFailedCheckTime = in.LastFailedCheckTime
-	out.Conditions = *(*Conditions)(unsafe.Pointer(&in.Conditions))
-	out.ObservedGeneration = in.ObservedGeneration
-	out.KubeVersion = in.KubeVersion
-	out.PrimaryIP = in.PrimaryIP
-	return nil
 }
 
 func autoConvert_v1alpha2_KeepalivedOpts_To_sunpike_KeepalivedOpts(in *KeepalivedOpts, out *sunpike.KeepalivedOpts, s conversion.Scope) error {
@@ -3303,6 +3648,10 @@ func Convert_sunpike_KubeVirtOpts_To_v1alpha2_KubeVirtOpts(in *sunpike.KubeVirtO
 
 func autoConvert_v1alpha2_KubeletOpts_To_sunpike_KubeletOpts(in *KubeletOpts, out *sunpike.KubeletOpts, s conversion.Scope) error {
 	out.CloudCfg = in.CloudCfg
+	out.ProviderID = in.ProviderID
+	out.ExtraArgs = in.ExtraArgs
+	out.NodeLabels = *(*map[string]string)(unsafe.Pointer(&in.NodeLabels))
+	out.NodeTaints = *(*map[string]string)(unsafe.Pointer(&in.NodeTaints))
 	return nil
 }
 
@@ -3313,6 +3662,10 @@ func Convert_v1alpha2_KubeletOpts_To_sunpike_KubeletOpts(in *KubeletOpts, out *s
 
 func autoConvert_sunpike_KubeletOpts_To_v1alpha2_KubeletOpts(in *sunpike.KubeletOpts, out *KubeletOpts, s conversion.Scope) error {
 	out.CloudCfg = in.CloudCfg
+	out.ProviderID = in.ProviderID
+	out.ExtraArgs = in.ExtraArgs
+	out.NodeLabels = *(*map[string]string)(unsafe.Pointer(&in.NodeLabels))
+	out.NodeTaints = *(*map[string]string)(unsafe.Pointer(&in.NodeTaints))
 	return nil
 }
 
@@ -3405,26 +3758,6 @@ func Convert_sunpike_MetalLBOpts_To_v1alpha2_MetalLBOpts(in *sunpike.MetalLBOpts
 	return autoConvert_sunpike_MetalLBOpts_To_v1alpha2_MetalLBOpts(in, out, s)
 }
 
-func autoConvert_v1alpha2_NodeletStatus_To_sunpike_NodeletStatus(in *NodeletStatus, out *sunpike.NodeletStatus, s conversion.Scope) error {
-	out.Version = in.Version
-	return nil
-}
-
-// Convert_v1alpha2_NodeletStatus_To_sunpike_NodeletStatus is an autogenerated conversion function.
-func Convert_v1alpha2_NodeletStatus_To_sunpike_NodeletStatus(in *NodeletStatus, out *sunpike.NodeletStatus, s conversion.Scope) error {
-	return autoConvert_v1alpha2_NodeletStatus_To_sunpike_NodeletStatus(in, out, s)
-}
-
-func autoConvert_sunpike_NodeletStatus_To_v1alpha2_NodeletStatus(in *sunpike.NodeletStatus, out *NodeletStatus, s conversion.Scope) error {
-	out.Version = in.Version
-	return nil
-}
-
-// Convert_sunpike_NodeletStatus_To_v1alpha2_NodeletStatus is an autogenerated conversion function.
-func Convert_sunpike_NodeletStatus_To_v1alpha2_NodeletStatus(in *sunpike.NodeletStatus, out *NodeletStatus, s conversion.Scope) error {
-	return autoConvert_sunpike_NodeletStatus_To_v1alpha2_NodeletStatus(in, out, s)
-}
-
 func autoConvert_v1alpha2_Override_To_sunpike_Override(in *Override, out *sunpike.Override, s conversion.Scope) error {
 	out.Params = *(*[]sunpike.Params)(unsafe.Pointer(&in.Params))
 	return nil
@@ -3448,6 +3781,7 @@ func Convert_sunpike_Override_To_v1alpha2_Override(in *sunpike.Override, out *Ov
 func autoConvert_v1alpha2_PF9_To_sunpike_PF9(in *PF9, out *sunpike.PF9, s conversion.Scope) error {
 	out.Masterless = in.Masterless
 	out.BouncerSlowReqWebhook = in.BouncerSlowReqWebhook
+	out.IsAirgapped = in.IsAirgapped
 	return nil
 }
 
@@ -3459,6 +3793,7 @@ func Convert_v1alpha2_PF9_To_sunpike_PF9(in *PF9, out *sunpike.PF9, s conversion
 func autoConvert_sunpike_PF9_To_v1alpha2_PF9(in *sunpike.PF9, out *PF9, s conversion.Scope) error {
 	out.Masterless = in.Masterless
 	out.BouncerSlowReqWebhook = in.BouncerSlowReqWebhook
+	out.IsAirgapped = in.IsAirgapped
 	return nil
 }
 
@@ -3553,4 +3888,32 @@ func autoConvert_sunpike_StorageBackend_To_v1alpha2_StorageBackend(in *sunpike.S
 // Convert_sunpike_StorageBackend_To_v1alpha2_StorageBackend is an autogenerated conversion function.
 func Convert_sunpike_StorageBackend_To_v1alpha2_StorageBackend(in *sunpike.StorageBackend, out *StorageBackend, s conversion.Scope) error {
 	return autoConvert_sunpike_StorageBackend_To_v1alpha2_StorageBackend(in, out, s)
+}
+
+func autoConvert_v1alpha2_Toleration_To_sunpike_Toleration(in *Toleration, out *sunpike.Toleration, s conversion.Scope) error {
+	out.Key = in.Key
+	out.Operator = sunpike.TolerationOperator(in.Operator)
+	out.Value = in.Value
+	out.Effect = sunpike.TaintEffect(in.Effect)
+	out.TolerationSeconds = (*int64)(unsafe.Pointer(in.TolerationSeconds))
+	return nil
+}
+
+// Convert_v1alpha2_Toleration_To_sunpike_Toleration is an autogenerated conversion function.
+func Convert_v1alpha2_Toleration_To_sunpike_Toleration(in *Toleration, out *sunpike.Toleration, s conversion.Scope) error {
+	return autoConvert_v1alpha2_Toleration_To_sunpike_Toleration(in, out, s)
+}
+
+func autoConvert_sunpike_Toleration_To_v1alpha2_Toleration(in *sunpike.Toleration, out *Toleration, s conversion.Scope) error {
+	out.Key = in.Key
+	out.Operator = TolerationOperator(in.Operator)
+	out.Value = in.Value
+	out.Effect = TaintEffect(in.Effect)
+	out.TolerationSeconds = (*int64)(unsafe.Pointer(in.TolerationSeconds))
+	return nil
+}
+
+// Convert_sunpike_Toleration_To_v1alpha2_Toleration is an autogenerated conversion function.
+func Convert_sunpike_Toleration_To_v1alpha2_Toleration(in *sunpike.Toleration, out *Toleration, s conversion.Scope) error {
+	return autoConvert_sunpike_Toleration_To_v1alpha2_Toleration(in, out, s)
 }

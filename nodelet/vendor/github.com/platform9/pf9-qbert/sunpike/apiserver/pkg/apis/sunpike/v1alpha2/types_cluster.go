@@ -253,16 +253,16 @@ type EKSCluster struct {
 	NodeGroups []EKSNodeGroup `json:"nodegroups,omitempty" protobuf:"bytes,11,name=nodegroups"`
 }
 
-//EKSLogging provides information about the logging
-//enabled in eks cluster.
+// EKSLogging provides information about the logging
+// enabled in eks cluster.
 type EKSLogging struct {
 	// Logging information for resources in the cluster.
 	// +optional
 	EKSClusterLogging []EKSClusterLogging `json:"clusterLogging,omitempty" protobuf:"bytes,1,name=clusterLogging"`
 }
 
-//EKSClusterLogging lays out the structure encapsulating
-//logging in eks clusters.
+// EKSClusterLogging lays out the structure encapsulating
+// logging in eks clusters.
 type EKSClusterLogging struct {
 	// +optional
 	Types []string `json:"types,omitempty" protobuf:"bytes,1,name=types"`
@@ -1082,12 +1082,21 @@ type AddonsOpts struct {
 
 	// ProfileAgent defines the options used to manage and configure the platform9 profile engine agent on the clsuter
 	ProfileAgent ProfileAgentOpts `json:"profileAgent,omitempty" protobuf:"bytes,6,opt,name=profileAgent"`
+
+	// AddonOperator defines the options used to manage and configure platform9 addon-operator on the cluster
+	AddonOperator AddonOperatorOpts `json:"addonOperator,omitempty" protobuf:"bytes,7,opt,name=addonOperator"`
 }
 
 // ProfileAgentOpts contains configuration related to platform9 profile engine agent
 type ProfileAgentOpts struct {
 	// Enabled signals that profile agent should be installed on the cluster, if set.
 	Enabled bool `json:"enabled,omitempty" protobuf:"bool,1,opt,name=enabled" kube.env:"ENABLE_PROFILE_AGENT"`
+}
+
+// AddonOperatorOpts contains configuration related to platform9 addon operator
+type AddonOperatorOpts struct {
+	// taf of addon operator image tag if configured should be used for addon operator configuration on the cluster.
+	ImageTag string `json:"imageTag,omitempty" protobuf:"string,1,opt,name=imageTag" kube.env:"ADDON_OPERATOR_IMAGE_TAG"`
 }
 
 // AppCatalogOpts contain configuration for the App Catalog addon.
@@ -1212,6 +1221,19 @@ type CalicoOpts struct {
 	//
 	// More info: https://docs.projectcalico.org/reference/felix/configuration
 	FelixIPv6Support bool `json:"felixIPv6Support,omitempty" protobuf:"bool,12,opt,name=felixIPv6Support" kube.env:"FELIX_IPV6SUPPORT"`
+
+	// Corresponds to the CALICO_NODE_CPU_LIMIT environment variable in Calico.
+	NodeCpuLimit string `json:"nodeCpuLimit,omitempty" protobuf:"string,13,opt,name=nodeCpuLimit" kube.env:"CALICO_NODE_CPU_LIMIT"`
+	// Corresponds to the CALICO_NODE_MEMORY_LIMIT environment variable in Calico.
+	NodeMemoryLimit string `json:"nodeMemoryLimit,omitempty" protobuf:"string,14,opt,name=nodeMemoryLimit" kube.env:"CALICO_NODE_MEMORY_LIMIT"`
+	// Corresponds to the CALICO_TYPHA_CPU_LIMIT environment variable in Calico.
+	TyphaCpuLimit string `json:"typhaCpuLimit,omitempty" protobuf:"string,15,opt,name=typhaCpuLimit" kube.env:"CALICO_TYPHA_CPU_LIMIT"`
+	// Corresponds to the CALICO_TYPHA_MEMORY_LIMIT environment variable in Calico.
+	TyphaMemoryLimit string `json:"typhaMemoryLimit,omitempty" protobuf:"string,16,opt,name=typhaMemoryLimit" kube.env:"CALICO_TYPHA_MEMORY_LIMIT"`
+	// Corresponds to the CALICO_CONTROLLER_CPU_LIMIT environment variable in Calico.
+	ControllerCpuLimit string `json:"controllerCpuLimit,omitempty" protobuf:"string,17,opt,name=controllerCpuLimit" kube.env:"CALICO_CONTROLLER_CPU_LIMIT"`
+	// Corresponds to the CALICO_CONTROLLER_MEMORY_LIMIT environment variable in Calico.
+	ControllerMemoryLimit string `json:"controllerMemoryLimit,omitempty" protobuf:"string,18,opt,name=controllerMemoryLimit" kube.env:"CALICO_CONTROLLER_MEMORY_LIMIT"`
 }
 
 // FlannelOpts are options for the Flannel CNI plugin.
@@ -1226,6 +1248,17 @@ type FlannelOpts struct {
 	// inter-host communication. Defaults to the IP of the interface being used
 	// for communication.
 	PublicInterfaceLabel string `json:"publicInterfaceLabel,omitempty" protobuf:"bytes,2,opt,name=publicInterfaceLabel" kube.env:"FLANNEL_PUBLIC_IFACE_LABEL"`
+}
+
+// AWSOpts are options for the AWS VPC-CNI plugin.
+//
+// See more: https://github.com/aws/amazon-vpc-cni-k8s/blob/af55286bb5429a06841d2940597410dcc4e74d7e/README.md
+type AWSOpts struct {
+	// Specifies whether an external NAT gateway should be used to provide SNAT of
+	// secondary ENI IP addresses.
+	//
+	// Corresponds to the AWS_VPC_CNI_EXTERNALSNAT environment variable in aws.
+	ExternalSNAT bool `json:"externalSNAT,omitempty" protobuf:"bool,1,opt,name=externalSNAT" kube.env:"AWS_VPC_CNI_EXTERNALSNAT"`
 }
 
 // CNIOpts contains the CNI configuration, which includes general options,
@@ -1257,6 +1290,11 @@ type CNIOpts struct {
 	//
 	// More info: https://github.com/coreos/flannel/blob/master/Documentation/configuration.md
 	Flannel FlannelOpts `json:"flannel,omitempty" protobuf:"bytes,6,opt,name=flannel"`
+
+	// AWSOpts are options for the AWS VPC-CNI plugin.
+	//
+	// See more: https://github.com/aws/amazon-vpc-cni-k8s/blob/af55286bb5429a06841d2940597410dcc4e74d7e/README.md
+	AWS AWSOpts `json:"aws,omitempty" protobuf:"bytes,7,opt,name=aws"`
 }
 
 // EtcdOpts contain configuration for the etcd cluster as a storage backend for
@@ -1306,6 +1344,19 @@ type KubeletOpts struct {
 	// (DEPRECATED: will be removed in 1.23, in favor of removing cloud
 	// providers code from Kubelet.)
 	CloudCfg string `json:"cloudCfg,omitempty" protobuf:"bytes,1,opt,name=cloudCfg" kube.env:"KUBELET_CLOUD_CONFIG"`
+
+	// ProviderID contains the provider ID that is specified by CAPI machine and
+	// will be populated in the kubelet running on the host.
+	ProviderID string `json:"providerID,omitempty" protobuf:"bytes,2,opt,name=providerID" kube.env:"KUBELET_PROVIDER_ID"`
+
+	// ExtraArgs contains arguments that will be passed as-is to kubelet process
+	ExtraArgs string `json:"extraArgs,omitempty" protobuf:"bytes,3,opt,name=extraArgs" kube.env:"KUBELET_FLAGS"`
+
+	// NodeLabels contains labels for the host
+	NodeLabels map[string]string `json:"nodeLabels,omitempty" protobuf:"bytes,4,opt,name=nodeLabels"`
+
+	// NodeTaints contains taints for the host
+	NodeTaints map[string]string `json:"nodeTaints,omitempty" protobuf:"bytes,5,opt,name=nodeTaints"`
 }
 
 // PF9 contains miscellaneous configuration, mostly related to PF9 services.
@@ -1320,6 +1371,9 @@ type PF9 struct {
 	//
 	// More info: https://platform9.atlassian.net/browse/INF-764
 	BouncerSlowReqWebhook string `json:"bouncerSlowReqWebhook,omitempty" protobuf:"bytes,2,opt,name=bouncerSlowReqWebhook" kube.env:"BOUNCER_SLOW_REQUEST_WEBHOOK"`
+
+	// isAirgapped specifies whether cluster is running in airgapped or SaaS env
+	IsAirgapped bool `json:"isAirgapped,omitempty" protobuf:"bool,3,opt,name=isAirgapped" kube.env:"IS_AIRGAPPED"`
 }
 
 // AWSCluster contains all AWS-specific configuration for the cluster

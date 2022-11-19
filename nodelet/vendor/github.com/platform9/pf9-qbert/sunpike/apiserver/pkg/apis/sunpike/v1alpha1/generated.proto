@@ -16,6 +16,23 @@ import "k8s.io/apimachinery/pkg/runtime/schema/generated.proto";
 // Package-wide variables from generator "generated".
 option go_package = "v1alpha1";
 
+// AWSOpts are options for the AWS VPC-CNI plugin.
+//
+// See more: https://github.com/aws/amazon-vpc-cni-k8s/blob/af55286bb5429a06841d2940597410dcc4e74d7e/README.md
+message AWSOpts {
+  // Specifies whether an external NAT gateway should be used to provide SNAT of
+  // secondary ENI IP addresses.
+  //
+  // Corresponds to the AWS_VPC_CNI_EXTERNALSNAT environment variable in aws.
+  optional bool externalSNAT = 1;
+}
+
+// AddonOperatorOpts contains configuration related to platform9 addon operator
+message AddonOperatorOpts {
+  // taf of addon operator image tag if configured should be used for addon operator configuration on the cluster.
+  optional string imageTag = 1;
+}
+
 // AddonsOpts is an aggregation of all supported addons.
 message AddonsOpts {
   // AppCatalog specifies if and how the App Catalog addon should be
@@ -39,6 +56,9 @@ message AddonsOpts {
 
   // ProfileAgent defines the options used to manage and configure the platform9 profile engine agent on the clsuter
   optional ProfileAgentOpts profileAgent = 6;
+
+  // AddonOperator defines the options used to manage and configure platform9 addon-operator on the cluster
+  optional AddonOperatorOpts addonOperator = 7;
 }
 
 // AppCatalogOpts contain configuration for the App Catalog addon.
@@ -76,6 +96,11 @@ message CNIOpts {
   //
   // More info: https://github.com/coreos/flannel/blob/master/Documentation/configuration.md
   optional FlannelOpts flannel = 6;
+
+  // AWSOpts are options for the AWS VPC-CNI plugin.
+  //
+  // See more: https://github.com/aws/amazon-vpc-cni-k8s/blob/af55286bb5429a06841d2940597410dcc4e74d7e/README.md
+  optional AWSOpts aws = 7;
 }
 
 // CPUManagerOpts defines the options used to manage the CPU and topology manager feature
@@ -168,6 +193,30 @@ message CalicoOpts {
   //
   // More info: https://docs.projectcalico.org/reference/felix/configuration
   optional bool felixIPv6Support = 12;
+
+  // Corresponds to the CALICO_NODE_CPU_LIMIT environment variable in Calico.
+  optional string nodeCpuLimit = 13;
+
+  // Corresponds to the CALICO_NODE_MEMORY_LIMIT environment variable in Calico.
+  optional string nodeMemoryLimit = 14;
+
+  // Corresponds to the CALICO_TYPHA_CPU_LIMIT environment variable in Calico.
+  optional string typhaCpuLimit = 15;
+
+  // Corresponds to the CALICO_TYPHA_MEMORY_LIMIT environment variable in Calico.
+  optional string typhaMemoryLimit = 16;
+
+  // Corresponds to the CALICO_CONTROLLER_CPU_LIMIT environment variable in Calico.
+  optional string controllerCpuLimit = 17;
+
+  // Corresponds to the CALICO_CONTROLLER_MEMORY_LIMIT environment variable in Calico.
+  optional string controllerMemoryLimit = 18;
+}
+
+// CatapultMonitoringOpts contains the settings to configure catapult monitoring
+message CatapultMonitoringOpts {
+  // Enabled signals whether catapult monitoring should be configured on the cluster.
+  optional bool enabled = 1;
 }
 
 // ClusterAutoScalerOpts contain configuration for the Cluster AutoScaler (CAS)
@@ -501,6 +550,11 @@ message HostStatus {
   // Note(erwin): with the current reduced status updates, this will always be
   // 				empty. We should consider removing this field.
   optional int64 currentStatusCheckTime = 24;
+
+  // Interfaces contains information related to all the interfaces found on the host
+  repeated NetworkInterface interfaces = 25;
+
+  optional string addonOperatorVersion = 26;
 }
 
 // KeepalivedOpts contains the settings to configure keepalived, which is used
@@ -646,6 +700,9 @@ message KubeClusterOpts {
   // hostname (instead of the IP) in the PF9 managed k8s cluster. This option is only applicable to IPv4 hosts.
   // This option is ignored when deploying clusters on IPv6 enabled hosts.
   optional bool useHostname = 8;
+
+  // Version of kubernetes to deploy on a node
+  optional string kubernetesVersion = 9;
 }
 
 // KubeControllerManagerOpts contains the settings for the kube-controller-manager. The most
@@ -703,6 +760,19 @@ message KubeletOpts {
   // (DEPRECATED: will be removed in 1.23, in favor of removing cloud
   // providers code from Kubelet.)
   optional string cloudCfg = 1;
+
+  // ProviderID contains the provider ID that is specified by CAPI machine and
+  // will be populated in the kubelet running on the host.
+  optional string providerID = 2;
+
+  // ExtraArgs contains arguments that will be passed as-is to kubelet process
+  optional string extraArgs = 3;
+
+  // NodeLabels contains labels for the host
+  map<string, string> nodeLabels = 4;
+
+  // NodeTaints contains taints for the host
+  map<string, string> nodeTaints = 5;
 }
 
 // LuigiOpts contain configuration for the Luigi addon.
@@ -724,6 +794,20 @@ message MetalLBOpts {
 
   // Enabled signals that the addon should be installed on the cluster, if set.
   optional bool enabled = 2;
+}
+
+message NetworkInterface {
+  // Name of the network interface e.g. eth0, ens129, etc.
+  optional string name = 1;
+
+  // IPAddrs contains the list of IP addresses associated with this interface
+  repeated string ipaddrs = 2;
+
+  // MACAddr is the MAC address of this interface
+  optional string macaddr = 3;
+
+  // IsDefault will indicate if a default route is associated with this interface
+  optional bool isdefault = 4;
 }
 
 // NodeletStatus contains information about the Nodelet process
@@ -799,6 +883,15 @@ message PF9Opts {
   // primary IP of the last added master node (in case of multi-master
   // without keepalived) or the Virtual IP (if keepalived is enabled).
   optional string masterIP = 13;
+
+  // ClusterName specifies the name of the cluster
+  optional string clusterName = 14;
+
+  // CatapultMonitoring contains catapult monitoring configs
+  optional CatapultMonitoringOpts catapultMonitoring = 15;
+
+  // isAirgapped specifies whether cluster is running in airgapped or SaaS env
+  optional bool isAirgapped = 16;
 }
 
 // ProfileAgentOpts contains configuration related to platform9 profile engine agent
