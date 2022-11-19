@@ -138,12 +138,12 @@ require (
 )
 
 // The replaced version for v0.0.0 should equal the version of github.com/platform9/pf9-qbert/sunpike/conductor
-replace github.com/platform9/pf9-qbert/sunpike/apiserver v0.0.0 => github.com/platform9/pf9-qbert/sunpike/apiserver v0.0.0-20210928133414-c4e8ce211671
+// replace github.com/platform9/pf9-qbert/sunpike/apiserver v0.0.0 => github.com/platform9/pf9-qbert/sunpike/apiserver v0.0.0-20210928133414-c4e8ce211671
 
 // To build/test nodelet with local changes to the sunpike components.
 // Uncomment the lines below, and comment out the replace above.
 // Do not commit these changes!
-// replace (
-// 	github.com/platform9/pf9-qbert/sunpike/apiserver => ../../pf9-qbert/sunpike/apiserver
-// 	github.com/platform9/pf9-qbert/sunpike/conductor => ../../pf9-qbert/sunpike/conductor
-// )
+replace (
+	github.com/platform9/pf9-qbert/sunpike/apiserver => ../../pf9-qbert/sunpike/apiserver
+	github.com/platform9/pf9-qbert/sunpike/conductor => ../../pf9-qbert/sunpike/conductor
+)
