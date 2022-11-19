@@ -32,6 +32,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&HostList{},
 		&Cluster{},
 		&ClusterList{},
+		&ClusterAgent{},
+		&ClusterAgentList{},
 		&CloudProvider{},
 		&CloudProviderList{},
 		&ClusterAddon{},
@@ -42,6 +44,12 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&ClusterProfileBindingList{},
 		&ClusterProfileDetail{},
 		&ClusterProfileBindingDetail{},
+		&ClusterVersion{},
+		&ClusterVersionList{},
+		&AddonVersion{},
+		&AddonVersionList{},
+		&AddonOperatorVersion{},
+		&AddonOperatorVersionList{},
 	)
 	return nil
 }

@@ -133,7 +133,8 @@ type HostSpec struct {
 	// ContainerRuntime specifies the container runtime to use
 	ContainerRuntime string `json:"containerRuntime,omitempty" protobuf:"bytes,15,opt,name=containerRuntime" kube.env:"RUNTIME"`
 
-	ServicesCIDRv6 string `json:"servicesCIDRv6,omitempty" protobuf:"bytes,16,opt,name=servicesCIDR" kube.env:"SERVICES_CIDR_V6"`
+    // ServicesCIDR for IPv6 in dualstack environment. For single-stack, ServicesCIDR == ServicesCIDRV6
+    ServicesCIDRv6 string `json:"servicesCIDRv6,omitempty" protobuf:"bytes,16,opt,name=servicesCIDR" kube.env:"SERVICES_CIDR_V6"`
 }
 
 // HostStatus represents information about the status of a Host. Status may
@@ -212,24 +213,38 @@ type HostStatus struct {
 	// status check was performed. The field is formatted as UNIX timestamp.
 	LastFailedCheckTime int64 `json:"lastFailedCheckTime,omitempty" protobuf:"varint,22,opt,name=lastFailedCheckTime"`
 
-	// Conditions defines current service state of the Cluster.
-	// +optional
-	Conditions Conditions `json:"conditions,omitempty" protobuf:"bytes,30,opt,name=conditions"`
+	// CurrentStatusCheck will be the order of the phase for which status
+	// check is running.
+	//
+	// Note(erwin): with the current reduced status updates, this will always be
+	// 				empty. We should consider removing this field.
+	CurrentStatusCheck int32 `json:"currentStatusCheck,omitempty" protobuf:"varint,23,opt,name=currentStatusCheck"`
 
-	// ObservedGeneration is the latest generation observed by the controller.
-	// +optional
-	ObservedGeneration int64 `json:"observedGeneration,omitempty" protobuf:"varint,31,opt,name=observedGeneration"`
+	// CurrentStatusCheckTime specifies the timestamp at which the current
+	// status check has started. The field is formatted as UNIX timestamp.
+	//
+	// Note(erwin): with the current reduced status updates, this will always be
+	// 				empty. We should consider removing this field.
+	CurrentStatusCheckTime int64 `json:"currentStatusCheckTime,omitempty" protobuf:"varint,24,opt,name=currentStatusCheckTime"`
 
-	// KubeVersion specifies the current version of Kubernetes running
-	// on the corresponding Node. This is meant to be a means of bubbling
-	// up status from the Node to the Machine.
-	// It is entirely optional, but useful for end-user UX if it’s present.
-	// +optional
-	KubeVersion string `json:"kubeVersion,omitempty" protobuf:"bytes,32,opt,name=kubeVersion"`
+	// Interfaces contains information related to all the interfaces found on the host
+	Interfaces []NetworkInterface `json:"interfaces,omitempty" protobuf:"bytes,25,opt,name=interfaces"`
 
-	// PrimaryIP contains the primary IP of this Host.
-	// +optional
-	PrimaryIP string `json:"primaryIP,omitempty" protobuf:"bytes,33,opt,name=primaryIP"`
+	AddonOperatorVersion string `json:"addonOperatorVersion,omitempty" protobuf:"bytes,26,opt,name=addonOperatorVersion"`
+}
+
+type NetworkInterface struct {
+	// Name of the network interface e.g. eth0, ens129, etc.
+	Name string `json:"name,omitempty" protobuf:"bytes,1,opt,name=name"`
+
+	// IPAddrs contains the list of IP addresses associated with this interface
+	IPAddrs []string `json:"ipaddrs,omitempty" protobuf:"bytes,2,opt,name=ipaddrs"`
+
+	// MACAddr is the MAC address of this interface
+	MACAddr string `json:"macaddr,omitempty" protobuf:"bytes,3,opt,name=macaddr"`
+
+	// IsDefault will indicate if a default route is associated with this interface
+	IsDefault bool `json:"isdefault,omitempty" protobuf:"bytes,4,opt,name=isdefault"`
 }
 
 // KubeClusterOpts contains the cluster-wide configuration. These settings
@@ -287,6 +302,15 @@ type KubeClusterOpts struct {
 	// hostname (instead of the IP) in the PF9 managed k8s cluster. This option is only applicable to IPv4 hosts.
 	// This option is ignored when deploying clusters on IPv6 enabled hosts.
 	UseHostname bool `json:"useHostname,omitempty" protobuf:"bool,8,opt,name=useHostname" kube.env:"USE_HOSTNAME"`
+
+	// Version of kubernetes to deploy on a node
+	KubernetesVersion string `json:"kubernetesVersion,omitempty" protobuf:"bytes,9,opt,name=kubernetesVersion"`
+}
+
+// CatapultMonitoringOpts contains the settings to configure catapult monitoring
+type CatapultMonitoringOpts struct {
+	// Enabled signals whether catapult monitoring should be configured on the cluster.
+	Enabled bool `json:"enabled,omitempty" protobuf:"bool,1,opt,name=enabled" kube.env:"CATAPULT_ENABLED"`
 }
 
 // PF9Opts contains miscellaneous configuration, mostly related to PF9 services.
@@ -356,7 +380,17 @@ type PF9Opts struct {
 	// without keepalived) or the Virtual IP (if keepalived is enabled).
 	MasterIP string `json:"masterIP,omitempty" protobuf:"bytes,13,opt,name=masterIP" kube.env:"MASTER_IP"`
 
-	MasterIPv6 string `json:"masterIPv6,omitempty" protobuf:"bytes,14,opt,name=masterIPv6" kube.env:"MASTER_IPV6"`
+	// ClusterName specifies the name of the cluster
+	ClusterName string `json:"clusterName,omitempty" protobuf:"bytes,14,opt,name=clusterName" kube.env:"CLUSTER_NAME"`
+
+	// CatapultMonitoring contains catapult monitoring configs
+	CatapultMonitoring CatapultMonitoringOpts `json:"catapultMonitoring,omitempty" protobuf:"bytes,15,opt,name=catapultMonitoring"`
+
+	// isAirgapped specifies whether cluster is running in airgapped or SaaS env
+	IsAirgapped bool `json:"isAirgapped,omitempty" protobuf:"bool,16,opt,name=isAirgapped" kube.env:"IS_AIRGAPPED"`
+
+    // MasterIPv6 is used in dualstack only for IPV6 address
+    MasterIPv6 string `json:"masterIPv6,omitempty" protobuf:"bytes,17,opt,name=masterIPv6" kube.env:"MASTER_IPV6"`
 }
 
 // NodeletStatus contains information about the Nodelet process

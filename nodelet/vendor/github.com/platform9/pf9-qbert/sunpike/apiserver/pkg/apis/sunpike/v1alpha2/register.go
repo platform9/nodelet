@@ -32,10 +32,10 @@ func init() {
 // Adds the list of known types to the given scheme.
 func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
-		&Host{},
-		&HostList{},
 		&Cluster{},
 		&ClusterList{},
+		&ClusterAgent{},
+		&ClusterAgentList{},
 		&CloudProvider{},
 		&CloudProviderList{},
 		&ClusterAddon{},
@@ -46,6 +46,12 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&ClusterProfileBindingList{},
 		&ClusterProfileDetail{},
 		&ClusterProfileBindingDetail{},
+		&ClusterVersion{},
+		&ClusterVersionList{},
+		&AddonVersion{},
+		&AddonVersionList{},
+		&AddonOperatorVersion{},
+		&AddonOperatorVersionList{},
 	)
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil

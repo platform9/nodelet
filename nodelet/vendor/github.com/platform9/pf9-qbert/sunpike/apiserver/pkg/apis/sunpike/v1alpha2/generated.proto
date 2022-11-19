@@ -405,6 +405,17 @@ message AWSCluster {
   optional string workerFlavor = 6;
 }
 
+// AWSOpts are options for the AWS VPC-CNI plugin.
+//
+// See more: https://github.com/aws/amazon-vpc-cni-k8s/blob/af55286bb5429a06841d2940597410dcc4e74d7e/README.md
+message AWSOpts {
+  // Specifies whether an external NAT gateway should be used to provide SNAT of
+  // secondary ENI IP addresses.
+  //
+  // Corresponds to the AWS_VPC_CNI_EXTERNALSNAT environment variable in aws.
+  optional bool externalSNAT = 1;
+}
+
 // AWSScalingConfig provides information regarding
 // scaling of the nodegroup
 // MoreInfo: https://docs.aws.amazon.com/autoscaling/ec2/userguide/asg-capacity-limits.html
@@ -440,6 +451,75 @@ message AWSVPC {
   repeated string subnets = 6;
 }
 
+// AddonOperatorOpts contains configuration related to platform9 addon operator
+message AddonOperatorOpts {
+  // taf of addon operator image tag if configured should be used for addon operator configuration on the cluster.
+  optional string imageTag = 1;
+}
+
+// AddonOperatorVersion is a representation of a supported add on version for kube versions.
+message AddonOperatorVersion {
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.TypeMeta typeMeta = 1;
+
+  // Standard object's metadata.
+  // More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 2;
+
+  // KubeVersion is the Kubernetes-portion of the Version  as x.y.z
+  // Example: 1.21.3
+  optional string kubeVersion = 3;
+
+  // Addons contains addon name and supported versions for given kube version
+  repeated string versions = 4;
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+message AddonOperatorVersionList {
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.TypeMeta typeMeta = 1;
+
+  // Standard object's metadata.
+  // More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 2;
+
+  repeated AddonOperatorVersion items = 3;
+}
+
+// AddonVersions contains supported addon versions
+message AddonTypeVersion {
+  // Name is the name of the Addon.
+  optional string name = 1;
+
+  // Versions contains the supported version list of the Addon.
+  repeated string versions = 2;
+}
+
+// AddonVersion is a representation of a supported add on version for kube versions.
+message AddonVersion {
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.TypeMeta typeMeta = 1;
+
+  // Standard object's metadata.
+  // More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 2;
+
+  // KubeVersion is the Kubernetes-portion of the Version.
+  // Example: 1.18, 1.19, 1.20, 1.21
+  optional string kubeVersion = 3;
+
+  // Addons contains addon name and supported versions for given kube version
+  repeated AddonTypeVersion addons = 4;
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+message AddonVersionList {
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.TypeMeta typeMeta = 1;
+
+  // Standard object's metadata.
+  // More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 2;
+
+  repeated AddonVersion items = 3;
+}
+
 // AddonsOpts is an aggregation of all supported addons.
 message AddonsOpts {
   // AppCatalog specifies if and how the App Catalog addon should be
@@ -463,6 +543,9 @@ message AddonsOpts {
 
   // ProfileAgent defines the options used to manage and configure the platform9 profile engine agent on the clsuter
   optional ProfileAgentOpts profileAgent = 6;
+
+  // AddonOperator defines the options used to manage and configure platform9 addon-operator on the cluster
+  optional AddonOperatorOpts addonOperator = 7;
 }
 
 // AppCatalogOpts contain configuration for the App Catalog addon.
@@ -495,17 +578,6 @@ message AzureCloudProviderCredentials {
 
 // AzureCloudProviderSpec contains all Azure-specific configuration for a CloudProvider.
 message AzureCloudProviderSpec {
-  // SecretName contains a reference to the secret in the same namespace in
-  // which the Azure credentials are stored.
-  //
-  // The referenced secret should be of type AzureCloudProviderSecret and
-  // therefore contains the following fields in its data:
-  // (1) clientID: the unique identifier of the Azure user account.
-  // (2) clientSecret: the secret access key associated with the client ID.
-  // (3) subscriptionID: can contain a AWS region which should be used by default for new resources.
-  // (3) tenantID: contains the tenant identifier.
-  //
-  // More info: https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html
   optional string secretName = 1;
 }
 
@@ -538,6 +610,11 @@ message CNIOpts {
   //
   // More info: https://github.com/coreos/flannel/blob/master/Documentation/configuration.md
   optional FlannelOpts flannel = 6;
+
+  // AWSOpts are options for the AWS VPC-CNI plugin.
+  //
+  // See more: https://github.com/aws/amazon-vpc-cni-k8s/blob/af55286bb5429a06841d2940597410dcc4e74d7e/README.md
+  optional AWSOpts aws = 7;
 }
 
 // CPUManagerOpts defines the options used to manage the CPU and topology manager feature
@@ -630,6 +707,24 @@ message CalicoOpts {
   //
   // More info: https://docs.projectcalico.org/reference/felix/configuration
   optional bool felixIPv6Support = 12;
+
+  // Corresponds to the CALICO_NODE_CPU_LIMIT environment variable in Calico.
+  optional string nodeCpuLimit = 13;
+
+  // Corresponds to the CALICO_NODE_MEMORY_LIMIT environment variable in Calico.
+  optional string nodeMemoryLimit = 14;
+
+  // Corresponds to the CALICO_TYPHA_CPU_LIMIT environment variable in Calico.
+  optional string typhaCpuLimit = 15;
+
+  // Corresponds to the CALICO_TYPHA_MEMORY_LIMIT environment variable in Calico.
+  optional string typhaMemoryLimit = 16;
+
+  // Corresponds to the CALICO_CONTROLLER_CPU_LIMIT environment variable in Calico.
+  optional string controllerCpuLimit = 17;
+
+  // Corresponds to the CALICO_CONTROLLER_MEMORY_LIMIT environment variable in Calico.
+  optional string controllerMemoryLimit = 18;
 }
 
 // CloudProvider is a representation of an infrastructure provider, which is used
@@ -680,6 +775,13 @@ message CloudProviderSpec {
   // Only one of these should be non-nil.
   // +optional
   optional AzureCloudProviderSpec azure = 3;
+
+  // GCP contains all Google Cloud-specific configuration for a CloudProvider.
+  //
+  // Any cluster-specific configuration goes into its type.
+  // Only one of these should be non-nil.
+  // +optional
+  optional GoogleCloudProviderSpec gke = 5;
 
   // Local contains all configuration specific to a on-premise CloudProvider.
   //
@@ -763,6 +865,7 @@ message ClusterAddonList {
 
 // ClusterAddonSpec contains the specification of the desired behavior of the Addon.
 message ClusterAddonSpec {
+  // +optional
   // ClusterID
   optional string clusterID = 1;
 
@@ -779,6 +882,10 @@ message ClusterAddonSpec {
   // Watch resources deployed by the Addon and not allow manual changes
   // +optional
   optional bool watch = 5;
+
+  // If specified, the addon pod's tolerations.
+  // +optional
+  repeated Toleration tolerations = 6;
 }
 
 // ClusterAddonStatus represents information about the status of a Addon. Status may
@@ -799,6 +906,57 @@ message ClusterAddonStatus {
   // LastChecked specifies the last time that the Addon object on the Cluster was checked
   // +optional
   optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastChecked = 3;
+}
+
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+message ClusterAgent {
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.TypeMeta typeMeta = 1;
+
+  // Standard object's metadata.
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 2;
+
+  optional ClusterAgentSpec spec = 3;
+
+  // Current phase of the agent.
+  // Valid values - connected, offline, errored
+  // +optional
+  optional ClusterAgentStatus status = 4;
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+message ClusterAgentList {
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.TypeMeta typeMeta = 1;
+
+  // Standard object's metadata.
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 2;
+
+  // Items contains the list of cluster profiles
+  repeated ClusterAgent items = 3;
+}
+
+message ClusterAgentSpec {
+  // ClusterName represents the identifier of the cluster for which
+  // this ClusterAgent is intended.
+  optional string clusterName = 1;
+}
+
+message ClusterAgentStatus {
+  // Current phase of the cluster agent.
+  // Enum of - connected, offline, errored
+  optional string phase = 1;
+
+  // Message contains any additional information to augment the Agent field
+  // It will also contain the reason for ClusterAgent in "errored" phase
+  // +optional
+  optional string message = 2;
+
+  // LastHeartBeat contains information about the timestamp at which the last
+  // heartbeat from the ClusterAgent was recorded. It's in UTC.
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastHeartBeat = 3;
+
+  // Version determines the reported version of the ClusterAgent.
+  optional string version = 4;
 }
 
 // ClusterAutoScalerOpts contain configuration for the Cluster AutoScaler (CAS)
@@ -1221,6 +1379,70 @@ message ClusterStatus {
   // ObservedGeneration is the latest generation observed by the controller.
   // +optional
   optional int64 observedGeneration = 8;
+}
+
+// ClusterVersion is a representation of a supported version for Clusters.
+//
+// In qbert, this was known as a 'supported_version'.
+message ClusterVersion {
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.TypeMeta typeMeta = 1;
+
+  // Standard object's metadata.
+  // More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 2;
+
+  // Version is the full format of the ClusterVersion. Generally, this should
+  // be the same as the ClusterVersion name. However, with the restricted
+  // format of the name field, they can differ. In case there is a difference
+  // this field should be viewed as authoritative.
+  // Example: 1.2.3-pmk.1801
+  optional string version = 3;
+
+  // KubeVersion is the Kubernetes-portion of the Version.
+  // Example: 1.2.3
+  optional string kubeVersion = 4;
+
+  // PMKVersion contains the PMK-portion of the Version.
+  // Example: 1801
+  optional string pmkVersion = 5;
+
+  // Addons contains addon-specific information about the versioning.
+  // +optional
+  repeated ClusterVersionAddon addons = 6;
+
+  // Changelog contains a URL to the location of the changelog for this ClusterVersion.
+  // Example: http://example.com/changelog/1.2.3-pmk.1801
+  // +optional
+  optional string changelog = 7;
+
+  // ReleasedAt specifies the time at which this version was released.
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time releasedAt = 8;
+
+  // Phase indicates the current state of this ClusterVersion.
+  // Example: Active
+  optional string phase = 9;
+}
+
+// ClusterVersionAddon contains addon-specific information about the versioning.
+message ClusterVersionAddon {
+  // Name is the name of the Addon.
+  optional string name = 1;
+
+  // Version contains the version of the Addon.
+  optional string version = 2;
+}
+
+// ClusterVersionList is a list of ClusterVersion objects.
+message ClusterVersionList {
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.TypeMeta typeMeta = 3;
+
+  // Standard list metadata.
+  // More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
+
+  // Items contains a list of Providers.
+  repeated ClusterVersion items = 2;
 }
 
 // Condition defines an observation of a Sunpike resource operational state.
@@ -1671,186 +1893,48 @@ message GKENodePool {
   repeated GKEInstance instances = 11;
 }
 
+// GoogleCloudProviderCredentials contains all Google Cloud-specific configuration for a CloudProvider.
+message GoogleCloudProviderCredentials {
+  // Type denotes the type of account
+  optional string type = 1;
+
+  // ProjectID is your Google Cloud project ID
+  optional string projectID = 2;
+
+  // PrivateKeyID is an identifier for your private key
+  optional string privateKeyID = 3;
+
+  // PrivateKey is the private key data associated with your service account JSON key
+  optional string privateKey = 4;
+
+  // ClientEmail is the email associated with the service account
+  optional string clientEmail = 5;
+
+  // ClientID is an identifier for this client
+  optional string clientID = 6;
+
+  // AuthURI is the auth endpoint to be used with this key
+  optional string authURI = 7;
+
+  // TokenURI is the token endpoint to be used with this key
+  optional string tokenURI = 8;
+
+  // AuthProviderx509CertURL is the endpoint for provider certs
+  optional string authProviderx509CertURL = 9;
+
+  // Clientx509CertURL is the endpoint for client certs
+  optional string clientx509CertURL = 10;
+}
+
+message GoogleCloudProviderSpec {
+  // SecretName contains a reference to the secret in the same namespace in
+  // which the GCP credentials are stored.
+  optional string secretName = 1;
+}
+
 message HA {
   // For HA setup
   optional KeepalivedOpts keepalived = 1;
-}
-
-// Host is a representation of the configuration and status of a single machine.
-message Host {
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.TypeMeta typeMeta = 4;
-
-  // Standard object's metadata.
-  // More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
-
-  // Specification of the desired behavior of the Host.
-  // More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
-  optional HostSpec spec = 2;
-
-  // Most recently observed status of the Host.
-  // This data may not be up to date.
-  // Populated by the system.
-  // Read-only.
-  // More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
-  optional HostStatus status = 3;
-}
-
-// HostList is a list of Host objects.
-message HostList {
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.TypeMeta typeMeta = 3;
-
-  // Standard list metadata.
-  // More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
-
-  // Items contains a list of Hosts.
-  repeated Host items = 2;
-}
-
-// HostPhase contains the status of a single phase script.
-message HostPhase {
-  // Name provides a human-readable name for this phase. These names can
-  // contain special characters and spaces.
-  //
-  // Example: "Configure and start auth web hook / pf9-bouncer"
-  optional string name = 1;
-
-  // Order is a unique number that is used to determine the order of the
-  // phases. The phases are ordered ascendingly based on this field.
-  optional int32 order = 2;
-
-  // StartedAt indicates when this phase started running.
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time startedAt = 3;
-
-  // Operation describes the type of operation that the phase is currently
-  // performing. Options: start|stop|status.
-  optional string operation = 4;
-
-  // Status describes the current state of the phase.
-  //
-  // Options:
-  // - not-started: state when no operation has been performed.
-  // - running:     state when start operation was successful.
-  // - stopped:     state when stop operation was successful.
-  // - failed:      state when start operation has failed.
-  // - executing:   state when an operation is being performed on a phase.
-  optional string status = 5;
-
-  // Message is a human readable description indicating details about why the
-  // phase is in this status.
-  //
-  // When the status is an error, the Message contains the error message.
-  optional string message = 6;
-}
-
-// HostSpec contains the specification of the desired behavior of the Host.
-//
-// Dev note: This type MUST be kept in sync with server/sunpike.js in qbert.
-// Make sure update both data structures when adding/modifying new fields.
-message HostSpec {
-  // ClusterID contains the name of the cluster to which this Host belongs.
-  // The configuration of this cluster will be used to configure this Host.
-  //
-  // See the Cluster type for more info.
-  optional string clusterID = 1;
-
-  // ClusterRole specifies the role that this Host should take within the
-  // cluster. Options:
-  //
-  // - master:	turn the host into a Kubernetes master node.
-  // - worker:	turn the host into a Kubernetes worker node.
-  // - none:		do not turn the host into a Kubernetes node.
-  optional string clusterRole = 2;
-
-  // KubeServiceState is the desired state of this Host in relation to
-  // the target cluster. If set to "true" the Host should be added to the
-  // cluster as a Node; if set to "false" the Host should be removed from the
-  // cluster as a Node; and, if set to another value (commonly "" or "ignore")
-  // the Host should simply be ignored and left in whatever state it is.
-  optional string kubeServiceState = 3;
-
-  // Debug will increase the verbosity of logging if set.
-  optional bool debug = 4;
-}
-
-// HostStatus represents information about the status of a Host. Status may
-// trail the actual state of a system, especially if the Host is not able to
-// contact Sunpike.
-message HostStatus {
-  // HostState constains the overall state of this Host.
-  optional string hostState = 1;
-
-  // ClusterRole is the role that is currently observed to be installed on
-  // the Host.
-  optional string clusterRole = 2;
-
-  // ServiceState is the current desired state of the Host. This should be
-  // equivalent to the KubeServiceState in the HostSpec, but is also stored
-  // in the HostStatus for backward-compatibility.
-  //
-  // If true the Host is being added to the
-  // cluster as a Node; if set to false the Host is being removed from the
-  // cluster as a Node; and, if set to another value (commonly "" or "ignore")
-  // the Host is simply being ignored and left in whatever state it is.
-  optional bool serviceState = 4;
-
-  // Hostname contains the hostname of the Host.
-  optional string hostname = 5;
-
-  // Nodelet contains information about the current state of the Nodelet
-  // process on the Host.
-  optional NodeletStatus nodelet = 6;
-
-  // Phases provides details about the progress of the scripts (phases)
-  // responsible for bringing the Host into or out of the Cluster. The phases
-  // are run in the order they are shown here.
-  repeated HostPhase phases = 10;
-
-  // PhaseCompleted specifies the order of the phase until which the chain has
-  // been completed successfully so far.
-  optional int32 phaseCompleted = 11;
-
-  // LastFailedPhase will be the order of the phase which failed to start in
-  // last attempt. If none have failed, this will be -1.
-  optional int32 lastFailedPhase = 12;
-
-  // StartAttempts describes the number of times Nodelet has attempted to run
-  // the start scripts.
-  optional int32 startAttempts = 13;
-
-  // CurrentPhase is the order of the phase which is currently running.
-  optional int32 currentPhase = 14;
-
-  // AllStatusChecks will be the list of integer orders of the phases that
-  // should be run as part of a status check.
-  repeated int32 allStatusChecks = 20;
-
-  // LastFailedCheck will be the order of the phase for which status check failed.
-  optional int32 lastFailedCheck = 21;
-
-  // LastFailedCheckTime contains the timestamp at which the last failed
-  // status check was performed. The field is formatted as UNIX timestamp.
-  optional int64 lastFailedCheckTime = 22;
-
-  // Conditions defines current service state of the Cluster.
-  // +optional
-  repeated Condition conditions = 30;
-
-  // ObservedGeneration is the latest generation observed by the controller.
-  // +optional
-  optional int64 observedGeneration = 31;
-
-  // KubeVersion specifies the current version of Kubernetes running
-  // on the corresponding Node. This is meant to be a means of bubbling
-  // up status from the Node to the Machine.
-  // It is entirely optional, but useful for end-user UX if it’s present.
-  // +optional
-  optional string kubeVersion = 32;
-
-  // PrimaryIP contains the primary IP of this Host.
-  // +optional
-  optional string primaryIP = 33;
 }
 
 // KeepalivedOpts contains the settings to configure keepalived, which is used
@@ -1996,6 +2080,19 @@ message KubeletOpts {
   // (DEPRECATED: will be removed in 1.23, in favor of removing cloud
   // providers code from Kubelet.)
   optional string cloudCfg = 1;
+
+  // ProviderID contains the provider ID that is specified by CAPI machine and
+  // will be populated in the kubelet running on the host.
+  optional string providerID = 2;
+
+  // ExtraArgs contains arguments that will be passed as-is to kubelet process
+  optional string extraArgs = 3;
+
+  // NodeLabels contains labels for the host
+  map<string, string> nodeLabels = 4;
+
+  // NodeTaints contains taints for the host
+  map<string, string> nodeTaints = 5;
 }
 
 message LoadBalancer {
@@ -2031,13 +2128,6 @@ message MetalLBOpts {
   optional bool enabled = 2;
 }
 
-// NodeletStatus contains information about the Nodelet process
-// itself (rather than about the Host).
-message NodeletStatus {
-  // Version is the version of Nodelet that is running on the Host.
-  optional string version = 1;
-}
-
 // Override defines params to override in the addon
 message Override {
   // Params list of override params
@@ -2056,6 +2146,9 @@ message PF9 {
   //
   // More info: https://platform9.atlassian.net/browse/INF-764
   optional string bouncerSlowReqWebhook = 2;
+
+  // isAirgapped specifies whether cluster is running in airgapped or SaaS env
+  optional bool isAirgapped = 3;
 }
 
 // Params defines params to override in the addon
@@ -2094,5 +2187,38 @@ message StorageBackend {
   //
   // More info: https://etcd.io/docs/latest/
   optional EtcdOpts etcd = 1;
+}
+
+// The pod this Toleration is attached to tolerates any taint that matches
+// the triple <key,value,effect> using the matching operator <operator>.
+message Toleration {
+  // Key is the taint key that the toleration applies to. Empty means match all taint keys.
+  // If the key is empty, operator must be Exists; this combination means to match all values and all keys.
+  // +optional
+  optional string key = 1;
+
+  // Operator represents a key's relationship to the value.
+  // Valid operators are Exists and Equal. Defaults to Equal.
+  // Exists is equivalent to wildcard for value, so that a pod can
+  // tolerate all taints of a particular category.
+  // +optional
+  optional string operator = 2;
+
+  // Value is the taint value the toleration matches to.
+  // If the operator is Exists, the value should be empty, otherwise just a regular string.
+  // +optional
+  optional string value = 3;
+
+  // Effect indicates the taint effect to match. Empty means match all taint effects.
+  // When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.
+  // +optional
+  optional string effect = 4;
+
+  // TolerationSeconds represents the period of time the toleration (which must be
+  // of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default,
+  // it is not set, which means tolerate the taint forever (do not evict). Zero and
+  // negative values will be treated as 0 (evict immediately) by the system.
+  // +optional
+  optional int64 tolerationSeconds = 5;
 }
 

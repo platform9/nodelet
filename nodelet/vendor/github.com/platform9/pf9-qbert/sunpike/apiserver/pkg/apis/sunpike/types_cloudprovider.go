@@ -37,6 +37,7 @@ const (
 	CloudProviderTypeUnknown CloudProviderType = "" // Default
 	CloudProviderTypeAWS     CloudProviderType = "aws"
 	CloudProviderTypeAzure   CloudProviderType = "azure"
+	CloudProviderTypeGCP     CloudProviderType = "gke"
 	CloudProviderTypeLocal   CloudProviderType = "local"
 )
 
@@ -93,6 +94,13 @@ type CloudProviderSpec struct {
 	// Only one of these should be non-nil.
 	// +optional
 	Azure *AzureCloudProviderSpec `json:"azure,omitempty" protobuf:"bytes,3,opt,name=azure"`
+
+	// GCP contains all Google Cloud-specific configuration for a CloudProvider.
+	//
+	// Any cluster-specific configuration goes into its type.
+	// Only one of these should be non-nil.
+	// +optional
+	GKE *GoogleCloudProviderSpec `json:"gke,omitempty" protobuf:"bytes,5,opt,name=gke"`
 
 	// Local contains all configuration specific to a on-premise CloudProvider.
 	//
@@ -188,9 +196,7 @@ type AzureCloudProviderSpec struct {
 	// (1) clientID: the unique identifier of the Azure user account.
 	// (2) clientSecret: the secret access key associated with the client ID.
 	// (3) subscriptionID: can contain a AWS region which should be used by default for new resources.
-	// (3) tenantID: contains the tenant identifier.
-	//
-	// More info: https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html
+	// (4) tenantID: contains the tenant identifier.
 	SecretName string `json:"secretName" protobuf:"bytes,1,opt,name=secretName"`
 }
 
@@ -206,6 +212,45 @@ type AzureCloudProviderCredentials struct {
 
 	// TenantID contains the tenant identifier.
 	TenantID string `json:"tenantID,omitempty" protobuf:"bytes,4,opt,name=tenantID"`
+}
+
+type GoogleCloudProviderSpec struct {
+	// SecretName contains a reference to the secret in the same namespace in
+	// which the GCP credentials are stored.
+	SecretName string `json:"secretName" protobuf:"bytes,1,opt,name=secretName"`
+}
+
+// GoogleCloudProviderCredentials contains all Google Cloud-specific configuration for a CloudProvider.
+type GoogleCloudProviderCredentials struct {
+	// Type denotes the type of account
+	Type string `json:"type,omitempty" protobuf:"bytes,1,opt,name=type"`
+
+	// ProjectID is your Google Cloud project ID
+	ProjectID string `json:"projectID,omitempty" protobuf:"bytes,2,opt,name=projectID"`
+
+	// PrivateKeyID is an identifier for your private key
+	PrivateKeyID string `json:"privateKeyID,omitempty" protobuf:"bytes,3,opt,name=privateKeyID"`
+
+	// PrivateKey is the private key data associated with your service account JSON key
+	PrivateKey string `json:"privateKey,omitempty" protobuf:"bytes,4,opt,name=privateKey"`
+
+	// ClientEmail is the email associated with the service account
+	ClientEmail string `json:"clientEmail,omitempty" protobuf:"bytes,5,opt,name=clientEmail"`
+
+	// ClientID is an identifier for this client
+	ClientID string `json:"clientID,omitempty" protobuf:"bytes,6,opt,name=clientID"`
+
+	// AuthURI is the auth endpoint to be used with this key
+	AuthURI string `json:"authURI,omitempty" protobuf:"bytes,7,opt,name=authURI"`
+
+	// TokenURI is the token endpoint to be used with this key
+	TokenURI string `json:"tokenURI,omitempty" protobuf:"bytes,8,opt,name=tokenURI"`
+
+	// AuthProviderx509CertURL is the endpoint for provider certs
+	AuthProviderx509CertURL string `json:"authProviderx509CertURL,omitempty" protobuf:"bytes,9,opt,name=authProviderx509CertURL"`
+
+	// Clientx509CertURL is the endpoint for client certs
+	Clientx509CertURL string `json:"clientx509CertURL,omitempty" protobuf:"bytes,10,opt,name=clientx509CertURL"`
 }
 
 // LocalCloudProviderSpec contains all configuration specific to a on-premise CloudProvider.
