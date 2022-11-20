@@ -44,7 +44,7 @@ ETCD_ENV: |-
   ETCD_STRICT_RECONFIG_CHECK=true
   ETCD_INITIAL_CLUSTER_TOKEN={{ .ClusterId }}
   ETCD_INITIAL_CLUSTER_STATE={{ .EtcdClusterState }}
-  {{ if and ((.IPv6Enabled) (not .Dualstack))-}}
+  {{ if and (.IPv6Enabled) (not .Dualstack) -}}
   ETCD_INITIAL_CLUSTER={{- range $MasterName, $MasterIp := .MasterList }}{{ $MasterName }}=https://[{{ $MasterIp }}]:2380,{{ end }}
   ETCD_INITIAL_ADVERTISE_PEER_URLS=https://[{{ .HostIp }}]:2380
   ETCD_LISTEN_PEER_URLS=https://[{{ .HostIp }}]:2380

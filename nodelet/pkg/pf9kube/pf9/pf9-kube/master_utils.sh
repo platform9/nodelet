@@ -442,6 +442,7 @@ function prepare_master_pod()
         else
             CLUSTER_CIDR="$CONTAINERS_CIDR"
         fi
+    fi
 
     DEBUG_LEVEL=2
 

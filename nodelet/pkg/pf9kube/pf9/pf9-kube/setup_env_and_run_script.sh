@@ -77,7 +77,7 @@ else
         export DUALSTACK="true"
         export NODE_IP=$(ipv4_address_of_node)
         export NODE_IPV6=$(ipv6_address_of_node)
-        export API_SERVICE_IPV6=`bin/addr_conv -cidr "$SERVICES_CIDR" -pos 1`
+        export API_SERVICE_IP=`bin/addr_conv -cidr "$SERVICES_CIDR" -pos 1`
         export DNS_IP=`bin/addr_conv -cidr "$SERVICES_CIDR" -pos 10`
         export API_SERVICE_IPV6=`bin/addr_conv -cidr "$SERVICES_CIDR_V6" -pos 1`
         export DNS_IPV6=`bin/addr_conv -cidr "$SERVICES_CIDR_V6" -pos 10`
@@ -96,10 +96,8 @@ else
         # because this is a new field and not (yet) set by Sunpike or Qbert
         # Currently only set by nodeletctl/airctl
         export NODE_IP=$(ipv4_address_of_node)
-        export API_SERVICE_IP=`bin/addr_conv -cidr "$SERVICES_CIDR_V6" -pos 1`
+        export API_SERVICE_IP=`bin/addr_conv -cidr "$SERVICES_CIDR" -pos 1`
         export DNS_IP=`bin/addr_conv -cidr "$SERVICES_CIDR_V6" -pos 10`
-        export API_SERVICE_IPV6=`bin/addr_conv -cidr "$SERVICES_CIDR_V6" -pos 1`
-        export DNS_IPV6=`bin/addr_conv -cidr "$SERVICES_CIDR_V6" -pos 10`
     fi
     export NODE_NAME=$(get_node_name)
 
