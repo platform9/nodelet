@@ -723,7 +723,7 @@ function ensure_proxy_running()
     local container_name="proxy"
     local container_img="${k8s_registry}/kube-proxy:$KUBERNETES_VERSION"
 
-    PROXY_CLUSTER_CIDRS = ""
+    local PROXY_CLUSTER_CIDRS=""
     if [ "$DUALSTACK" == "true" ]; then
         PROXY_CLUSTER_CIDRS="$CONTAINERS_CIDR,$CONTAINERS_CIDR_V6"
     elif [ "$IPV6_ENABLED" == "true" ]; then
@@ -799,12 +799,12 @@ function check_required_params()
     fi
     echo master IP is $MASTER_IP
 
-    if [ "$IPV4_ENABLED" == "true" && "$CONTAINERS_CIDR" == "" ]; then
+    if [[ "$IPV4_ENABLED" == "true" && "$CONTAINERS_CIDR" == "" ]]; then
         echo CONTAINERS_CIDR not defined
         exit 1
     fi
 
-    if [ "$IPV6_ENABLED" == "true" && "$CONTAINERS_CIDR_V6" == "" ]; then
+    if [[ "$IPV6_ENABLED" == "true" && "$CONTAINERS_CIDR_V6" == "" ]]; then
         echo CONTAINERS_CIDR_V6 not defined
         exit 1
     fi
@@ -815,6 +815,7 @@ function check_required_params()
     if [ "$SERVICES_CIDR" == "" ]; then
         if [ "$SERVICES_CIDR_V6" == "" ]; then
             echo SERVICES_CIDR nor SERVICES_CIDR_V6 not defined
+        fi
         exit 1
     fi
     echo services CIDR is $SERVICES_CIDR
