@@ -588,7 +588,9 @@ function prepare_certs()
     fi
 
     if [ "${DUALSTACK}" == "true" ]; then
-        apiserver_sans="${apiserver_sans}, IP:${API_SERVICE_IPV6}"
+        apiserver_sans="${apiserver_sans}, IP:${API_SERVICE_IPV6}, IP:${MASTER_IPV6}"
+        etcd_sans="${etcd_sans}, IP:${NODE_IPV6}, IP:${MASTER_IPV6}"
+        kubelet_sans="${kubelet_sans}, IP:${NODE_IPV6}"
     fi
 
     trimmed_etcd_sans=$(trim_sans "$etcd_sans")

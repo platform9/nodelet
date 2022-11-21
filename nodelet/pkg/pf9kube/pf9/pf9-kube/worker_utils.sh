@@ -30,6 +30,10 @@ function prepare_certs()
         IP:${node_ip}, \
         ${node_name_type}:${node_name}"
 
+    if [ "${DUALSTACK}" == "true" ]; then
+        kubelet_sans="${kubelet_sans}, IP:${NODE_IPV6}"
+    fi
+
     local trimmed_kubelet_sans=$(trim_sans "$kubelet_sans")
     ensure_certs_dir_backedup "startup"
 
