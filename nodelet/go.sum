@@ -730,6 +730,10 @@ github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINE
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/sftp v1.10.1/go.mod h1:lYOWFsE0bwd1+KfKJaKeuokY15vzFx25BLbzYYoAxZI=
+github.com/platform9/pf9-qbert/sunpike/apiserver v0.0.0-20221207021428-7b763143f9f5 h1:U71BJLW1fYsPB96X2bKvftrEbq/uMIHa4pNCDUp03PY=
+github.com/platform9/pf9-qbert/sunpike/apiserver v0.0.0-20221207021428-7b763143f9f5/go.mod h1:ZpnuPNVYB4Hoqvx71Kl/tPvDFbCnL5c7hhSa2T22NBk=
+github.com/platform9/pf9-qbert/sunpike/conductor v0.0.0-20221207021428-7b763143f9f5 h1:5nc7cWnfGhklfyF62O4LAqM2G0M8nlXK143seL/lvIE=
+github.com/platform9/pf9-qbert/sunpike/conductor v0.0.0-20221207021428-7b763143f9f5/go.mod h1:121XjMoOSHw8bvobMfJoNH5J3h+GcwZlCo2T1N4O+4c=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/posener/complete v1.1.1/go.mod h1:em0nMJCgc9GFtwrmVmEMR/ZL6WyhyjMBndrE9hABlRI=
