@@ -26,7 +26,7 @@ function start() {
     touch $KUBE_STACK_START_FILE_MARKER
     
     # Actual generate certs
-    echo node IP is $NODE_NAME
+    echo node IP is $NODE_IP
     echo node name is "$NODE_NAME"
     echo node endpoint type is "$NODE_NAME_TYPE"
     if [[ "x$NODE_NAME" == "x"  ||  "x$NODE_IP" == "x"  ||  "x$NODE_NAME_TYPE" == "x" || "$NODE_NAME" == "127.0.0.1" ]]; then
