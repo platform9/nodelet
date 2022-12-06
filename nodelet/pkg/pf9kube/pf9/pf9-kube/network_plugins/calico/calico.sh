@@ -51,6 +51,12 @@ function deploy_calico_daemonset()
 
     local CALICO_IPV4POOL_CIDR=${CONTAINERS_CIDR}
 
+    if [[ "$IPV6_ENABLED" == "true" && "$DUALSTACK" == "false" ]]; then
+        CALICO_IPV4POOL_CIDR=""
+    elif [[ "$IPV4_ENABLED" == "true" && "$DUALSTACK" == "false" ]]; then
+        CALICO_IPV6POOL_CIDR=""
+    fi
+
     # Replace configuration values in calico spec with user input
     sed -e "s|__CALICO_IPV4POOL_CIDR__|${CALICO_IPV4POOL_CIDR}|g" \
         -e "s|__PF9_ETCD_ENDPOINTS__|https://${MASTER_IP}:4001|g" \

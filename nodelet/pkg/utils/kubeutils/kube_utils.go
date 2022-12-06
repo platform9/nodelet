@@ -361,7 +361,12 @@ func (u *UtilsImpl) EnsureDns(cfg config.Config) error {
 		k8sRegistry = cfg.K8sPrivateRegistry
 	}
 
-	dnsIP, _ := netUtil.AddrConv(cfg.ServicesCIDR, 10)
+	servicesCidr := cfg.ServicesCIDR
+	if cfg.IPv6Enabled && !cfg.IPv4Enabled {
+		servicesCidr = cfg.ServicesCIDRv6
+	}
+
+	dnsIP, _ := netUtil.AddrConv(servicesCidr, 10)
 	type dataToAdd struct {
 		DnsIP       string
 		K8sRegistry string

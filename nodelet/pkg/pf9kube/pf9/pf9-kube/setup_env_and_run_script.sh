@@ -105,5 +105,14 @@ else
         export CONTAINERS_CIDR_V6="${CALICO_IPV6POOL_CIDR}"
     fi
 
+    echo DUALSTACK is $DUALSTACK
+    echo NODE_IP is $NODE_IP
+    echo NODE_IPV6 is $NODE_IPV6
+    echo API_SERVICE_IP is $API_SERVICE_IP
+    echo DNS_IP is $DNS_IP
+    echo API_SERVICE_IPV6 is $API_SERVICE_IPV6
+    echo DNS_IPV6 is $DNS_IPV6
+
+
     do_cmd $1 $2 $3
 fi
