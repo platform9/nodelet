@@ -134,7 +134,7 @@ type HostSpec struct {
 	ContainerRuntime string `json:"containerRuntime,omitempty" protobuf:"bytes,15,opt,name=containerRuntime" kube.env:"RUNTIME"`
 
     // ServicesCIDR for IPv6 in dualstack environment. For single-stack, ServicesCIDR == ServicesCIDRV6
-    ServicesCIDRv6 string `json:"servicesCIDRv6,omitempty" protobuf:"bytes,16,opt,name=servicesCIDR" kube.env:"SERVICES_CIDR_V6"`
+    ServicesCIDRv6 string `json:"servicesCIDRv6,omitempty" protobuf:"bytes,16,opt,name=servicesCIDRv6" kube.env:"SERVICES_CIDR_V6"`
 }
 
 // HostStatus represents information about the status of a Host. Status may
