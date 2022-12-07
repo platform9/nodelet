@@ -1854,6 +1854,7 @@ func autoConvert_v1alpha2_CNIOpts_To_sunpike_CNIOpts(in *CNIOpts, out *sunpike.C
 	if err := Convert_v1alpha2_AWSOpts_To_sunpike_AWSOpts(&in.AWS, &out.AWS, s); err != nil {
 		return err
 	}
+	out.IPv4 = in.IPv4
 	return nil
 }
 
@@ -1876,6 +1877,7 @@ func autoConvert_sunpike_CNIOpts_To_v1alpha2_CNIOpts(in *sunpike.CNIOpts, out *C
 	if err := Convert_sunpike_AWSOpts_To_v1alpha2_AWSOpts(&in.AWS, &out.AWS, s); err != nil {
 		return err
 	}
+	out.IPv4 = in.IPv4
 	return nil
 }
 

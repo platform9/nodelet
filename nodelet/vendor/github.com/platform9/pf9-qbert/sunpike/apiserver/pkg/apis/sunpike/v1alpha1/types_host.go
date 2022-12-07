@@ -145,7 +145,7 @@ type HostSpec struct {
 	// ContainerRuntime specifies the container runtime to use
 	ContainerRuntime string `json:"containerRuntime,omitempty" protobuf:"bytes,15,opt,name=containerRuntime" kube.env:"RUNTIME"`
 
-    ServicesCIDRv6 string `json:"servicesCIDRv6,omitempty" protobuf:"bytes,16,opt,name=servicesCIDRv6" kube.env:"SERVICES_CIDR_V6"`
+	ServicesCIDRv6 string `json:"servicesCIDRv6,omitempty" protobuf:"bytes,16,opt,name=servicesCIDRv6" kube.env:"SERVICES_CIDR_V6"`
 }
 
 // HostStatus represents information about the status of a Host. Status may
@@ -522,7 +522,7 @@ type CNIOpts struct {
 	// See more: https://github.com/aws/amazon-vpc-cni-k8s/blob/af55286bb5429a06841d2940597410dcc4e74d7e/README.md
 	AWS AWSOpts `json:"aws,omitempty" protobuf:"bytes,7,opt,name=aws"`
 
-    IPv4 bool `json:"IPv4,omitempty" protobuf:"bool,8,opt,name=IPv4" kube.env:"IPV4_ENABLED"`
+	IPv4 bool `json:"IPv4,omitempty" protobuf:"bool,8,opt,name=IPv4" kube.env:"IPV4_ENABLED"`
 }
 
 // AddonsOpts is an aggregation of all supported addons.
@@ -885,7 +885,7 @@ type PF9Opts struct {
 	// isAirgapped specifies whether cluster is running in airgapped or SaaS env
 	IsAirgapped bool `json:"isAirgapped,omitempty" protobuf:"bool,16,opt,name=isAirgapped" kube.env:"IS_AIRGAPPED"`
 
-    MasterIPv6 string `json:"masterIPv6,omitempty" protobuf:"bytes,17,opt,name=masterIPv6" kube.env:"MASTER_IPV6"`
+	MasterIPv6 string `json:"masterIPv6,omitempty" protobuf:"bytes,17,opt,name=masterIPv6" kube.env:"MASTER_IPV6"`
 }
 
 // NodeletStatus contains information about the Nodelet process

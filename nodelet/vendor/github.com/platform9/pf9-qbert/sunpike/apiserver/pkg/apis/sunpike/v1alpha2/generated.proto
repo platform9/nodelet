@@ -615,6 +615,9 @@ message CNIOpts {
   //
   // See more: https://github.com/aws/amazon-vpc-cni-k8s/blob/af55286bb5429a06841d2940597410dcc4e74d7e/README.md
   optional AWSOpts aws = 7;
+
+  // IPv4 indicates whether this cluster should support IPv4.
+  optional bool IPv4 = 8;
 }
 
 // CPUManagerOpts defines the options used to manage the CPU and topology manager feature

@@ -1296,6 +1296,9 @@ type CNIOpts struct {
 	//
 	// See more: https://github.com/aws/amazon-vpc-cni-k8s/blob/af55286bb5429a06841d2940597410dcc4e74d7e/README.md
 	AWS AWSOpts `json:"aws,omitempty" protobuf:"bytes,7,opt,name=aws"`
+
+	// IPv4 indicates whether this cluster should support IPv4.
+	IPv4 bool `json:"IPv4,omitempty" protobuf:"bool,8,opt,name=IPv4" kube.env:"IPV4_ENABLED"`
 }
 
 // EtcdOpts contain configuration for the etcd cluster as a storage backend for

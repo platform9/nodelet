@@ -481,6 +481,7 @@ func autoConvert_v1alpha1_CNIOpts_To_sunpike_CNIOpts(in *CNIOpts, out *sunpike.C
 	if err := Convert_v1alpha1_AWSOpts_To_sunpike_AWSOpts(&in.AWS, &out.AWS, s); err != nil {
 		return err
 	}
+	out.IPv4 = in.IPv4
 	return nil
 }
 
@@ -503,6 +504,7 @@ func autoConvert_sunpike_CNIOpts_To_v1alpha1_CNIOpts(in *sunpike.CNIOpts, out *C
 	if err := Convert_sunpike_AWSOpts_To_v1alpha1_AWSOpts(&in.AWS, &out.AWS, s); err != nil {
 		return err
 	}
+	out.IPv4 = in.IPv4
 	return nil
 }
 
@@ -827,6 +829,7 @@ func autoConvert_v1alpha1_HostSpec_To_sunpike_HostSpec(in *HostSpec, out *sunpik
 	out.GCRPrivateRegistry = in.GCRPrivateRegistry
 	out.K8SPrivateRegistry = in.K8SPrivateRegistry
 	out.ContainerRuntime = in.ContainerRuntime
+	out.ServicesCIDRv6 = in.ServicesCIDRv6
 	return nil
 }
 
@@ -861,6 +864,7 @@ func autoConvert_sunpike_HostSpec_To_v1alpha1_HostSpec(in *sunpike.HostSpec, out
 	out.GCRPrivateRegistry = in.GCRPrivateRegistry
 	out.K8SPrivateRegistry = in.K8SPrivateRegistry
 	out.ContainerRuntime = in.ContainerRuntime
+	out.ServicesCIDRv6 = in.ServicesCIDRv6
 	return nil
 }
 
@@ -1302,6 +1306,7 @@ func autoConvert_v1alpha1_PF9Opts_To_sunpike_PF9Opts(in *PF9Opts, out *sunpike.P
 		return err
 	}
 	out.IsAirgapped = in.IsAirgapped
+	out.MasterIPv6 = in.MasterIPv6
 	return nil
 }
 
@@ -1333,6 +1338,7 @@ func autoConvert_sunpike_PF9Opts_To_v1alpha1_PF9Opts(in *sunpike.PF9Opts, out *P
 		return err
 	}
 	out.IsAirgapped = in.IsAirgapped
+	out.MasterIPv6 = in.MasterIPv6
 	return nil
 }
 

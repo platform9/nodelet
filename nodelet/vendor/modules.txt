@@ -375,13 +375,13 @@ github.com/peterbourgon/diskv
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
-# github.com/platform9/pf9-qbert/sunpike/apiserver v0.0.0 => ../../pf9-qbert/sunpike/apiserver
+# github.com/platform9/pf9-qbert/sunpike/apiserver v0.0.0 => github.com/platform9/pf9-qbert/sunpike/apiserver v0.0.0-20221207021428-7b763143f9f5
 ## explicit; go 1.18
 github.com/platform9/pf9-qbert/sunpike/apiserver/pkg/apis/sunpike
 github.com/platform9/pf9-qbert/sunpike/apiserver/pkg/apis/sunpike/v1alpha1
 github.com/platform9/pf9-qbert/sunpike/apiserver/pkg/apis/sunpike/v1alpha2
 github.com/platform9/pf9-qbert/sunpike/apiserver/pkg/hosts
-# github.com/platform9/pf9-qbert/sunpike/conductor v0.0.0-20210928133414-c4e8ce211671 => ../../pf9-qbert/sunpike/conductor
+# github.com/platform9/pf9-qbert/sunpike/conductor v0.0.0-20221207021428-7b763143f9f5
 ## explicit; go 1.18
 github.com/platform9/pf9-qbert/sunpike/conductor/pkg/api
 # github.com/pmezard/go-difflib v1.0.0
@@ -1047,5 +1047,3 @@ sigs.k8s.io/structured-merge-diff/v4/value
 # sigs.k8s.io/yaml v1.2.0
 ## explicit; go 1.12
 sigs.k8s.io/yaml
-# github.com/platform9/pf9-qbert/sunpike/apiserver => ../../pf9-qbert/sunpike/apiserver
-# github.com/platform9/pf9-qbert/sunpike/conductor => ../../pf9-qbert/sunpike/conductor

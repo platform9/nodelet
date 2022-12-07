@@ -133,8 +133,8 @@ type HostSpec struct {
 	// ContainerRuntime specifies the container runtime to use
 	ContainerRuntime string `json:"containerRuntime,omitempty" protobuf:"bytes,15,opt,name=containerRuntime" kube.env:"RUNTIME"`
 
-    // ServicesCIDR for IPv6 in dualstack environment. For single-stack, ServicesCIDR == ServicesCIDRV6
-    ServicesCIDRv6 string `json:"servicesCIDRv6,omitempty" protobuf:"bytes,16,opt,name=servicesCIDRv6" kube.env:"SERVICES_CIDR_V6"`
+	// ServicesCIDR for IPv6 in dualstack environment. For single-stack, ServicesCIDR == ServicesCIDRV6
+	ServicesCIDRv6 string `json:"servicesCIDRv6,omitempty" protobuf:"bytes,16,opt,name=servicesCIDRv6" kube.env:"SERVICES_CIDR_V6"`
 }
 
 // HostStatus represents information about the status of a Host. Status may
@@ -389,8 +389,8 @@ type PF9Opts struct {
 	// isAirgapped specifies whether cluster is running in airgapped or SaaS env
 	IsAirgapped bool `json:"isAirgapped,omitempty" protobuf:"bool,16,opt,name=isAirgapped" kube.env:"IS_AIRGAPPED"`
 
-    // MasterIPv6 is used in dualstack only for IPV6 address
-    MasterIPv6 string `json:"masterIPv6,omitempty" protobuf:"bytes,17,opt,name=masterIPv6" kube.env:"MASTER_IPV6"`
+	// MasterIPv6 is used in dualstack only for IPV6 address
+	MasterIPv6 string `json:"masterIPv6,omitempty" protobuf:"bytes,17,opt,name=masterIPv6" kube.env:"MASTER_IPV6"`
 }
 
 // NodeletStatus contains information about the Nodelet process

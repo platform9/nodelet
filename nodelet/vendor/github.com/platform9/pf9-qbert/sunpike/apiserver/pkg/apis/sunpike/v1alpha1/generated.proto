@@ -101,6 +101,8 @@ message CNIOpts {
   //
   // See more: https://github.com/aws/amazon-vpc-cni-k8s/blob/af55286bb5429a06841d2940597410dcc4e74d7e/README.md
   optional AWSOpts aws = 7;
+
+  optional bool IPv4 = 8;
 }
 
 // CPUManagerOpts defines the options used to manage the CPU and topology manager feature
@@ -471,6 +473,8 @@ message HostSpec {
 
   // ContainerRuntime specifies the container runtime to use
   optional string containerRuntime = 15;
+
+  optional string servicesCIDRv6 = 16;
 }
 
 // HostStatus represents information about the status of a Host. Status may
@@ -892,6 +896,8 @@ message PF9Opts {
 
   // isAirgapped specifies whether cluster is running in airgapped or SaaS env
   optional bool isAirgapped = 16;
+
+  optional string masterIPv6 = 17;
 }
 
 // ProfileAgentOpts contains configuration related to platform9 profile engine agent
