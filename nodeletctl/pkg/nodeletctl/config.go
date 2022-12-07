@@ -116,6 +116,11 @@ func setNodeletClusterCfg(cfg *BootstrapConfig, nodelet *NodeletConfig) {
 		} else {
 			nodelet.ServicesCidr = cfg.ServicesCidr
 		}
+		if nodelet.MasterIp == "" && nodelet.MasterIpv6 != "" {
+			nodelet.MasterIp = nodelet.MasterIpv6
+		} else if nodelet.MasterIpv6 == "" && nodelet.MasterIp != "" {
+			nodelet.MasterIpv6 = nodelet.MasterIp
+		}
 	} else {
 		// IPv4 only
 		nodelet.CalicoIP4 = "autodetect"
