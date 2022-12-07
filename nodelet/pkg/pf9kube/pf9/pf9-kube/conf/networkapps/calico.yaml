@@ -3530,17 +3530,19 @@ spec:
   # (when using the Kubernetes datastore). Use one replica for every 100-200 nodes. In
   # production, we recommend running at least 3 replicas to reduce the impact of rolling upgrade.
   # PF9 - Change replicas to 3 per recommendation above. This covers us for up to 600 nodes
-  # PF9 todo: Add qbert scaleup/down logic to scale this Deployment past 3 replicas
-  replicas: 3
-  # PF9 End
+  #PF9 - Use cluster proportional autoscaler - don't set repliacs here
+  # replicas: 3
+  #PF9
   revisionHistoryLimit: 2
   selector:
     matchLabels:
       k8s-app: calico-typha
   strategy:
     rollingUpdate:
-      maxSurge: 25%
-      maxUnavailable: 75%
+      # PF9 Begin - change maxSurge and maxUnavailable to handle single node cluster upgrade w/ autoscaler
+      maxSurge: 66%
+      maxUnavailable: 1
+     # PF9 End
     type: RollingUpdate
   template:
     metadata:
@@ -4100,6 +4102,7 @@ spec:
       k8s-app: calico-kube-controllers
 
 ---
+# PF9 begin - add cluster proportional autoscaler
 apiVersion: v1
 data:
   ladder: |-
@@ -4212,3 +4215,6 @@ spec:
       - key: "CriticalAddonsOnly"
         operator: "Exists"
       serviceAccountName: calico-typha-autoscaler
+
+# PF9 End - typha cluster proportional autoscaler
+
