@@ -97,7 +97,7 @@ else
         # Currently only set by nodeletctl/airctl
         export NODE_IP=$(ipv4_address_of_node)
         export API_SERVICE_IP=`bin/addr_conv -cidr "$SERVICES_CIDR" -pos 1`
-        export DNS_IP=`bin/addr_conv -cidr "$SERVICES_CIDR_V6" -pos 10`
+        export DNS_IP=`bin/addr_conv -cidr "$SERVICES_CIDR" -pos 10`
     fi
     export NODE_NAME=$(get_node_name)
 
