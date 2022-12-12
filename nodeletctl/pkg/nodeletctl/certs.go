@@ -321,13 +321,13 @@ func trustCA(certsDir string) error {
 	removeCmd := exec.Command("sudo", "rm", dstFile)
 	output, err = removeCmd.CombinedOutput()
 	if err != nil {
-		zap.S().Warnf("failed to remove root cA: %v - %s", err, string(output))
+		zap.S().Warnf("failed to remove root ca: %v - %s", err, string(output))
 	}
 
 	copyCmd := exec.Command("sudo", "cp", srcFile, dstFile)
 	output, err = copyCmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("failed to copy root cA: %v - %s", err, string(output))
+		return fmt.Errorf("failed to copy root ca: %v - %s", err, string(output))
 	}
 
 	extractCmd := exec.Command("sudo", "update-ca-trust", "extract")
