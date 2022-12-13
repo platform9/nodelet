@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sync"
 	"time"
@@ -119,7 +120,7 @@ func ParseBootstrapConfig(cfgPath string) (*BootstrapConfig, error) {
 	zap.S().Infof("ParseBootstrapConfig cfgPath: %s", cfgPath)
 	cfgFile, err := ioutil.ReadFile(cfgPath)
 	if err != nil {
-		return nil, fmt.Errorf("Error opening bootstrap config file: %s", cfgFile)
+		return nil, fmt.Errorf("error opening bootstrap config file: %s", cfgFile)
 	}
 
 	bootstrapConfig := InitBootstrapConfig()
@@ -129,14 +130,14 @@ func ParseBootstrapConfig(cfgPath string) (*BootstrapConfig, error) {
 	}
 
 	if err := isClusterCfgValid(bootstrapConfig); err != nil {
-		return nil, fmt.Errorf("Invalid cluster config: %s", err)
+		return nil, fmt.Errorf("invalid cluster config: %s", err)
 	}
 
 	if len(bootstrapConfig.DNS.InlineHosts) > 0 {
 		// If custom hosts are specified, save to /etc/pf9/hosts and upload to each node to use core CoreDNS
 		bootstrapConfig.DNS.HostsFile, err = WriteHostsFileForEntries(bootstrapConfig.ClusterId, bootstrapConfig.DNS.InlineHosts)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to generate custom hosts file: %s", err)
+			return nil, fmt.Errorf("failed to generate custom hosts file: %s", err)
 		}
 	} else if bootstrapConfig.DNS.HostsFile == "" {
 		// If custom hosts and custom file are both empty, use local /etc/hosts as default
@@ -150,7 +151,7 @@ func CreateCluster(cfgPath string) error {
 	clusterCfg, err := ParseBootstrapConfig(cfgPath)
 	if err != nil {
 		zap.S().Infof("Failed to Parse Cluster Config: %s", err)
-		return fmt.Errorf("Failed to Parse Cluster Config: %s", err)
+		return fmt.Errorf("failed to Parse Cluster Config: %s", err)
 	}
 
 	clusterStateCertsDir := filepath.Join(ClusterStateDir, clusterCfg.ClusterId, "certs")
@@ -162,13 +163,13 @@ func CreateCluster(cfgPath string) error {
 	masters, err := GetCurrentMasters(clusterCfg)
 	if err == nil {
 		if len(masters) > 0 {
-			return fmt.Errorf("Found an already active cluster with masters: %v\nUse nodeletctl delete first", masters)
+			return fmt.Errorf("found an already active cluster with masters: %v\nUse nodeletctl delete first", masters)
 		}
 	}
 
 	if err := DeployCluster(clusterCfg); err != nil {
 		zap.S().Infof("Cluster failed: %s\n", err)
-		return fmt.Errorf("Cluster failed: %s", err)
+		return fmt.Errorf("cluster failed: %s", err)
 	}
 
 	if err := clusterCfg.saveClusterConfig(); err != nil {
@@ -184,7 +185,7 @@ func DeployCluster(clusterCfg *BootstrapConfig) error {
 	if clusterCfg.CertsDir == "" {
 		certsDir, err := GenCALocal(clusterCfg.ClusterId)
 		if err != nil {
-			return fmt.Errorf("Cert generation failed: %s\n", err)
+			return fmt.Errorf("cert generation failed: %s", err)
 		}
 		clusterCfg.CertsDir = certsDir
 	}
@@ -192,7 +193,7 @@ func DeployCluster(clusterCfg *BootstrapConfig) error {
 	err := trustCA(clusterCfg.CertsDir)
 	if err != nil {
 		zap.S().Errorf("error adding nodelet Root CA as trusted certs: %s\n", err)
-		return fmt.Errorf("error adding nodelet Root CA as trusted certs: %s\n", err)
+		return fmt.Errorf("error adding nodelet Root CA as trusted certs: %s", err)
 	}
 
 	if err := GenKubeconfig(clusterCfg); err != nil {
@@ -228,7 +229,7 @@ func DeployCluster(clusterCfg *BootstrapConfig) error {
 		nodeletSrcFile, err := GenNodeletConfigLocal(nodeletCfg, masterNodeletConfigTmpl)
 		if err != nil {
 			zap.S().Infof("Failed to generate config: %s", err)
-			return fmt.Errorf("Failed to generate config: %s", err)
+			return fmt.Errorf("failed to generate config: %s", err)
 		}
 		zap.S().Debugf("master nodeletsrc file %s", nodeletSrcFile)
 		deployer, err := GetNodeletDeployer(clusterCfg, globalClusterStatus, nodeletCfg, nodeletSrcFile)
@@ -261,7 +262,7 @@ func UpgradeCluster(cfgPath string) error {
 	clusterCfg, err := ParseBootstrapConfig(cfgPath)
 	if err != nil {
 		zap.S().Infof("Failed to Parse Cluster Config: %s", err)
-		return fmt.Errorf("Failed to Parse Cluster Config: %s", err)
+		return fmt.Errorf("failed to Parse Cluster Config: %s", err)
 	}
 
 	// TODO: Need to validate if nodelet version in the bootstrap is the supported version, possibly by
@@ -285,28 +286,28 @@ func UpgradeCluster(cfgPath string) error {
 
 	masters, err := GetCurrentMasters(clusterCfg)
 	if err != nil {
-		return fmt.Errorf("Failed to get active K8s masters: %s", err)
+		return fmt.Errorf("failed to get active K8s masters: %s", err)
 	}
 
 	workers, err := GetCurrentWorkers(clusterCfg)
 	if err != nil {
-		return fmt.Errorf("Failed to get active K8s workers: %s", err)
+		return fmt.Errorf("failed to get active K8s workers: %s", err)
 	}
 
 	if len(clusterCfg.MasterNodes) != len(masters) {
-		return fmt.Errorf("Masters in the cluster and Bootstrap config doesnt match")
+		return fmt.Errorf("masters in the cluster and Bootstrap config doesnt match")
 	}
 	newMasters, oldMasters, _ := getDiffNodes(clusterCfg.MasterNodes, masters)
 	if len(newMasters) != 0 || len(oldMasters) != 0 {
-		return fmt.Errorf("Masters in the cluster and Bootstrap config doesnt match")
+		return fmt.Errorf("masters in the cluster and Bootstrap config doesnt match")
 	}
 
 	if len(clusterCfg.WorkerNodes) != len(workers) {
-		return fmt.Errorf("Workers in the cluster and Bootstrap config doesnt match")
+		return fmt.Errorf("workers in the cluster and Bootstrap config doesnt match")
 	}
 	newWorkers, oldWorkers, _ := getDiffNodes(clusterCfg.WorkerNodes, workers)
 	if len(newWorkers) != 0 || len(oldWorkers) != 0 {
-		return fmt.Errorf("Workers in the cluster and Bootstrap config doesnt match")
+		return fmt.Errorf("workers in the cluster and Bootstrap config doesnt match")
 	}
 
 	// Upgrade each master node sequentially
@@ -328,7 +329,7 @@ func UpgradeCluster(cfgPath string) error {
 		nodeletSrcFile, err := GenNodeletConfigLocal(nodeletCfg, masterNodeletConfigTmpl)
 		if err != nil {
 			zap.S().Infof("Failed to generate config: %s", err)
-			return fmt.Errorf("Failed to generate config: %s", err)
+			return fmt.Errorf("failed to generate config: %s", err)
 		}
 		zap.S().Debugf("master nodeletsrc file %s", nodeletSrcFile)
 
@@ -348,7 +349,7 @@ func UpgradeCluster(cfgPath string) error {
 
 	if err := UpgradeWorkers(clusterCfg, globalClusterStatus); err != nil {
 		zap.S().Infof("Failed to upgrade workers: %s", err)
-		return fmt.Errorf("Failed to upgrade workers: %s", err)
+		return fmt.Errorf("failed to upgrade workers: %s", err)
 	}
 
 	SyncNodes(clusterCfg, nil)
@@ -374,7 +375,7 @@ func UpgradeWorkers(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus) e
 		nodeletSrcFile, err := GenNodeletConfigLocal(nodeletCfg, workerNodeletConfigTmpl)
 		if err != nil {
 			zap.S().Infof("Failed to generate config: %s", err)
-			return fmt.Errorf("Failed to generate config: %s", err)
+			return fmt.Errorf("failed to generate config: %s", err)
 		}
 		deployer, err := GetNodeletDeployer(clusterCfg, clusterStatus, nodeletCfg, nodeletSrcFile)
 		if err != nil {
@@ -425,7 +426,7 @@ func DeleteCluster(cfgPath string) error {
 	clusterCfg, err := ParseBootstrapConfig(cfgPath)
 	if err != nil {
 		zap.S().Infof("Failed to Parse Cluster Config: %s", err)
-		return fmt.Errorf("Failed to Parse Cluster Config: %s", err)
+		return fmt.Errorf("failed to Parse Cluster Config: %s", err)
 	}
 
 	allNodes := append(clusterCfg.WorkerNodes, clusterCfg.MasterNodes...)
@@ -453,7 +454,7 @@ func DeleteCluster(cfgPath string) error {
 	}
 
 	if deleteFailed {
-		return fmt.Errorf("Cluster delete failed. Please check logs for further fetails")
+		return fmt.Errorf("cluster delete failed. Please check logs for further fetails")
 	}
 	return nil
 }
@@ -516,11 +517,11 @@ func ScaleCluster(cfgPath string) error {
 	clusterCfg, err := ParseBootstrapConfig(cfgPath)
 	if err != nil {
 		zap.S().Infof("Failed to Parse Cluster Config: %s", err)
-		return fmt.Errorf("Failed to Parse Cluster Config: %s", err)
+		return fmt.Errorf("failed to Parse Cluster Config: %s", err)
 	}
 
 	if clusterCfg.CertsDir == "" && !CertsExist(clusterCfg.ClusterId) {
-		return fmt.Errorf("Could not find existing certs for cluster %s", clusterCfg.ClusterId)
+		return fmt.Errorf("could not find existing certs for cluster %s", clusterCfg.ClusterId)
 	} else if clusterCfg.CertsDir == "" {
 		clusterCfg.CertsDir = filepath.Join(ClusterStateDir, clusterCfg.ClusterId, "certs")
 	}
@@ -530,12 +531,12 @@ func ScaleCluster(cfgPath string) error {
 
 	masters, err := GetCurrentMasters(clusterCfg)
 	if err != nil {
-		return fmt.Errorf("Failed to get active K8s masters: %s", err)
+		return fmt.Errorf("failed to get active K8s masters: %s", err)
 	}
 
 	workers, err := GetCurrentWorkers(clusterCfg)
 	if err != nil {
-		return fmt.Errorf("Failed to get active K8s workers: %s", err)
+		return fmt.Errorf("failed to get active K8s workers: %s", err)
 	}
 
 	newMasters, oldMasters, currMasters := getDiffNodes(clusterCfg.MasterNodes, masters)
@@ -628,7 +629,7 @@ func AddMasters(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus, currM
 		nodeletSrcFile, err := GenNodeletConfigLocal(nodeletCfg, masterNodeletConfigTmpl)
 		if err != nil {
 			zap.S().Infof("Failed to generate config: %s", err)
-			return fmt.Errorf("Failed to generate config: %s", err)
+			return fmt.Errorf("failed to generate config: %s", err)
 		}
 		zap.S().Debugf("nodelet src file %s", nodeletSrcFile)
 
@@ -642,12 +643,12 @@ func AddMasters(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus, currM
 		}
 		zap.S().Infof("Added master %s to etcd ", host.NodeName)
 		if err := AddNodeToEtcd(clusterCfg, currMasters, nodeletCfg.HostIp); err != nil {
-			return fmt.Errorf("Failed to add nodes %+v as etcd members: %s", newMasters, err)
+			return fmt.Errorf("failed to add nodes %+v as etcd members: %s", newMasters, err)
 		}
 		zap.S().Infof("Spawning master %s", host.NodeName)
 		_, _ = deployer.SpawnMaster(numMaster)
 		if err := SyncNodes(clusterCfg, &[]HostConfig{host}); err != nil {
-			return fmt.Errorf("Failed to sync new master: %+v", host)
+			return fmt.Errorf("failed to sync new master: %+v", host)
 		}
 
 		*currMasters = append(*currMasters, host)
@@ -667,7 +668,7 @@ func RemoveMasters(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus, cu
 			nodeletCfg.HostIp = host.NodeName
 		}
 		if err := RemoveNodeFromEtcd(clusterCfg, currMasters, nodeletCfg.HostIp); err != nil {
-			return fmt.Errorf("Failed to remove nodes %+v from etcd members: %s", host, err)
+			return fmt.Errorf("failed to remove nodes %+v from etcd members: %s", host, err)
 		}
 
 		deployer, err := GetNodeletDeployer(clusterCfg, nil, nodeletCfg, "")
@@ -678,7 +679,7 @@ func RemoveMasters(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus, cu
 		zap.S().Infof("Removing node %s from cluster %s", host.NodeName, clusterCfg.ClusterId)
 		err = deployer.DeleteNodelet()
 		if err != nil {
-			return fmt.Errorf("Failed to delete node %s: %s\n", host.NodeName, err)
+			return fmt.Errorf("failed to delete node %s: %s", host.NodeName, err)
 		}
 
 		// Remove the deleted master from slice of current active masters
@@ -712,7 +713,7 @@ func DeployWorkers(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus, wo
 		nodeletSrcFile, err := GenNodeletConfigLocal(nodeletCfg, workerNodeletConfigTmpl)
 		if err != nil {
 			zap.S().Infof("Failed to generate config: %s", err)
-			return fmt.Errorf("Failed to generate config: %s", err)
+			return fmt.Errorf("failed to generate config: %s", err)
 		}
 		deployer, err := GetNodeletDeployer(clusterCfg, clusterStatus, nodeletCfg, nodeletSrcFile)
 		if err != nil {
@@ -749,7 +750,7 @@ func DeleteWorkers(clusterCfg *BootstrapConfig, oldNodes []HostConfig) error {
 		zap.S().Infof("Removing node %s from cluster %s", host.NodeName, clusterCfg.ClusterId)
 		err = deployer.DeleteNodelet()
 		if err != nil {
-			return fmt.Errorf("Failed to delete node %s: %s\n", host.NodeName, err)
+			return fmt.Errorf("failed to delete node %s: %s", host.NodeName, err)
 		}
 	}
 	return nil
@@ -759,19 +760,19 @@ func RegenClusterCerts(cfgPath string) error {
 	clusterCfg, err := ParseBootstrapConfig(cfgPath)
 	if err != nil {
 		zap.S().Infof("Failed to Parse Cluster Config: %s", err)
-		return fmt.Errorf("Failed to Parse Cluster Config: %s", err)
+		return fmt.Errorf("failed to Parse Cluster Config: %s", err)
 	}
 
 	err = RegenCA(clusterCfg)
 	if err != nil {
 		zap.S().Errorf("Failed to regenerate new CA: %s", err)
-		return fmt.Errorf("Failed to regenerate new CA: %s", err)
+		return fmt.Errorf("failed to regenerate new CA: %s", err)
 	}
 
 	err = trustCA(clusterCfg.CertsDir)
 	if err != nil {
 		zap.S().Errorf("error adding nodelet Root CA as trusted certs: %s\n", err)
-		return fmt.Errorf("error adding nodelet Root CA as trusted certs: %s\n", err)
+		return fmt.Errorf("error adding nodelet Root CA as trusted certs: %s", err)
 	}
 
 	clusterStatus := new(ClusterStatus)
@@ -782,17 +783,17 @@ func RegenClusterCerts(cfgPath string) error {
 
 	if err := regenCertsForHosts(clusterCfg, otherMasters); err != nil {
 		zap.S().Errorf("Failed to regen certs for masters %+v: err", otherMasters)
-		return fmt.Errorf("Failed to regen certs for masters %+v: err", otherMasters)
+		return fmt.Errorf("failed to regen certs for masters %+v: err", otherMasters)
 	}
 
 	if err := regenCertsForHosts(clusterCfg, clusterCfg.WorkerNodes); err != nil {
 		zap.S().Errorf("Failed to regen certs for masters %+v: err", otherMasters)
-		return fmt.Errorf("Failed to regen certs for masters %+v: err", otherMasters)
+		return fmt.Errorf("failed to regen certs for masters %+v: err", otherMasters)
 	}
 
 	if err := regenCertsForHosts(clusterCfg, firstMaster); err != nil {
 		zap.S().Errorf("Failed to regen certs for masters %+v: err", otherMasters)
-		return fmt.Errorf("Failed to regen certs for masters %+v: err", otherMasters)
+		return fmt.Errorf("failed to regen certs for masters %+v: err", otherMasters)
 	}
 
 	return nil
@@ -831,12 +832,12 @@ func ConfigClusterDNS(cfgPath string) error {
 	clusterCfg, err := ParseBootstrapConfig(cfgPath)
 	if err != nil {
 		zap.S().Infof("Failed to Parse Cluster Config: %s", err)
-		return fmt.Errorf("Failed to Parse Cluster Config: %s", err)
+		return fmt.Errorf("failed to Parse Cluster Config: %s", err)
 	}
 
 	if err := UploadHostsFile(clusterCfg); err != nil {
 		zap.S().Infof("Cluster failed: %s\n", err)
-		return fmt.Errorf("Cluster failed: %s", err)
+		return fmt.Errorf("cluster failed: %s", err)
 	}
 
 	return nil
@@ -872,7 +873,7 @@ func UploadHostsFile(clusterCfg *BootstrapConfig) error {
 		}
 	}
 	if failed {
-		return fmt.Errorf("Failed to upload custom hosts file or restart nodelet. Check node for details")
+		return fmt.Errorf("failed to upload custom hosts file or restart nodelet. Check node for details")
 	}
 	return nil
 }
@@ -881,8 +882,10 @@ func WriteHostsFileForEntries(clusterName string, entries []string) (string, err
 	clusterDir := filepath.Join(ClusterStateDir, clusterName)
 	if _, err := os.Stat(clusterDir); os.IsNotExist(err) {
 		zap.S().Infof("Creating node state dir: %s\n", clusterDir)
-		if err := os.MkdirAll(clusterDir, 0777); err != nil {
-			return "", fmt.Errorf("Failed to create dir: %s", err)
+		createdirCmd := exec.Command("sudo", "mkdir", "-p", "-m", "777", clusterDir)
+		output, err := createdirCmd.CombinedOutput()
+		if err != nil {
+			return "", fmt.Errorf("failed to create dir: %v - %s", err, string(output))
 		}
 	}
 
@@ -940,13 +943,13 @@ func SyncNodes(clusterCfg *BootstrapConfig, nodes *[]HostConfig) error {
 
 func isClusterCfgValid(clusterCfg *BootstrapConfig) error {
 	if len(clusterCfg.MasterNodes) == 0 {
-		return fmt.Errorf("Number of master nodes cannot be zero")
+		return fmt.Errorf("number of master nodes cannot be zero")
 	}
 	if (len(clusterCfg.MasterNodes) % 2) == 0 {
-		return fmt.Errorf("Number of master nodes cannot be even")
+		return fmt.Errorf("number of master nodes cannot be even")
 	}
 	if !clusterCfg.AllowWorkloadsOnMaster && len(clusterCfg.WorkerNodes) == 0 {
-		return fmt.Errorf("Number of worker nodes cannot be zero when no workloads are allowed on masters")
+		return fmt.Errorf("number of worker nodes cannot be zero when no workloads are allowed on masters")
 	}
 	if clusterCfg.MasterVipEnabled {
 		if clusterCfg.MasterVipInterface == "" {
@@ -962,14 +965,14 @@ func isClusterCfgValid(clusterCfg *BootstrapConfig) error {
 func (cfg *BootstrapConfig) saveClusterConfig() error {
 	bytes, err := yaml.Marshal(cfg)
 	if err != nil {
-		return fmt.Errorf("Failed to marshal cluster config into YAML: %s", err)
+		return fmt.Errorf("failed to marshal cluster config into YAML: %s", err)
 	}
 
 	clusterFileName := cfg.ClusterId + ".yaml"
 	clusterFile := filepath.Join(ClusterStateDir, cfg.ClusterId, clusterFileName)
 
 	if err := ioutil.WriteFile(clusterFile, bytes, 0644); err != nil {
-		return fmt.Errorf("Failed to save updated cluster file: %s", err)
+		return fmt.Errorf("failed to save updated cluster file: %s", err)
 	}
 
 	zap.S().Infof("Wrote %s", clusterFile)
