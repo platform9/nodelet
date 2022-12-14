@@ -3,6 +3,7 @@ package nodeletctl
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"text/template"
 
@@ -132,8 +133,10 @@ func GenNodeletConfigLocal(host *NodeletConfig, templateName string) (string, er
 	nodeStateDir := filepath.Join(ClusterStateDir, host.ClusterId, host.HostId)
 	if _, err := os.Stat(nodeStateDir); os.IsNotExist(err) {
 		zap.S().Infof("Creating node state dir: %s\n", nodeStateDir)
-		if err := os.MkdirAll(nodeStateDir, 0777); err != nil {
-			return "", fmt.Errorf("Failed to create node state dir for host %s: %s", host.HostId, err)
+		createNodeStateDirCmd := exec.Command("sudo", "mkdir", "-p", "-m", "777", nodeStateDir)
+		output, err := createNodeStateDirCmd.CombinedOutput()
+		if err != nil {
+			return "", fmt.Errorf("failed to create node state dir for host %v: %s - %s", host.HostId, err, string(output))
 		}
 	}
 

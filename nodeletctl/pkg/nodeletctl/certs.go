@@ -39,7 +39,7 @@ func GenCALocal(clusterName string) (string, error) {
 	createCertsDirCmd := exec.Command("sudo", "mkdir", "-p", "-m", "777", certsDir)
 	output, err := createCertsDirCmd.CombinedOutput()
 	if err != nil {
-		return "", fmt.Errorf("failed to create certsDir: %v - %s", err, string(output))
+		return "", fmt.Errorf("failed to create certs dir: %v - %s", err, string(output))
 	}
 	if err := genCA(certsDir); err != nil {
 		return "", err
