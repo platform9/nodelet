@@ -177,6 +177,12 @@ func CreateCluster(cfgPath string) error {
 		return err
 	}
 
+	// Set the ownership of ClusterStateDir dir to current logged-in user
+	if err := setClusterStateDirOwnership(); err != nil {
+		zap.S().Errorf("Failed to set ownership: %v", err)
+		return fmt.Errorf("failed to set ownership: %v", err)
+	}
+
 	return nil
 }
 
@@ -395,6 +401,37 @@ func UpgradeWorkers(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus) e
 func SetClusterNodeStatus(status *ClusterStatus, nodeName, health string, err error) {
 	status.statusMap[nodeName].nodeHealth = health
 	status.statusMap[nodeName].errMsg = err
+}
+
+func setClusterStateDirOwnership() error {
+
+	currentUserCmd := exec.Command("id", "-un")
+	currentUserB, err := currentUserCmd.CombinedOutput()
+	if err != nil {
+		zap.S().Errorf("Failed to get current user: %s, stdout: %s", err, string(currentUserB))
+		return fmt.Errorf("Failed to get current user: %s, stdout: %s", err, string(currentUserB))
+	}
+	currentUser := string(currentUserB)
+	zap.S().Infof("currentUser: %s", currentUser)
+	currentUserGroupCmd := exec.Command("id", "-u", "-n", currentUser)
+	currentUserGroupB, err := currentUserGroupCmd.CombinedOutput()
+	if err != nil {
+		zap.S().Errorf("Failed to get current user's primary group: %s, stdout: %s", err, string(currentUserGroupB))
+	}
+	currentUserGroup := string(currentUserGroupB)
+	zap.S().Infof("currentUser: %s", currentUserGroup)
+	// append group membership only if it exists
+	userOwnString := currentUser
+	if err == nil && currentUserGroup != "" {
+		userOwnString = userOwnString + ":" + currentUserGroup
+	}
+	zap.S().Infof("userOwnString: %s", userOwnString)
+	chmodCmd := exec.Command("sudo", "chown", "-R", userOwnString, ClusterStateDir)
+	chmodCmdB, err := chmodCmd.CombinedOutput()
+	if err != nil {
+		zap.S().Errorf("Failed to set ownership %s to user %s: %s, %s", ClusterStateDir, currentUser, err, string(chmodCmdB))
+	}
+	return nil
 }
 
 func SyncAndRetry(clusterCfg *BootstrapConfig, nodeletStatus *ClusterStatus, nodesToSync *[]HostConfig, done chan bool) {
