@@ -136,7 +136,7 @@ func GenNodeletConfigLocal(host *NodeletConfig, templateName string) (string, er
 		createNodeStateDirCmd := exec.Command("sudo", "mkdir", "-p", "-m", "777", nodeStateDir)
 		output, err := createNodeStateDirCmd.CombinedOutput()
 		if err != nil {
-			return "", fmt.Errorf("failed to create node state dir for host %v: %s - %s", host.HostId, err, string(output))
+			return "", fmt.Errorf("failed to create node state dir for host %s: %v - %s", host.HostId, err, string(output))
 		}
 	}
 
