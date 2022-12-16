@@ -172,15 +172,15 @@ func CreateCluster(cfgPath string) error {
 		return fmt.Errorf("cluster failed: %s", err)
 	}
 
-	if err := clusterCfg.saveClusterConfig(); err != nil {
-		zap.S().Errorf("Failed to save cluster config: %s", err)
-		return err
-	}
-
 	// Set the ownership of ClusterStateDir dir to SSHUser from bootstrap config
 	if err := setClusterStateDirOwnership(clusterCfg.SSHUser); err != nil {
 		zap.S().Errorf("Failed to set ownership: %v", err)
 		return fmt.Errorf("failed to set ownership: %v", err)
+	}
+
+	if err := clusterCfg.saveClusterConfig(); err != nil {
+		zap.S().Errorf("Failed to save cluster config: %s", err)
+		return err
 	}
 
 	return nil
