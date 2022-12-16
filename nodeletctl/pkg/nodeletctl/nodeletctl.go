@@ -172,6 +172,12 @@ func CreateCluster(cfgPath string) error {
 		return fmt.Errorf("cluster failed: %s", err)
 	}
 
+	// Set the ownership of ClusterStateDir dir to SSHUser from bootstrap config
+	if err := setClusterStateDirOwnership(clusterCfg.SSHUser); err != nil {
+		zap.S().Errorf("Failed to set ownership: %v", err)
+		return fmt.Errorf("failed to set ownership: %v", err)
+	}
+
 	if err := clusterCfg.saveClusterConfig(); err != nil {
 		zap.S().Errorf("Failed to save cluster config: %s", err)
 		return err
@@ -395,6 +401,17 @@ func UpgradeWorkers(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus) e
 func SetClusterNodeStatus(status *ClusterStatus, nodeName, health string, err error) {
 	status.statusMap[nodeName].nodeHealth = health
 	status.statusMap[nodeName].errMsg = err
+}
+
+func setClusterStateDirOwnership(username string) error {
+
+	zap.S().Infof("setting ownership of %s directory to %s", ClusterStateDir, username)
+	chmodCmd := exec.Command("sudo", "chown", "-R", username, ClusterStateDir)
+	chmodCmdB, err := chmodCmd.CombinedOutput()
+	if err != nil {
+		zap.S().Errorf("Failed to set ownership %s to user %s: %s, %s", ClusterStateDir, username, err, string(chmodCmdB))
+	}
+	return nil
 }
 
 func SyncAndRetry(clusterCfg *BootstrapConfig, nodeletStatus *ClusterStatus, nodesToSync *[]HostConfig, done chan bool) {
