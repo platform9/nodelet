@@ -61,7 +61,7 @@ func (e *EtcdImpl) InspectEtcd() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	defer cont.CloseClient()
+	defer cont.CloseClientConnection()
 	exist, err := cont.IsContainerExist(context.Background(), "etcd")
 	if err != nil {
 		return false, err
@@ -152,7 +152,7 @@ func (e *EtcdImpl) EnsureEtcdDestroyed(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer cont.CloseClient()
+	defer cont.CloseClientConnection()
 	err = cont.EnsureContainerDestroyed(ctx, "etcd", "10s")
 	if err != nil {
 		return err
@@ -217,7 +217,7 @@ func (e *EtcdImpl) EnsureEtcdRunning(ctx context.Context, cfg config.Config) err
 	if err != nil {
 		return err
 	}
-	defer cont.CloseClient()
+	defer cont.CloseClientConnection()
 	err = cont.EnsureFreshContainerRunning(ctx, constants.K8sNamespace, etcdContainerName, etcdContainerImage, etcdRunOpts, etcdCmdArgs)
 	if err != nil {
 		zap.S().Errorf("running etcd container failed: %v", err)
@@ -471,7 +471,7 @@ func (e *EtcdImpl) IsEtcdRunning(ctx context.Context) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	defer cont.CloseClient()
+	defer cont.CloseClientConnection()
 	running, err := cont.IsContainerRunning(ctx, "etcd")
 	if err != nil {
 		return false, err

@@ -18,13 +18,9 @@ type ContainerUtils interface {
 	CreateContainer(ctx context.Context, containerName string, containerImage string, runOpts RunOpts, cmdArgs []string) (containerd.Container, error)
 	RemoveContainer(ctx context.Context, container containerd.Container, force bool) error
 	StopContainer(ctx context.Context, container containerd.Container, timeoutStr string) error
-<<<<<<< HEAD
 	CloseClientConnection()
-=======
-	CloseClient()
 	IsContainerExist(ctx context.Context, containerName string) (bool, error)
 	IsContainerRunning(ctx context.Context, containerName string) (bool, error)
->>>>>>> adding functions to check etcd running, etcd healthy, also adding label of name to containers and generating id for them
 }
 
 type ImageUtils interface {
