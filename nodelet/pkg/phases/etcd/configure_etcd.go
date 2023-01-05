@@ -60,7 +60,6 @@ func (ce *ConfigureEtcdPhase) Start(ctx context.Context, cfg config.Config) erro
 	}
 	if !exist {
 		zap.S().Errorf("Skipping; etcd container does not exist")
-
 		return nil
 	}
 	// check if etcd backup and raft index check is required
@@ -85,7 +84,10 @@ func (ce *ConfigureEtcdPhase) Start(ctx context.Context, cfg config.Config) erro
 func (ce *ConfigureEtcdPhase) Stop(ctx context.Context, cfg config.Config) error {
 
 	ce.log.Infof("Running Stop of phase: %s", ce.HostPhase.Name)
-
+	err := ce.etcd.EnsureEtcdDestroyed(ctx)
+	if err != nil {
+		return err
+	}
 	phaseutils.SetHostStatus(ce.HostPhase, constants.StoppedState, "")
 	return nil
 }

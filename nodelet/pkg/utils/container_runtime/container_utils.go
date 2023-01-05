@@ -3,6 +3,8 @@ package containerruntime
 import (
 	"bufio"
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"strings"
@@ -42,6 +44,9 @@ type RunOpts struct {
 const (
 	TimeOut = "10s"
 	Host    = "host"
+)
+const (
+	IDLength = 64
 )
 
 func NewContainerUtil() (ContainerUtils, error) {
@@ -261,8 +266,15 @@ func (c *ContainerUtility) CreateContainer(ctx context.Context, containerName st
 	spec := containerd.WithSpec(&specs, opts...)
 	cOpts = append(cOpts, spec)
 
+	// add lables for container name
+	labels := map[string]string{
+		"pf9.io/containerName": containerName,
+	}
+	cOpts = append(cOpts, containerd.WithAdditionalContainerLabels(labels))
+	// generate id
+	id := GenerateContID()
 	// create a container
-	container, err := c.Client.NewContainer(ctx, containerName, cOpts...)
+	container, err := c.Client.NewContainer(ctx, id, cOpts...)
 	if err != nil {
 		c.log.Errorf("error creating container:%v", err)
 		return nil, err
@@ -351,7 +363,7 @@ func (c *ContainerUtility) StopContainer(ctx context.Context, container containe
 	if err != nil {
 		return err
 	}
-	task, err := container.Task(ctx, cio.Load)
+	task, err := container.Task(ctx, cio.Load) // can we use this cio for taking logs?
 	if err != nil {
 		if errdefs.IsNotFound(err) {
 			zap.S().Infof("task not found in container:%s", container.ID())
@@ -359,7 +371,6 @@ func (c *ContainerUtility) StopContainer(ctx context.Context, container containe
 		}
 		return err
 	}
-
 	status, err := task.Status(ctx)
 	if err != nil {
 		return err
@@ -436,18 +447,68 @@ func waitContainerStop(ctx context.Context, exitCh <-chan containerd.ExitStatus,
 }
 
 func (c *ContainerUtility) GetContainerWithGivenName(ctx context.Context, containerName string) (containerd.Container, error) {
-	// TODO: investigate use of filters to below function from containerd
+	// TODO: we can use of filters to list containers
+	// namelable := "pf9.io/containerName"
+	// filters := []string{
+	// 	fmt.Sprintf("labels.%s==%s", namelable, containerName),
+	// }
+	// containers, err := c.Client.Containers(ctx, filters...)
 	containers, err := c.Client.Containers(ctx)
 	if err != nil {
 		return nil, err
 	}
+	if len(containers) < 1 {
+		c.log.Infof("container not found: %s\n", containerName)
+		return nil, nil
+	}
 	for _, container := range containers {
-		if container.ID() == containerName {
+		lables, err := container.Labels(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if lables["pf9.io/containerName"] == containerName {
 			return container, nil
 		}
 	}
 	c.log.Infof("container not found: %s\n", containerName)
 	return nil, nil
+}
+
+func (c *ContainerUtility) IsContainerRunning(ctx context.Context, containerName string) (bool, error) {
+	cont, err := c.GetContainerWithGivenName(ctx, containerName)
+	if err != nil {
+		return false, err
+	}
+	task, err := cont.Task(ctx, cio.Load)
+	if err != nil {
+		if errdefs.IsNotFound(err) {
+			zap.S().Infof("task not found in container:%s", cont.ID())
+			return false, nil
+		}
+		return false, err
+	}
+	status, err := task.Status(ctx)
+	if err != nil {
+		return false, err
+	}
+	if status.Status == containerd.Running {
+		return true, nil
+	} // else {
+	//get container logs //is necessary?
+	//}
+	return false, nil
+}
+
+// just checks if container exist. it doesnt check for the task is present or not.
+func (c *ContainerUtility) IsContainerExist(ctx context.Context, containerName string) (bool, error) {
+	cont, err := c.GetContainerWithGivenName(ctx, containerName)
+	if err != nil {
+		return false, err
+	}
+	if cont != nil {
+		return true, nil
+	}
+	return false, nil
 }
 
 func parseEnvVars(paths []string) ([]string, error) {
@@ -671,4 +732,17 @@ func GetPrivilegedOpts(runOpts RunOpts, opts []oci.SpecOpts) []oci.SpecOpts {
 	}
 
 	return opts
+}
+
+func GenerateContID() string {
+	bytesLength := IDLength / 2
+	b := make([]byte, bytesLength)
+	n, err := rand.Read(b)
+	if err != nil {
+		panic(err)
+	}
+	if n != bytesLength {
+		panic(fmt.Errorf("expected %d bytes, got %d bytes", bytesLength, n))
+	}
+	return hex.EncodeToString(b)
 }

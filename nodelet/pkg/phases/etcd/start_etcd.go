@@ -45,10 +45,18 @@ func (ce *StartEtcdPhase) GetOrder() int {
 	return int(ce.HostPhase.Order)
 }
 
-func (ce *StartEtcdPhase) Status(context.Context, config.Config) error {
+func (ce *StartEtcdPhase) Status(ctx context.Context, cfg config.Config) error {
 
 	ce.log.Infof("Running Status of phase: %s", ce.HostPhase.Name)
-
+	running, err := ce.etcd.IsEtcdRunning(ctx)
+	if err != nil {
+		phaseutils.SetHostStatus(ce.HostPhase, constants.FailedState, err.Error())
+		return err
+	}
+	if !running {
+		phaseutils.SetHostStatus(ce.HostPhase, constants.FailedState, "etcd not running")
+		return fmt.Errorf("etcd not running")
+	}
 	phaseutils.SetHostStatus(ce.HostPhase, constants.RunningState, "")
 	return nil
 }

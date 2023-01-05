@@ -25,6 +25,7 @@ type EtcdUtils interface {
 	EnsureEtcdClusterStatus() error
 	InspectEtcd() (bool, error)
 	EnsureEtcdRunning(ctx context.Context, cfg config.Config) error
+	IsEtcdRunning(ctx context.Context) (bool, error)
 }
 
 type EtcdImpl struct {
@@ -37,18 +38,18 @@ func New() EtcdUtils {
 	}
 }
 
-// Todo :
-//IsContainerExist
-//isContainerRunning
-//isEtcdHealthy
-//get_container_logs() by logpath
-//getetcdlogs by pf9ctr_run logs etcd > "${logfile}"
-
 func (e *EtcdImpl) EnsureEtcdDataStoredOnHost() (bool, error) {
+	/*
+		if ! pf9ctr_run \
+			inspect etcd >/dev/null; then
+			echo "Skipping; etcd container does not exist"
+			return
+		fi
+	*/
+	//currently taking inspect call as to check if etcd present (need review/comments here)
 	zap.S().Infof("Ensuring etcd data is stored on host")
 	exist, err := e.InspectEtcd()
 	if err != nil {
-
 		zap.S().Errorf("error when checking etcd container exist")
 		return false, err
 	}
@@ -56,15 +57,16 @@ func (e *EtcdImpl) EnsureEtcdDataStoredOnHost() (bool, error) {
 }
 
 func (e *EtcdImpl) InspectEtcd() (bool, error) {
-	// cont, err := cr.NewContainerUtil()
-	// if err != nil {
-	// 	return false, err
-	// }
-	//exist, err := cont.IsContainerExist()
-	// if err != nil {
-	// 	return false, err
-	// }
-	return false, nil
+	cont, err := cr.NewContainerUtil()
+	if err != nil {
+		return false, err
+	}
+	defer cont.CloseClient()
+	exist, err := cont.IsContainerExist(context.Background(), "etcd")
+	if err != nil {
+		return false, err
+	}
+	return exist, nil
 }
 
 func (e *EtcdImpl) IsEligibleForEtcdBackup() (bool, error) {
@@ -150,6 +152,7 @@ func (e *EtcdImpl) EnsureEtcdDestroyed(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	defer cont.CloseClient()
 	err = cont.EnsureContainerDestroyed(ctx, "etcd", "10s")
 	if err != nil {
 		return err
@@ -214,36 +217,44 @@ func (e *EtcdImpl) EnsureEtcdRunning(ctx context.Context, cfg config.Config) err
 	if err != nil {
 		return err
 	}
+	defer cont.CloseClient()
 	err = cont.EnsureFreshContainerRunning(ctx, constants.K8sNamespace, etcdContainerName, etcdContainerImage, etcdRunOpts, etcdCmdArgs)
 	if err != nil {
 		zap.S().Errorf("running etcd container failed: %v", err)
-		return err
 	}
 
-	// healthy := false
-	// retries := 90
-	// for i := 0; i < retries; i++ {
-	// 	running = isContainerRunning("etcd")
-	// 	if !running {
-	// 		//local logfile="/var/log/pf9/kube/etcd-${timestamp}.log"
-	// 		//pf9ctr_run logs etcd > "${logfile}" 2>&1
-	// 		zap.S().Info("Restarting failed etcd")
-	// 		err = cont.EnsureFreshContainerRunning(ctx, etcdContainerName, etcdContainerImage, etcdRunOpts, etcdCmdArgs)
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 		continue
-	// 	}
-	// 	healthy = isEtcdHealthy()
-	// 	if healthy {
-	// 		break
-	// 	}
-	// 	zap.S().Infof("Waiting for healthy etcd cluster")
-	// }
-	// if !healthy {
-	// 	zap.S().Infof("timed out waiting for etcd initialization")
-	// 	return err
-	// }
+	healthy := false
+	retries := 90
+	for i := 0; i < retries; i++ {
+		running, err := cont.IsContainerRunning(ctx, "etcd")
+		if err != nil {
+			zap.S().Errorf("failed to check if etcd running: %v", err)
+			return err
+		}
+		if !running {
+			//local logfile="/var/log/pf9/kube/etcd-${timestamp}.log"
+			//pf9ctr_run logs etcd > "${logfile}" 2>&1
+			zap.S().Info("Restarting failed etcd")
+			err = cont.EnsureFreshContainerRunning(ctx, constants.K8sNamespace, etcdContainerName, etcdContainerImage, etcdRunOpts, etcdCmdArgs)
+			if err != nil {
+				zap.S().Errorf("retry of running etcd faild: %v", err)
+			}
+			continue
+		}
+		healthy, err := isEtcdHealthy(ctx, cfg, cont)
+		if err != nil {
+			zap.S().Errorf("failed to check if etcd healthy: %v", err)
+			return err
+		}
+		if healthy {
+			break
+		}
+		zap.S().Infof("Waiting for healthy etcd cluster")
+	}
+	if !healthy {
+		zap.S().Infof("timed out waiting for etcd initialization")
+		return err
+	}
 	return nil
 }
 
@@ -408,4 +419,62 @@ func createEtcdDirsIfnotPresent(ctx context.Context, cfg config.Config) error {
 		}
 	}
 	return nil
+}
+
+func isEtcdHealthy(ctx context.Context, cfg config.Config, cont cr.ContainerUtils) (bool, error) {
+	/* if pf9ctr_run \
+	   run ${etcdctl_volume_flags} \
+	   --rm --net=host ${ETCD_CONTAINER_IMG} \
+	   etcdctl --endpoints 'https://localhost:4001' ${etcdctl_tls_flags} endpoint health */
+	volumes := []string{
+		"/etc/ssl:/etc/ssl",
+		"/etc/pki:/etc/pki",
+		"/etc/pf9/kube.d/certs:/certs",
+	}
+	cmdArgs := []string{
+		"etcdctl",
+		"--endpoints 'https://localhost:4001'",
+		"--cacert /certs/etcdctl/etcd/ca.crt",
+		"--cert /certs/etcdctl/etcd/request.crt", // <- etcdctl tls flags
+		"--key /certs/etcdctl/etcd/request.key",
+		"endpoint health",
+	}
+	runOpts := cr.RunOpts{
+		Volumes: volumes,
+		Network: cr.Host,
+	}
+	containerName := "testEtcdHealthy"
+	containerImage := getEtcdContainerImage(cfg)
+	err := cont.EnsureFreshContainerRunning(ctx, constants.K8sNamespace, containerName, containerImage, runOpts, cmdArgs)
+	if err != nil {
+		zap.S().Errorf("failed to run testEtcd container: %v", err)
+		//etcdHealthy = false
+		return false, err
+	}
+	// TODO: find way to take output the etcdctl cmd from container we created and run
+	// ASK: can we use checkEndpointStatus fn from checketcdraftindex whuch directly runs
+	/* currently we are assuming etcd healthy if there is no error from above fn.(not appropriate)
+	   But ideally we should take o/p of the etcdctl enpoint health cmd from the container created?
+	   need someone to look into this. */
+	// now removing above created container
+	err = cont.EnsureContainerDestroyed(ctx, containerName, "10s")
+	if err != nil {
+		zap.S().Errorf("failed to destroy testEtcd container: %v", err)
+		return false, err
+	}
+	zap.S().Info("etcd enpoint is healthy")
+	return true, nil
+}
+
+func (e *EtcdImpl) IsEtcdRunning(ctx context.Context) (bool, error) {
+	cont, err := cr.NewContainerUtil()
+	if err != nil {
+		return false, err
+	}
+	defer cont.CloseClient()
+	running, err := cont.IsContainerRunning(ctx, "etcd")
+	if err != nil {
+		return false, err
+	}
+	return running, nil
 }
