@@ -5,6 +5,7 @@ package containerruntime
 import (
 	"context"
 	"fmt"
+	"github.com/containerd/containerd/leases"
 	"io/ioutil"
 	"os"
 
@@ -65,6 +66,14 @@ func (i *ImageUtility) LoadImagesFromFile(ctx context.Context, fileName string) 
 		return errors.Wrap(err, "failed to create container runtime client")
 	}
 	defer client.Close()
+
+	// Create a lease with random ID and add that to context, so all the images imported with this context is never garbage collected
+	manager := client.LeasesService()
+	l, err := manager.Create(ctx, leases.WithRandomID())
+	if err != nil {
+		return errors.Wrap(err, "failed to create leases with RandomID")
+	}
+	ctx = leases.WithLease(ctx, l.ID)
 
 	imgs, err := client.Import(ctx, decompressor, containerd.WithDigestRef(archive.DigestTranslator(constants.DefaultSnapShotter)), containerd.WithSkipDigestRef(func(name string) bool { return name != "" }), containerd.WithImportPlatform(platform))
 	if err != nil {
