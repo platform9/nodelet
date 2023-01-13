@@ -70,10 +70,14 @@ func (i *ImageUtility) LoadImagesFromFile(ctx context.Context, fileName string) 
 	// Create a lease with random ID and add that to context, so all the images imported with this context is never garbage collected
 	manager := client.LeasesService()
 	l, err := manager.Create(ctx, leases.WithRandomID())
+	zap.S().Infof("Created a lease with ID: %s", l.ID)
 	if err != nil {
 		return errors.Wrap(err, "failed to create leases with RandomID")
 	}
 	ctx = leases.WithLease(ctx, l.ID)
+	zap.S().Infof("Assigned context to the lease")
+	lid, errBool := leases.FromContext(ctx)
+	zap.S().Infof("Lease ID from context: %s, err_bool: %t", lid, errBool)
 
 	imgs, err := client.Import(ctx, decompressor, containerd.WithDigestRef(archive.DigestTranslator(constants.DefaultSnapShotter)), containerd.WithSkipDigestRef(func(name string) bool { return name != "" }), containerd.WithImportPlatform(platform))
 	if err != nil {
