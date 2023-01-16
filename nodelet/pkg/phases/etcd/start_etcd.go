@@ -70,6 +70,7 @@ func (ce *StartEtcdPhase) Start(ctx context.Context, cfg config.Config) error {
 	// 2. cluster upgrade
 	etcdUpgrade, err := ce.etcd.IsEligibleForEtcdBackup()
 	if err != nil {
+		zap.S().Errorf("failed to check if etcd is eligible for backup: %v", err)
 		return err
 	}
 	netUtils := netutils.New()
@@ -89,6 +90,7 @@ func (ce *StartEtcdPhase) Start(ctx context.Context, cfg config.Config) error {
 
 	err = ce.etcd.EnsureEtcdRunning(ctx, cfg)
 	if err != nil {
+		zap.S().Errorf("failed to run etcd: %v", err)
 		return err
 	}
 	if etcdUpgrade {
@@ -96,6 +98,7 @@ func (ce *StartEtcdPhase) Start(ctx context.Context, cfg config.Config) error {
 		for i := 0; i < 18; i++ {
 			err = ce.etcd.EnsureEtcdClusterStatus()
 			if err != nil {
+				zap.S().Errorf("failed to ensure etcd cluster status: %v", err)
 				time.Sleep(10 * time.Second)
 				continue
 			}
@@ -109,9 +112,10 @@ func (ce *StartEtcdPhase) Start(ctx context.Context, cfg config.Config) error {
 func (ce *StartEtcdPhase) Stop(ctx context.Context, cfg config.Config) error {
 
 	ce.log.Infof("Running Stop of phase: %s", ce.HostPhase.Name)
-
+	zap.S().Info("Destroying etcd container")
 	err := ce.etcd.EnsureEtcdDestroyed(ctx)
 	if err != nil {
+		zap.S().Errorf("could not destroy etcd container: %v", err)
 		return err
 	}
 

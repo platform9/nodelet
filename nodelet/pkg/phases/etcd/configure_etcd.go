@@ -45,7 +45,6 @@ func (ce *ConfigureEtcdPhase) GetOrder() int {
 func (ce *ConfigureEtcdPhase) Status(context.Context, config.Config) error {
 
 	ce.log.Infof("Running Status of phase: %s", ce.HostPhase.Name)
-
 	phaseutils.SetHostStatus(ce.HostPhase, constants.RunningState, "")
 	return nil
 }
@@ -53,13 +52,12 @@ func (ce *ConfigureEtcdPhase) Status(context.Context, config.Config) error {
 func (ce *ConfigureEtcdPhase) Start(ctx context.Context, cfg config.Config) error {
 
 	ce.log.Infof("Running Start of phase: %s", ce.HostPhase.Name)
-
 	exist, err := ce.etcd.EnsureEtcdDataStoredOnHost()
 	if err != nil {
 		return err
 	}
 	if !exist {
-		zap.S().Errorf("Skipping; etcd container does not exist")
+		zap.S().Errorf("Skipping etcd backup; etcd container does not exist")
 		return nil
 	}
 	// check if etcd backup and raft index check is required
@@ -68,12 +66,14 @@ func (ce *ConfigureEtcdPhase) Start(ctx context.Context, cfg config.Config) erro
 	// 2. cluster upgrade
 	etcdUpgrade, err := ce.etcd.IsEligibleForEtcdBackup()
 	if err != nil {
+		zap.S().Errorf("failed to check if etcd is eligible for backup: %v", err)
 		return err
 	}
 	if etcdUpgrade {
 		ce.log.Infof("etcd to be upgraded. performing etcd data backup")
 		err = ce.etcd.EnsureEtcdDataBackup(cfg)
 		if err != nil {
+			zap.S().Errorf("failed to backup etcd: %v", err)
 			return err
 		}
 	}
@@ -84,8 +84,10 @@ func (ce *ConfigureEtcdPhase) Start(ctx context.Context, cfg config.Config) erro
 func (ce *ConfigureEtcdPhase) Stop(ctx context.Context, cfg config.Config) error {
 
 	ce.log.Infof("Running Stop of phase: %s", ce.HostPhase.Name)
+	zap.S().Info("Destroying etcd container")
 	err := ce.etcd.EnsureEtcdDestroyed(ctx)
 	if err != nil {
+		zap.S().Errorf("could not destroy etcd container: %v", err)
 		return err
 	}
 	phaseutils.SetHostStatus(ce.HostPhase, constants.StoppedState, "")

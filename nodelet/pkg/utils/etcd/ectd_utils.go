@@ -50,7 +50,7 @@ func (e *EtcdImpl) EnsureEtcdDataStoredOnHost() (bool, error) {
 	zap.S().Infof("Ensuring etcd data is stored on host")
 	exist, err := e.InspectEtcd()
 	if err != nil {
-		zap.S().Errorf("error when checking etcd container exist")
+		zap.S().Errorf("error when checking etcd container exist: %v", err)
 		return false, err
 	}
 	return exist, nil
@@ -62,7 +62,7 @@ func (e *EtcdImpl) InspectEtcd() (bool, error) {
 		return false, err
 	}
 	defer cont.CloseClientConnection()
-	exist, err := cont.IsContainerExist(context.Background(), "etcd")
+	exist, err := cont.IsContainerExist(context.Background(), "etcd", "k8s.io")
 	if err != nil {
 		return false, err
 	}
@@ -80,8 +80,10 @@ func (e *EtcdImpl) IsEligibleForEtcdBackup() (bool, error) {
 		// to false assumption.
 		// With this, backup and raft check shall happen once during both fresh install
 		// and upgrade
+		zap.S().Infof("etcd version file not present creating one")
 		e.WriteEtcdVersionToFile()
 	} else {
+		zap.S().Infof("etcd version file is present")
 		oldVersion, err := e.file.ReadFile(constants.EtcdVersionFile)
 		if err != nil {
 			return false, err
@@ -93,6 +95,7 @@ func (e *EtcdImpl) IsEligibleForEtcdBackup() (bool, error) {
 		} else {
 			// when etcd version is a mismatch, that indicates upgrade
 			// perform backup and raft check and update the etcd version to most recent
+			zap.S().Infof("etcd version mismatched writing new version to file")
 			e.WriteEtcdVersionToFile()
 		}
 	}
@@ -144,6 +147,7 @@ func (e *EtcdImpl) WriteEtcdVersionToFile() error {
 	if err != nil {
 		return err
 	}
+	zap.S().Info("wrote etcd version to version file")
 	return nil
 }
 
@@ -153,8 +157,9 @@ func (e *EtcdImpl) EnsureEtcdDestroyed(ctx context.Context) error {
 		return err
 	}
 	defer cont.CloseClientConnection()
-	err = cont.EnsureContainerDestroyed(ctx, "etcd", "10s")
+	err = cont.EnsureContainerDestroyed(ctx, "etcd", "k8s.io", "10s")
 	if err != nil {
+		zap.S().Errorf("failed to destroy etcd container: %v", err)
 		return err
 	}
 	return nil
@@ -189,10 +194,12 @@ func (e *EtcdImpl) EnsureEtcdRunning(ctx context.Context, cfg config.Config) err
 
 	err := createEtcdDirsIfnotPresent(ctx, cfg)
 	if err != nil {
+		zap.S().Errorf("failed to create required etcd dirs: %v", err)
 		return err
 	}
 	err = e.WriteEtcdEnv(cfg)
 	if err != nil {
+		zap.S().Errorf("failed to create etcd envs: %v", err)
 		return errors.Wrapf(err, "could not write etcd env")
 	}
 
@@ -220,13 +227,13 @@ func (e *EtcdImpl) EnsureEtcdRunning(ctx context.Context, cfg config.Config) err
 	defer cont.CloseClientConnection()
 	err = cont.EnsureFreshContainerRunning(ctx, constants.K8sNamespace, etcdContainerName, etcdContainerImage, etcdRunOpts, etcdCmdArgs)
 	if err != nil {
-		zap.S().Errorf("running etcd container failed: %v", err)
+		zap.S().Errorf("failed to run etcd container : %v", err)
 	}
 
 	healthy := false
 	retries := 90
 	for i := 0; i < retries; i++ {
-		running, err := cont.IsContainerRunning(ctx, "etcd")
+		running, err := cont.IsContainerRunning(ctx, "etcd", "k8s.io")
 		if err != nil {
 			zap.S().Errorf("failed to check if etcd running: %v", err)
 			return err
@@ -457,7 +464,7 @@ func isEtcdHealthy(ctx context.Context, cfg config.Config, cont cr.ContainerUtil
 	   But ideally we should take o/p of the etcdctl enpoint health cmd from the container created?
 	   need someone to look into this. */
 	// now removing above created container
-	err = cont.EnsureContainerDestroyed(ctx, containerName, "10s")
+	err = cont.EnsureContainerDestroyed(ctx, containerName, "k8s.io", "10s")
 	if err != nil {
 		zap.S().Errorf("failed to destroy testEtcd container: %v", err)
 		return false, err
@@ -472,8 +479,9 @@ func (e *EtcdImpl) IsEtcdRunning(ctx context.Context) (bool, error) {
 		return false, err
 	}
 	defer cont.CloseClientConnection()
-	running, err := cont.IsContainerRunning(ctx, "etcd")
+	running, err := cont.IsContainerRunning(ctx, "etcd", "k8s.io")
 	if err != nil {
+		zap.S().Errorf("failed to check if etcd container running: %v", err)
 		return false, err
 	}
 	return running, nil

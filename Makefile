@@ -790,4 +790,3 @@ update-supported-version:
 		echo "promoting to $$s3_roles_root"; \
 		aws s3 cp --acl public-read $(BUILD_DIR)/artifacts/$(PF9_KUBE_VERSION) $${s3_roles_root}/$(PF9_KUBE_VERSION); \
 	done
-

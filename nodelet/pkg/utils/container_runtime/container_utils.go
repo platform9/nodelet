@@ -86,11 +86,11 @@ func (c *ContainerUtility) CloseClientConnection() {
 
 func (c *ContainerUtility) EnsureFreshContainerRunning(ctx context.Context, namespace string, containerName string, containerImage string, runOpts RunOpts, cmdArgs []string) error {
 
-	ctx = namespaces.WithNamespace(ctx, namespace)
-	err := c.EnsureContainerDestroyed(ctx, containerName, TimeOut)
+	err := c.EnsureContainerDestroyed(ctx, containerName, namespace, TimeOut)
 	if err != nil {
 		return err
 	}
+	ctx = namespaces.WithNamespace(ctx, namespace)
 	container, err := c.CreateContainer(ctx, containerName, containerImage, runOpts, cmdArgs)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create container:%s", containerName)
@@ -99,6 +99,8 @@ func (c *ContainerUtility) EnsureFreshContainerRunning(ctx context.Context, name
 	//create a task from the container
 	task, err := container.NewTask(ctx, cio.NewCreator(cio.WithStdio))
 	if err != nil {
+		zap.S().Infof("newtask failed sleeping for 5 mins")
+		time.Sleep(300 * time.Second)
 		return errors.Wrapf(err, "failed to create new task:%s", containerName)
 	}
 
@@ -124,9 +126,9 @@ func (c *ContainerUtility) EnsureFreshContainerRunning(ctx context.Context, name
 }
 
 // EnsureContainerDestroyed takes containers Name
-func (c *ContainerUtility) EnsureContainerDestroyed(ctx context.Context, containerName string, timeoutStr string) error {
+func (c *ContainerUtility) EnsureContainerDestroyed(ctx context.Context, containerName string, ns string, timeoutStr string) error {
 
-	container, err := c.GetContainerWithGivenName(ctx, containerName)
+	container, err := c.GetContainerWithGivenNameandNamespace(ctx, containerName, ns)
 	if err != nil {
 		return err
 	}
@@ -134,6 +136,7 @@ func (c *ContainerUtility) EnsureContainerDestroyed(ctx context.Context, contain
 		c.log.Infof("container not present: %s", containerName)
 		return nil
 	}
+	ctx = namespaces.WithNamespace(ctx, ns)
 	err = c.StopContainer(ctx, container, timeoutStr)
 	if err != nil {
 		return errors.Wrapf(err, "couldn't stop the container: %s", container.ID())
@@ -169,11 +172,11 @@ func (c *ContainerUtility) EnsureContainersDestroyed(ctx context.Context, contai
 	return nil
 }
 
-func (c *ContainerUtility) EnsureContainerStoppedOrNonExistent(ctx context.Context, containerName string) error {
+func (c *ContainerUtility) EnsureContainerStoppedOrNonExistent(ctx context.Context, containerName string, ns string) error {
 
 	c.log.Infof("Ensuring container %s is stopped or non-existent\n", containerName)
 
-	container, err := c.GetContainerWithGivenName(ctx, containerName)
+	container, err := c.GetContainerWithGivenNameandNamespace(ctx, containerName, ns)
 	if err != nil {
 		return err
 	}
@@ -181,7 +184,7 @@ func (c *ContainerUtility) EnsureContainerStoppedOrNonExistent(ctx context.Conte
 		c.log.Infof("container %s does not exist\n", containerName)
 		return nil
 	}
-
+	ctx = namespaces.WithNamespace(ctx, ns)
 	err = c.StopContainer(ctx, container, TimeOut)
 	if err != nil {
 		return errors.Wrapf(err, "couldn't stop the container: %s", container.ID())
@@ -189,8 +192,9 @@ func (c *ContainerUtility) EnsureContainerStoppedOrNonExistent(ctx context.Conte
 	return nil
 }
 
-func (c *ContainerUtility) GetContainersInNamespace(ctx context.Context, namespace string) ([]containerd.Container, error) {
+func (c *ContainerUtility) GetContainersInNamespace(ctx context.Context, ns string) ([]containerd.Container, error) {
 
+	ctx = namespaces.WithNamespace(ctx, ns)
 	containers, err := c.Client.Containers(ctx)
 	if err != nil {
 		return nil, err
@@ -204,7 +208,7 @@ func (c *ContainerUtility) DestroyContainersInNamespace(ctx context.Context, nam
 	if err != nil {
 		return errors.Wrapf(err, "error getting containers in namespace: %s ", namespace)
 	}
-
+	ctx = namespaces.WithNamespace(ctx, namespace)
 	err = c.EnsureContainersDestroyed(ctx, containers, TimeOut)
 	if err != nil {
 		return errors.Wrapf(err, "could not destroy containers in namespace: %s", namespace)
@@ -216,7 +220,6 @@ func (c *ContainerUtility) DestroyContainersInNamespacesList(ctx context.Context
 
 	for _, namespace := range namespacelist {
 		zap.S().Infof("Destroying containers in namespace: %s", namespace)
-		ctx = namespaces.WithNamespace(ctx, namespace)
 		err := c.DestroyContainersInNamespace(ctx, namespace)
 		return err
 	}
@@ -234,7 +237,6 @@ func (c *ContainerUtility) CreateContainer(ctx context.Context, containerName st
 	if err != nil {
 		return nil, err
 	}
-
 	opts = GetNetworkopts(runOpts, opts)
 	opts = GetCmdargsOpts(image, cmdArgs, opts)
 	//opts = SetPlatformOptions(opts) //is it required?
@@ -246,24 +248,19 @@ func (c *ContainerUtility) CreateContainer(ctx context.Context, containerName st
 	if err != nil {
 		return nil, err
 	}
-
 	// err = c.MountandUnmount(ctx, image) // dont know whats it doing. just added for cheking its working
 	// if err != nil {
 	// 	c.log.Errorf("error in mountandunmount:%v", err)
 	// 	return nil, err
 	// }
-
 	opts, err = GetVolumeOPts(runOpts, opts)
 	if err != nil {
 		c.log.Errorf("error getting volumeopts:%v", err)
 		return nil, err
 	}
-
-	cOpts = append(cOpts, containerd.WithImage(image))
 	//cOpts = append(cOpts, containerd.WithNewSnapshot(containerName+"-snapshot", image))
-
-	var specs specs.Spec
-	spec := containerd.WithSpec(&specs, opts...)
+	spec := containerd.WithNewSpec(opts...)
+	cOpts = append(cOpts, containerd.WithImage(image))
 	cOpts = append(cOpts, spec)
 
 	// add lables for container name
@@ -446,13 +443,14 @@ func waitContainerStop(ctx context.Context, exitCh <-chan containerd.ExitStatus,
 	}
 }
 
-func (c *ContainerUtility) GetContainerWithGivenName(ctx context.Context, containerName string) (containerd.Container, error) {
+func (c *ContainerUtility) GetContainerWithGivenNameandNamespace(ctx context.Context, containerName string, ns string) (containerd.Container, error) {
 	// TODO: we can use of filters to list containers
 	// namelable := "pf9.io/containerName"
 	// filters := []string{
 	// 	fmt.Sprintf("labels.%s==%s", namelable, containerName),
 	// }
 	// containers, err := c.Client.Containers(ctx, filters...)
+	ctx = namespaces.WithNamespace(ctx, ns)
 	containers, err := c.Client.Containers(ctx)
 	if err != nil {
 		return nil, err
@@ -474,11 +472,15 @@ func (c *ContainerUtility) GetContainerWithGivenName(ctx context.Context, contai
 	return nil, nil
 }
 
-func (c *ContainerUtility) IsContainerRunning(ctx context.Context, containerName string) (bool, error) {
-	cont, err := c.GetContainerWithGivenName(ctx, containerName)
+func (c *ContainerUtility) IsContainerRunning(ctx context.Context, containerName string, ns string) (bool, error) {
+	cont, err := c.GetContainerWithGivenNameandNamespace(ctx, containerName, ns)
 	if err != nil {
 		return false, err
 	}
+	if cont == nil {
+		return false, nil
+	}
+	ctx = namespaces.WithNamespace(ctx, ns)
 	task, err := cont.Task(ctx, cio.Load)
 	if err != nil {
 		if errdefs.IsNotFound(err) {
@@ -500,9 +502,10 @@ func (c *ContainerUtility) IsContainerRunning(ctx context.Context, containerName
 }
 
 // just checks if container exist. it doesnt check for the task is present or not.
-func (c *ContainerUtility) IsContainerExist(ctx context.Context, containerName string) (bool, error) {
-	cont, err := c.GetContainerWithGivenName(ctx, containerName)
+func (c *ContainerUtility) IsContainerExist(ctx context.Context, containerName string, ns string) (bool, error) {
+	cont, err := c.GetContainerWithGivenNameandNamespace(ctx, containerName, ns)
 	if err != nil {
+		zap.S().Errorf("container not found: %s :%v", containerName, err)
 		return false, err
 	}
 	if cont != nil {
@@ -714,8 +717,10 @@ func GetVolumeOPts(runOpts RunOpts, opts []oci.SpecOpts) ([]oci.SpecOpts, error)
 }
 
 func GetCmdargsOpts(image containerd.Image, cmdArgs []string, opts []oci.SpecOpts) []oci.SpecOpts {
-	opts = append(opts, oci.WithImageConfigArgs(image, cmdArgs))
-	// check if this required //opts = append(opts, oci.WithProcessArgs(processArgs...)) and how to use
+	//opts = append(opts, oci.WithImageConfigArgs(image, cmdArgs))
+	// check if imageconfigargs vs withprocessargs and which is required here? //and how to use
+	// is withprocesscwd required and if yes which dir?
+	opts = append(opts, oci.WithProcessArgs(cmdArgs...), oci.WithProcessCwd("/"))
 	return opts
 }
 
@@ -724,7 +729,7 @@ func GetPrivilegedOpts(runOpts RunOpts, opts []oci.SpecOpts) []oci.SpecOpts {
 	if runOpts.Privileged {
 		privilegedOpts := []oci.SpecOpts{
 			oci.WithPrivileged,
-			oci.WithAllDevicesAllowed,
+			oci.WithAllDevicesAllowed, // are this 3 ok to allow?
 			oci.WithHostDevices,
 			oci.WithNewPrivileges,
 		}
