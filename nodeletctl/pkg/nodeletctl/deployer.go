@@ -406,8 +406,10 @@ func (nd *NodeletDeployer) InstallNodelet() error {
 	return nil
 }
 
-/* This is a temporary workaround, normally done by hostagent
-   TODO: Add to the nodelet after-install.sh script
+/*
+This is a temporary workaround, normally done by hostagent
+
+	TODO: Add to the nodelet after-install.sh script
 */
 func (nd *NodeletDeployer) SetPf9Ownerships() error {
 	zap.S().Infof("Setting pf9 ownership")
@@ -495,12 +497,13 @@ func (nd *NodeletDeployer) RefreshNodeletStatus() (string, error) {
 	return nodeletData.NodeState, nil
 }
 
-/* Copying files follows a predictable pattern
-   1. Make the remote directory, if it doesn't exist
-   2. Set permissions to pf9:pf9group
-   3. Upload to /tmp/ because ssh user may be different, and SFTP client
-      used by pf9ctl.UploadFile only allows access to home directory and /tmp
-   4. Finally, move to target directory
+/*
+Copying files follows a predictable pattern
+ 1. Make the remote directory, if it doesn't exist
+ 2. Set permissions to pf9:pf9group
+ 3. Upload to /tmp/ because ssh user may be different, and SFTP client
+    used by pf9ctl.UploadFile only allows access to home directory and /tmp
+ 4. Finally, move to target directory
 */
 func UploadFileWrapper(srcFilePath, fileName, dstDir string, client ssh.Client) error {
 	zap.S().Infof("Uploading %s to %s", srcFilePath, dstDir)
@@ -628,7 +631,7 @@ func CreateSSHClientRaw(host string, user string, privateKey []byte, port int) (
 	if isv6 := IsIpV6Addr(host); isv6 {
 		host = EncloseIpV6(host)
 	}
-	client, err := ssh.NewClient(host, port, user, privateKey, "")
+	client, err := ssh.NewClient(host, port, user, privateKey, "", "")
 	return client, err
 }
 

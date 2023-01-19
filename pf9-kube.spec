@@ -10,6 +10,7 @@ Requires:       curl
 Requires:       gzip
 Requires:       net-tools
 Requires:       libcgroup-tools
+Requires:       iptables-services
 AutoReqProv:    no
 
 %global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
@@ -164,7 +165,7 @@ EOF
 
     chmod 0660 /etc/containerd/config.toml
 
-    # Enable containerd 
+    # Enable containerd
     systemctl daemon-reload
     systemctl enable --now containerd
 
