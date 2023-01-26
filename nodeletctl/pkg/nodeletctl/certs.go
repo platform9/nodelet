@@ -217,10 +217,16 @@ func GenKubeconfig(cfg *BootstrapConfig) error {
 		ClientKeyData:  adminKeyB64,
 	}
 
-	if cfg.IPv6Enabled {
-		kubeconfigArgs.MasterIp = "[" + cfg.MasterIp + "]"
+	masterIp := cfg.MasterIp
+	if cfg.IPv6Enabled && !cfg.IPv4Enabled {
+		// For backwards compatability in ipv6-only, either MasterIp or MasterIpv6 can be specified
+		if masterIp == "" && cfg.MasterIpv6 != "" {
+			masterIp = cfg.MasterIpv6
+		}
+		kubeconfigArgs.MasterIp = "[" + masterIp + "]"
 	} else {
-		kubeconfigArgs.MasterIp = cfg.MasterIp
+		// For Ipv4 or dualstack, use the IPv4 master IP in kubeconfig
+		kubeconfigArgs.MasterIp = masterIp
 	}
 
 	if err := writeKubeconfigFile(kubeconfigArgs); err != nil {
