@@ -834,8 +834,8 @@ github.com/platform9/nodelet/nodelet v0.0.0-20220420170655-9ece5c5b1f61/go.mod h
 github.com/platform9/pf9-qbert/sunpike/apiserver v0.0.0-20210928133414-c4e8ce211671 h1:0Cw1OpBrYwy2rMemFwAqIO69AlU/uH8n7qED7cbMD50=
 github.com/platform9/pf9-qbert/sunpike/apiserver v0.0.0-20210928133414-c4e8ce211671/go.mod h1:j28m/sxhoHx59pAUgRQoa+qqlQZ3tg4zf37sg4e/ibQ=
 github.com/platform9/pf9-qbert/sunpike/conductor v0.0.0-20210928133414-c4e8ce211671/go.mod h1:3WMWXxOKjUZtvqDe2MUFOZuogVcyAdKG/obAoyjTBoU=
-github.com/platform9/pf9ctl v0.0.0-20230116114556-40afd6d532d3 h1:kILbvgrqv6Ie1/xLBUfsDSMP8dV+dL91AnAgvjJbTY8=
-github.com/platform9/pf9ctl v0.0.0-20230116114556-40afd6d532d3/go.mod h1:f1j2irdWF84iQW/BSy+qgdyCkjDtR0RhYvoY1zfyv1k=
+github.com/platform9/pf9ctl v0.0.0-20230125134605-3783dcfca904 h1:PLrnZA286fdSJFWyc/amgxRy7l1zFxs+fA3FOr272Ws=
+github.com/platform9/pf9ctl v0.0.0-20230125134605-3783dcfca904/go.mod h1:f1j2irdWF84iQW/BSy+qgdyCkjDtR0RhYvoY1zfyv1k=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/posener/complete v1.1.1/go.mod h1:em0nMJCgc9GFtwrmVmEMR/ZL6WyhyjMBndrE9hABlRI=

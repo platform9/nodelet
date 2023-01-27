@@ -89,7 +89,7 @@ github.com/platform9/nodelet/nodelet/pkg/utils/fileio
 # github.com/platform9/pf9-qbert/sunpike/apiserver v0.0.0 => github.com/platform9/pf9-qbert/sunpike/apiserver v0.0.0-20210928133414-c4e8ce211671
 github.com/platform9/pf9-qbert/sunpike/apiserver/pkg/apis/sunpike
 github.com/platform9/pf9-qbert/sunpike/apiserver/pkg/apis/sunpike/v1alpha1
-# github.com/platform9/pf9ctl v0.0.0-20230116114556-40afd6d532d3
+# github.com/platform9/pf9ctl v0.0.0-20230125134605-3783dcfca904
 ## explicit
 github.com/platform9/pf9ctl/pkg/ssh
 # github.com/spf13/afero v1.8.2
