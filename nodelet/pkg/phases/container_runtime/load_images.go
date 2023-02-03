@@ -3,6 +3,9 @@ package containerruntime
 import (
 	"context"
 	"fmt"
+	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/namespaces"
+	"github.com/containerd/containerd/platforms"
 	"os"
 
 	"github.com/platform9/nodelet/nodelet/pkg/utils/config"
@@ -49,6 +52,47 @@ func (l *LoadImagePhase) GetOrder() int {
 func (l *LoadImagePhase) Status(ctx context.Context, cfg config.Config) error {
 
 	l.log.Infof("Running Status of phase: %s", l.HostPhase.Name)
+
+	l.log.Infof("trying to containerd")
+	client, err := containerd.New(constants.ContainerdSocket, containerd.WithDefaultPlatform(platforms.DefaultStrict()))
+	if err != nil {
+		l.log.Warnf("Failed to connect to containerd")
+		return err
+	}
+	defer client.Close()
+
+	l.log.Infof("Connected to containerd")
+	manager := client.LeasesService()
+
+	l.log.Infof("Setting namespaces to context")
+	ctx = namespaces.WithNamespace(ctx, "k8s.io")
+
+	ns, ok := namespaces.Namespace(ctx)
+	l.log.Infof("Verifiying that namespaces from context: %s, %v", ns, ok)
+
+	l.log.Infof("Sending List request to lease manager")
+	leases, err := manager.List(ctx)
+
+	l.log.Infof("List leases")
+
+	if err != nil {
+		l.log.Warnf("List leases failed with %v", err)
+		return err
+	}
+
+	for _, lease := range leases {
+		l.log.Infof("In Lease: %s, with labels: %v", lease.ID, lease.Labels)
+
+		resources, err := manager.ListResources(ctx, lease)
+		if err != nil {
+			l.log.Warnf("Failed to list resources in the lease")
+			return err
+		}
+		for _, resource := range resources {
+			l.log.Infof("Lease resource.ID: %s, and resource.Type: %s", resource.ID, resource.Type)
+		}
+
+	}
 
 	if _, err := os.Stat(cfg.UserImagesDir); os.IsNotExist(err) {
 		l.log.Warnf("User images Directory:%s is not present", cfg.UserImagesDir)
