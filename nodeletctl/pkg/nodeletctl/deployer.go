@@ -573,6 +573,14 @@ func (nd *NodeletDeployer) DeleteCniDir() error {
 	return nil
 }
 
+func (nd *NodeletDeployer) DeleteUserImagesFiles() error {
+	deleteCmd := "rm -rf " + filepath.Join(UserImagesDir, "*")
+	if _, _, err := nd.client.RunCommand(deleteCmd); err != nil {
+		return fmt.Errorf("failed to cleanup old user images files: %s", err)
+	}
+	return nil
+}
+
 func (nd *NodeletDeployer) UploadCertsAndRestartStack(wg *sync.WaitGroup) error {
 	defer wg.Done()
 

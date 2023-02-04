@@ -248,6 +248,10 @@ func DeployCluster(clusterCfg *BootstrapConfig) error {
 			deployer: deployer,
 		}
 
+		if err = deployer.DeleteUserImagesFiles(); err != nil {
+			zap.S().Warnf("failed cleaning up user images: %v, maybe because the dir doesnt exist", err)
+		}
+
 		converged, err := deployer.SpawnMaster(numMaster)
 		zap.S().Infof("Master status: %s\n", converged)
 		if err != nil {
@@ -349,6 +353,10 @@ func UpgradeCluster(cfgPath string) error {
 			deployer: deployer,
 		}
 
+		if err := deployer.DeleteUserImagesFiles(); err != nil {
+			SetClusterNodeStatus(deployer.clusterStatus, deployer.nodeletCfg.HostId, "failed", err)
+		}
+
 		if err := deployer.UpgradeMaster(); err != nil {
 			SetClusterNodeStatus(deployer.clusterStatus, deployer.nodeletCfg.HostId, "failed", err)
 		}
@@ -392,6 +400,11 @@ func UpgradeWorkers(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus) e
 		clusterStatus.statusMap[host.NodeName] = &NodeStatus{
 			deployer: deployer,
 		}
+
+		if err = deployer.DeleteUserImagesFiles(); err != nil {
+			return err
+		}
+
 		wg.Add(1)
 		go deployer.UpgradeWorker(&wg)
 	}
@@ -741,6 +754,11 @@ func DeployWorkers(clusterCfg *BootstrapConfig, clusterStatus *ClusterStatus, wo
 		clusterStatus.statusMap[host.NodeName] = &NodeStatus{
 			deployer: deployer,
 		}
+
+		if err = deployer.DeleteUserImagesFiles(); err != nil {
+			zap.S().Warnf("failed cleaning up user images: %v, maybe because the dir doesnt exist", err)
+		}
+
 		wg.Add(1)
 		zap.S().Infof("Adding worker %s to cluster %s", host.NodeName, clusterCfg.ClusterId)
 		go deployer.SpawnWorker(&wg)
