@@ -30,6 +30,7 @@ type NodeletConfig struct {
 	Privileged             string
 	NodeletRole            string
 	UserImages             []string
+	SystemImages           []string
 	CoreDNSHostsFile       string
 	IPv4Enabled            bool
 	IPv6Enabled            bool

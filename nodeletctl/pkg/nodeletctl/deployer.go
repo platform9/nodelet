@@ -204,6 +204,9 @@ func (nd *NodeletDeployer) DeployNodelet() error {
 	if err := nd.UploadCerts(); err != nil {
 		return fmt.Errorf("failed to upload certs: %s", err)
 	}
+	if err := nd.UploadSystemImages(); err != nil {
+		return fmt.Errorf("failed to upload system container images: %s", err)
+	}
 	if err := nd.UploadUserImages(); err != nil {
 		return fmt.Errorf("failed to upload user container images: %s", err)
 	}
@@ -607,6 +610,44 @@ func (nd *NodeletDeployer) UploadUserImages() error {
 		if err != nil {
 			return fmt.Errorf("Failed to upload user images: %s", err)
 		}
+	}
+	return nil
+}
+
+func (nd *NodeletDeployer) UploadSystemImages() error {
+	if nd.nodeletCfg.SystemImages == nil {
+		zap.S().Infof("No offline system container images specified, skipping upload...")
+		return nil
+	}
+
+	local, err := IsLocal(nd.nodeletCfg.HostIp)
+	if err != nil {
+		return fmt.Errorf("error determining if this is a local node: %v", err)
+	}
+
+	for _, systemImage := range nd.nodeletCfg.SystemImages {
+		zap.S().Infof("Uploading system images: %s", systemImage)
+
+		if _, err := os.Stat(systemImage); os.IsNotExist(err) {
+			zap.S().Errorf("System Images file does not exist: %s", err)
+			return fmt.Errorf("User Images file does not exist: %s", err)
+		}
+
+		if local {
+			// Create symlink on local nodes to save disk space
+			symlinkPath := filepath.Join(UserImagesDir, filepath.Base(systemImage))
+			err = os.Symlink(systemImage, symlinkPath)
+			if err != nil {
+				return fmt.Errorf("error creating symlink from %s to dest: %s: %v", systemImage, symlinkPath, err)
+			}
+		} else {
+			filename := filepath.Base(systemImage)
+			err := UploadFileWrapper(systemImage, filename, UserImagesDir, nd.client)
+			if err != nil {
+				return fmt.Errorf("failed to upload system images: %v", err)
+			}
+		}
+
 	}
 	return nil
 }

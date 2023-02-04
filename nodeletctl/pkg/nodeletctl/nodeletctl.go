@@ -32,6 +32,7 @@ type BootstrapConfig struct {
 	Privileged             string                 `json:"privileged,omitempty"`
 	ContainerRuntime       ContainerRuntimeConfig `json:"containerRuntime,omitempty"`
 	UserImages             []string               `json:"userImages,omitempty"`
+	SystemImages           []string               `json:"systemImages,omitempty"`
 	DNS                    CoreDNSConfig          `json:"dns,omitempty"`
 	UseHostname            bool                   `json:"useHostname,omitempty"`
 	IPv4Enabled            bool                   `json:"ipv4,omitempty"`
