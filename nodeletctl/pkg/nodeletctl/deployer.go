@@ -642,11 +642,31 @@ func (nd *NodeletDeployer) UploadSystemImages() error {
 		}
 
 		if local {
+			mkdirCmd := "mkdir -p " + UserImagesDir
+			_, stderr, err := nd.client.RunCommand(mkdirCmd)
+			//mkdirCmd := exec.Command("mkdir", "-p", UserImagesDir)
+			//_, err := mkdirCmd.CombinedOutput()
+			if err != nil {
+				zap.S().Errorf("error creating UserImagesDir at %s: stderr: %s: %v", UserImagesDir, string(stderr), err)
+				return fmt.Errorf("error creating UserImagesDir at %s: %v", UserImagesDir, err)
+			}
+
+			//chownCmd := exec.Command("chown", fmt.Sprintf("%s:pf9group", NodeletUser), UserImagesDir)
+			chownCmd := fmt.Sprintf("chown %s:pf9group %s", NodeletUser, UserImagesDir)
+			_, stderr, err = nd.client.RunCommand(chownCmd)
+			//_, err = chownCmd.CombinedOutput()
+			if err != nil {
+				zap.S().Errorf("error changing ownder of UserImagesDir at %s to %s: stderr: %s: %v", UserImagesDir, NodeletUser, string(stderr), err)
+				return fmt.Errorf("error changing ownder of UserImagesDir at %s to %s: %v", UserImagesDir, NodeletUser, err)
+			}
+
 			// Create symlink on local nodes to save disk space
 			symlinkPath := filepath.Join(UserImagesDir, filepath.Base(systemImage))
-			err = os.Symlink(systemImage, symlinkPath)
+			symlinkCmd := fmt.Sprintf("ln -s %s %s", systemImage, symlinkPath)
+			//err = os.Symlink(systemImage, symlinkPath)
+			_, stderr, err = nd.client.RunCommand(symlinkCmd)
 			if err != nil {
-				return fmt.Errorf("error creating symlink from %s to dest: %s: %v", systemImage, symlinkPath, err)
+				return fmt.Errorf("error creating symlink from %s to dest: %s: stderr: %s, %v", systemImage, symlinkPath, string(stderr), err)
 			}
 		} else {
 			filename := filepath.Base(systemImage)
