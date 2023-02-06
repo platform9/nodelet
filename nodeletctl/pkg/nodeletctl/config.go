@@ -30,6 +30,7 @@ type NodeletConfig struct {
 	Privileged             string
 	NodeletRole            string
 	UserImages             []string
+	SystemImages           []string
 	CoreDNSHostsFile       string
 	IPv4Enabled            bool
 	IPv6Enabled            bool
@@ -62,6 +63,7 @@ func setNodeletClusterCfg(cfg *BootstrapConfig, nodelet *NodeletConfig) {
 	nodelet.Mtu = cfg.MTU
 	nodelet.Privileged = cfg.Privileged
 	nodelet.UserImages = cfg.UserImages
+	nodelet.SystemImages = cfg.SystemImages
 	nodelet.CoreDNSHostsFile = cfg.DNS.HostsFile
 	nodelet.IPv4Enabled = cfg.IPv4Enabled
 	nodelet.IPv6Enabled = cfg.IPv6Enabled
