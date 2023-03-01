@@ -16,3 +16,7 @@ build/
 *.vscode*
 *.code-workspace
 *junit.xml
+
+# IDE stuff
+.vscode
+.idea
