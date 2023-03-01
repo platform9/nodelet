@@ -232,7 +232,15 @@ func DeployCluster(clusterCfg *BootstrapConfig) error {
 		nodeletCfg.NodeletRole = "master"
 		nodeletCfg.MasterList = &masterList
 		nodeletCfg.EtcdClusterState = "new"
-
+		for _, path := range nodeletCfg.UserImages {
+			if _, err := os.Stat(path); err != nil {
+				if os.IsNotExist(err) {
+					retErr := fmt.Errorf("invalid UserImage path in nodelet config %s, %w", path, err)
+					zap.S().Error(retErr)
+					return retErr
+				}
+			}
+		}
 		nodeletSrcFile, err := GenNodeletConfigLocal(nodeletCfg, masterNodeletConfigTmpl)
 		if err != nil {
 			zap.S().Infof("Failed to generate config: %s", err)
