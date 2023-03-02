@@ -398,6 +398,7 @@ func DeployCluster(clusterCfg *BootstrapConfig) error {
 					zap.S().Error(retErr)
 					return retErr
 				}
+				return err
 			}
 		}
 		nodeletSrcFile, err := GenNodeletConfigLocal(nodeletCfg, masterNodeletConfigTmpl)
