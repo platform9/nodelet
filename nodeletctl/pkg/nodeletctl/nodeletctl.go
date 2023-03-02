@@ -239,6 +239,17 @@ func DeployCluster(clusterCfg *BootstrapConfig) error {
 					zap.S().Error(retErr)
 					return retErr
 				}
+				return err
+			}
+		}
+		for _, path := range nodeletCfg.SystemImages {
+			if _, err := os.Stat(path); err != nil {
+				if os.IsNotExist(err) {
+					retErr := fmt.Errorf("invalid SystemImage path in nodelet config %s, %w", path, err)
+					zap.S().Error(retErr)
+					return retErr
+				}
+				return err
 			}
 		}
 		nodeletSrcFile, err := GenNodeletConfigLocal(nodeletCfg, masterNodeletConfigTmpl)
