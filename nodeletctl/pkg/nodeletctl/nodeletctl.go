@@ -108,7 +108,7 @@ func InitBootstrapConfig() *BootstrapConfig {
 		K8sApiPort:             "443",
 		MasterVipEnabled:       false,
 		MTU:                    "1440",
-		IPv4Enabled:            true,
+		IPv4Enabled:            false,
 		IPv6Enabled:            false,
 		UseHostname:            false,
 		Calico:                 calicoConfig,
