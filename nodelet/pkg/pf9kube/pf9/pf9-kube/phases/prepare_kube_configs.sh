@@ -16,6 +16,7 @@ fi
 [ "$DEBUG" == "true" ] && set -x
 
 function start() {
+    local config_dir="/etc/pf9/kube.d/kubeconfigs"
     if [ "$ROLE" == "master" ]; then
         kustomize_config
         prepare_conf_files
@@ -25,6 +26,10 @@ function start() {
     if [ "$ROLE" == "master" ]; then
         prepare_rolebindings
     fi
+
+    # Make the config directory read write executable
+    chmod -R 0600 $config_dir
+    chmod 0700 $config_dir
 }
 
 function stop() {
