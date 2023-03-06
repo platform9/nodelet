@@ -29,7 +29,6 @@ function start() {
 
     # Make the config directory read write executable
     chmod -R 0600 $config_dir
-    chmod 0700 $config_dir
 }
 
 function stop() {
