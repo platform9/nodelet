@@ -27,7 +27,7 @@ function start() {
         prepare_rolebindings
     fi
 
-    # Make the config directory read write executable
+    # Allow read, write on the config dir by owner but not by group, others
     chmod -R 0600 $config_dir
 }
 
