@@ -16,6 +16,7 @@ fi
 [ "$DEBUG" == "true" ] && set -x
 
 function start() {
+    local config_dir="/etc/pf9/kube.d/kubeconfigs"
     if [ "$ROLE" == "master" ]; then
         kustomize_config
         prepare_conf_files
@@ -25,6 +26,9 @@ function start() {
     if [ "$ROLE" == "master" ]; then
         prepare_rolebindings
     fi
+
+    # Allow read, write on the config dir by owner but not by group, others
+    chmod -R 0600 $config_dir
 }
 
 function stop() {
