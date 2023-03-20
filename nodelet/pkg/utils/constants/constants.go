@@ -128,7 +128,7 @@ var (
 	// MobyNamespace is namespace for docker
 	MobyNamespace = "moby"
 	// K8sRegistry represents registry for official images for kubernetes
-	K8sRegistry = "k8s.gcr.io"
+	K8sRegistry = "registry.k8s.io"
 
 	// Kubelet related variables from defaults.env
 	KubeletDataDir          = "/var/lib/kubelet"
