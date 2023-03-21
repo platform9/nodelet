@@ -539,7 +539,7 @@ function ensure_kubelet_running()
     local node_name=$1
     local kubeconfig="/etc/pf9/kube.d/kubeconfigs/kubelet.yaml"
     local log_dir_path="/var/log/pf9/kubelet/"
-    local k8s_registry="${K8S_PRIVATE_REGISTRY:-k8s.gcr.io}"
+    local k8s_registry="${K8S_PRIVATE_REGISTRY:-registry.k8s.io}"
     local pause_img="${k8s_registry}/pause:3.6"
 
     prepare_kubelet_bootstrap_config
@@ -707,7 +707,7 @@ function ensure_proxy_running()
         --privileged \
         --volume ${kubeconfig}:${kubeconfig_in_container}"
 
-    local k8s_registry="${K8S_PRIVATE_REGISTRY:-k8s.gcr.io}"
+    local k8s_registry="${K8S_PRIVATE_REGISTRY:-registry.k8s.io}"
     local container_name="proxy"
     local container_img="${k8s_registry}/kube-proxy:$KUBERNETES_VERSION"
 
