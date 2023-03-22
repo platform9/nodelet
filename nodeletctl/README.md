@@ -100,6 +100,7 @@ type BootstrapConfig struct {
 	AllowWorkloadsOnMaster bool                   `json:"allowWorkloadsOnMaster,omitempty"`
 	K8sApiPort             string                 `json:"k8sApiPort,omitempty"`
 	MasterIp               string                 `json:"masterIp,omitempty"`
+	MasterIpv6             string                 `json:"masterIpV6,omitempty"`
 	MasterVipEnabled       bool                   `json:"masterVipEnabled,omitempty"`
 	MasterVipInterface     string                 `json:"masterVipInterface,omitempty"`
 	MasterVipVrouterId     int                    `json:"masterVipVrouterId,omitempty"`
@@ -107,13 +108,25 @@ type BootstrapConfig struct {
 	Privileged             string                 `json:"privileged,omitempty"`
 	ContainerRuntime       ContainerRuntimeConfig `json:"containerRuntime,omitempty"`
 	UserImages             []string               `json:"userImages,omitempty"`
+	SystemImages           []string               `json:"systemImages,omitempty"`
 	DNS                    CoreDNSConfig          `json:"dns,omitempty"`
 	UseHostname            bool                   `json:"useHostname,omitempty"`
+	IPv4Enabled            bool                   `json:"ipv4,omitempty"`
 	IPv6Enabled            bool                   `json:"ipv6,omitempty"`
 	Calico                 CalicoConfig           `json:"calico,omitempty"`
 	ServicesCidr           string                 `json:"servicesCidr,omitempty"`
+	ServicesCidrV6         string                 `json:"servicesCidrV6,omitempty"`
+	EtcdConfig             EtcdConfig             `json:"etcdConfig,omitempty"`
 	MasterNodes            []HostConfig           `json:"masterNodes"`
 	WorkerNodes            []HostConfig           `json:"workerNodes"`
+}
+
+type EtcdConfig struct {
+	DataDir           string `json:"dataDir,omitempty"`
+	DiscoveryUrl      string `json:"discoveryUrl,omitempty"`
+	ElectionTimeout   int    `json:"electionTimeout,omitempty"`
+	HeartbeatInterval int    `json:"heartbeatInterval,omitempty"`
+	Version           string `json:"version,omitempty"`
 }
 
 type CalicoConfig struct {
@@ -184,6 +197,17 @@ ContainerRuntime
 The default runtime is containerd
 CgroupDriver: systemd
 ```
+
+EtcdConfig
+-------------------------------------------
+DataDir:           "/var/opt/pf9/kube/etcd/data" // location of etcd data directory
+DiscoveryUrl:      "" // URL for new etcd members to discover all other members.
+                      // This isn't typically used. PF9 performs an explicit join
+		      // for each new node added
+ElectionTimeout:   "1000" // time in ms to declare an election timeout
+HeartbeatInterval: "100" // time in ms between two heartbeats
+Version:           "" // etcd version used. Defaults to v3
+
 
 Only the Calico CNI is supported. For more information on configuring the Calico options, please see: https://projectcalico.docs.tigera.io/networking/ip-autodetection
 
