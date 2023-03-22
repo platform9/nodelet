@@ -86,6 +86,15 @@ func setNodeletClusterCfg(cfg *BootstrapConfig, nodelet *NodeletConfig) {
 	nodelet.CalicoV6ContainersCidr = cfg.Calico.V6ContainersCidr
 
 	// Add etcd config
+	if cfg.EtcdConfig.DataDir == "" {
+		cfg.EtcdConfig.DataDir = DefaultEtcdDataDir
+	}
+	if cfg.EtcdConfig.ElectionTimeout == 0 {
+		cfg.EtcdConfig.ElectionTimeout = DefaultEtcdElectionTimeout
+	}
+	if cfg.EtcdConfig.HeartbeatInterval == 0 {
+		cfg.EtcdConfig.HeartbeatInterval = DefaultEtcdHeartbeatInterval
+	}
 	nodelet.EtcdDataDir = cfg.EtcdConfig.DataDir
 	nodelet.EtcdDiscoveryUrl = cfg.EtcdConfig.DiscoveryUrl
 	nodelet.EtcdElectionTimeout = cfg.EtcdConfig.ElectionTimeout
