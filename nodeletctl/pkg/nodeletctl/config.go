@@ -17,6 +17,11 @@ type NodeletConfig struct {
 	ClusterId              string
 	ContainerRuntime       ContainerRuntimeConfig
 	EtcdClusterState       string
+	EtcdDataDir            string
+	EtcdDiscoveryUrl       string
+	EtcdElectionTimeout    int
+	EtcdHeartbeatInterval  int
+	EtcdVersion            string
 	HostId                 string
 	HostIp                 string
 	K8sApiPort             string
@@ -79,6 +84,14 @@ func setNodeletClusterCfg(cfg *BootstrapConfig, nodelet *NodeletConfig) {
 	nodelet.CalicoV6BlockSize = cfg.Calico.V6BlockSize
 	nodelet.CalicoV6NATOutgoing = cfg.Calico.V6NATOutgoing
 	nodelet.CalicoV6ContainersCidr = cfg.Calico.V6ContainersCidr
+
+	// Add etcd config
+	nodelet.EtcdDataDir = cfg.EtcdConfig.DataDir
+	nodelet.EtcdDiscoveryUrl = cfg.EtcdConfig.DiscoveryUrl
+	nodelet.EtcdElectionTimeout = cfg.EtcdConfig.ElectionTimeout
+	nodelet.EtcdHeartbeatInterval = cfg.EtcdConfig.HeartbeatInterval
+	nodelet.EtcdVersion = cfg.EtcdConfig.Version
+
 	nodelet.UseHostname = cfg.UseHostname
 	if cfg.ServicesCidr == "" {
 		nodelet.ServicesCidr = DefaultV4ServicesCidr
