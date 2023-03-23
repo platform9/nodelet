@@ -40,8 +40,17 @@ type BootstrapConfig struct {
 	Calico                 CalicoConfig           `json:"calico,omitempty"`
 	ServicesCidr           string                 `json:"servicesCidr,omitempty"`
 	ServicesCidrV6         string                 `json:"servicesCidrV6,omitempty"`
+	EtcdConfig             EtcdConfig             `json:"etcdConfig,omitempty"`
 	MasterNodes            []HostConfig           `json:"masterNodes"`
 	WorkerNodes            []HostConfig           `json:"workerNodes"`
+}
+
+type EtcdConfig struct {
+	DataDir           string `json:"dataDir,omitempty"`
+	DiscoveryUrl      string `json:"discoveryUrl,omitempty"`
+	ElectionTimeout   int    `json:"electionTimeout,omitempty"`
+	HeartbeatInterval int    `json:"heartbeatInterval,omitempty"`
+	Version           string `json:"version,omitempty"`
 }
 
 type CalicoConfig struct {
