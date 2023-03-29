@@ -385,7 +385,7 @@ function configure_containerd_http_proxy()
     mkdir -p "$CONTAINERD_DROPIN_DIR"
     cat > "$override_cfg" <<EOF
 [Service]
-Environment="HTTP_PROXY=${HTTP_PROXY}"  
+Environment="HTTP_PROXY=${HTTP_PROXY}"
 Environment="HTTPS_PROXY=${HTTPS_PROXY}"
 Environment="NO_PROXY=${NO_PROXY}"
 EOF
@@ -401,5 +401,9 @@ function install_keepalived()
 
   echo "Installing keepalived"
   # install keepalived
-  yum install -y $KEEPALIVED_PACKAGE_DIR/keepalived-2.1.3-1.el7.x86_64.rpm
+  if [[ "$ID" == "centos" ]]; then
+    yum install -y $KEEPALIVED_PACKAGE_DIR/keepalived-2.1.3-1.el7.x86_64.rpm
+  elif [[ "$ID" == "rhel" ]]; then
+    yum install -y $KEEPALIVED_PACKAGE_DIR/keepalived-2.1.5-9.el8.x86_64.rpm
+  fi
 }

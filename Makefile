@@ -366,6 +366,7 @@ nerdctl:
 KEEPALIVED_DEB_U20 := https://github.com/hnakamur/keepalived-deb/releases/download/debian%2F1%252.1.3-1ubuntu1ppa1-focal/keepalived_2.1.3-1ubuntu1ppa1.focal_amd64.deb
 KEEPALIVED_DEB_U18 := https://github.com/hnakamur/keepalived-deb/releases/download/debian%2F1%252.1.3-1ubuntu1ppa1-bionic/keepalived_2.1.3-1ubuntu1ppa1.bionic_amd64.deb
 KEEPALIVED_RPM_CENTOS7 := https://github.com/hnakamur/keepalived-rpm/releases/download/2.1.3-1/keepalived-2.1.3-1.el7.x86_64.rpm
+KEEPALIVED_RPM_RHEL86 := https://rpmfind.net/linux/centos/8-stream/AppStream/x86_64/os/Packages/keepalived-2.1.5-9.el8.x86_64.rpm
 
 keepalived:
 	echo "Downloading Keepalived packages"
@@ -373,6 +374,7 @@ keepalived:
 	curl --output $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/keepalived_packages/keepalived_2.1.3-1ubuntu1ppa1.focal_amd64.deb -L ${KEEPALIVED_DEB_U20}
 	curl --output $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/keepalived_packages/keepalived_2.1.3-1ubuntu1ppa1.bionic_amd64.deb -L ${KEEPALIVED_DEB_U18}
 	curl --output $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/keepalived_packages/keepalived-2.1.3-1.el7.x86_64.rpm -L ${KEEPALIVED_RPM_CENTOS7}
+	curl --output $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/keepalived_packages/keepalived-2.1.5-9.el8.x86_64.rpm -L ${KEEPALIVED_RPM_RHEL86}
 	# Download Ubuntu 18.04 dependency packages as well
 	curl --output $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/keepalived_packages/libjansson4_2.11-1_amd64.deb -L http://archive.ubuntu.com/ubuntu/pool/main/j/jansson/libjansson4_2.11-1_amd64.deb
 	curl --output $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/keepalived_packages/libnftnl7_1.0.9-2_amd64.deb -L http://archive.ubuntu.com/ubuntu/pool/universe/libn/libnftnl/libnftnl7_1.0.9-2_amd64.deb
@@ -534,7 +536,7 @@ virtctl:
 -include $(ROOT_DIR)/ip_type/Makefile
 -include $(ROOT_DIR)/addr_conv/Makefile
 
-jq: 
+jq:
 	echo "Downloading jq"
 	cd ${KUBERNETES_DIR} && \
 	${WGET_CMD} -O jq -L https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 && \
@@ -790,4 +792,3 @@ update-supported-version:
 		echo "promoting to $$s3_roles_root"; \
 		aws s3 cp --acl public-read $(BUILD_DIR)/artifacts/$(PF9_KUBE_VERSION) $${s3_roles_root}/$(PF9_KUBE_VERSION); \
 	done
-
