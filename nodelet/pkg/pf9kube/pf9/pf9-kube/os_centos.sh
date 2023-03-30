@@ -1,5 +1,6 @@
 source defaults.env
 source runtime.sh
+source /etc/os-release
 
 PWD=$(pwd)
 PF9_TE_FILE="$PWD/pf9.te"
@@ -395,7 +396,8 @@ EOF
 
 function get_expected_keepalived_version()
 {
-  if [[ "$VERSION_ID" =~ ^8.* ]]; then
+    echo "From /etc/os-release: ID=$ID VERSION_ID=$VERSION_ID"
+    if [[ "$VERSION_ID" =~ ^8.* ]]; then
         echo ${KEEPALIVED_VERSION_RHEL8}
     else
         # Assume it is 7.x
