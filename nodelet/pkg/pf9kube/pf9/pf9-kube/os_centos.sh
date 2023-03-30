@@ -393,17 +393,28 @@ EOF
     systemctl restart containerd
 }
 
+function get_expected_keepalived_version()
+{
+  if [[ "$VERSION_ID" =~ ^8.* ]]; then
+        echo ${KEEPALIVED_VERSION_RHEL8}
+    else
+        # Assume it is 7.x
+        echo ${KEEPALIVED_VERSION_RHEL7}
+    fi
+}
+
 function install_keepalived()
 {
-  echo "Removing keepalived"
-  # remove keepalived
-  yum erase -y keepalived
+    echo "Removing keepalived"
+    # remove keepalived
+    yum erase -y keepalived
 
-  echo "Installing keepalived"
-  # install keepalived
-  if [[ "$ID" == "centos" ]]; then
-    yum install -y $KEEPALIVED_PACKAGE_DIR/keepalived-2.1.3-1.el7.x86_64.rpm
-  elif [[ "$ID" == "rhel" ]]; then
-    yum install -y $KEEPALIVED_PACKAGE_DIR/keepalived-2.1.5-9.el8.x86_64.rpm
-  fi
+    echo "Installing keepalived"
+    # install keepalived
+    if [[ "$VERSION_ID" =~ ^8.* ]]; then
+        yum install -y keepalived-2.1.5
+    else
+        # Assume it is 7.x
+        yum install -y $KEEPALIVED_PACKAGE_DIR/keepalived-2.1.3-1.el7.x86_64.rpm
+    fi
 }

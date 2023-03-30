@@ -51,7 +51,7 @@ function runtime_repo_installed()
 {
     if [ "$DOCKER_UBUNTU_REPO_URL" ]; then
         apt-cache policy | grep -q "$DOCKER_UBUNTU_REPO_URL"
-    else 
+    else
         apt-cache policy | grep -q "https://download.docker.com/linux/ubuntu $(lsb_release -cs)/stable"
     fi
 }
@@ -67,7 +67,7 @@ function install_runtime_repo()
 
     # Install the repository
     echo "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list
-    
+
     # if the upstream repo is not available use the updated repo
     if [ "$DOCKER_UBUNTU_REPO_URL" ]; then
         echo "deb $DOCKER_UBUNTU_REPO_URL" >> /etc/apt/sources.list.d/docker.list
@@ -263,12 +263,17 @@ function configure_containerd_http_proxy()
     mkdir -p "$CONTAINERD_DROPIN_DIR"
     cat > "$override_cfg" <<EOF
 [Service]
-Environment="HTTP_PROXY=${HTTP_PROXY}"  
+Environment="HTTP_PROXY=${HTTP_PROXY}"
 Environment="HTTPS_PROXY=${HTTPS_PROXY}"
 Environment="NO_PROXY=${NO_PROXY}"
 EOF
     systemctl daemon-reload
     systemctl restart containerd
+}
+
+function get_expected_keepalived_version()
+{
+    echo ${KEEPALIVED_VERSION_UBUNTU}
 }
 
 function install_keepalived()
