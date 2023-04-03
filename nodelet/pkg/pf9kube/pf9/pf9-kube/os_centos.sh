@@ -414,7 +414,7 @@ function install_keepalived()
     echo "Installing keepalived"
     # install keepalived
     if [[ "$VERSION_ID" =~ ^8.* ]]; then
-        yum install -y keepalived-2.1.5
+        yum install -y $KEEPALIVED_PACKAGE_DIR/keepalived-2.1.5-9.el8.x86_64.rpm
     else
         # Assume it is 7.x
         yum install -y $KEEPALIVED_PACKAGE_DIR/keepalived-2.1.3-1.el7.x86_64.rpm
