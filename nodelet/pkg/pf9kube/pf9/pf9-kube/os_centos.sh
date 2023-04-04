@@ -396,7 +396,6 @@ EOF
 
 function get_expected_keepalived_version()
 {
-    echo "From /etc/os-release: ID=$ID VERSION_ID=$VERSION_ID"
     if [[ "$VERSION_ID" =~ ^8.* ]]; then
         echo ${KEEPALIVED_VERSION_RHEL8}
     else
