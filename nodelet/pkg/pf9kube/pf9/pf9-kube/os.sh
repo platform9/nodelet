@@ -196,12 +196,13 @@ function check_keepalived_installed()
     echo "Keepalived found, checking version"
     local keepalived_version_installed=$(keepalived --version 2>&1 >/dev/null | head -1 | cut -d " " -f 2)
     echo "keepalived installed version = ${keepalived_version_installed}"
-    if [ ${keepalived_version_installed} == ${KEEPALIVED_VERSION} ]; then
-      echo "Expected Keepalived version is installed"
+    local keepalived_version_expected=$(get_expected_keepalived_version)
+    if [ ${keepalived_version_installed} == ${keepalived_version_expected} ]; then
+      echo "Expected Keepalived version ${keepalived_version_expected} is installed"
       IS_KEEPALIVED_INSTALLED=1
       return
     fi
-    echo "Keepalived version ${KEEPALIVED_VERSION} expected but ${keepalived_version_installed} is found"
+    echo "Keepalived version ${keepalived_version_expected} expected but ${keepalived_version_installed} is found"
     IS_KEEPALIVED_INSTALLED=0
     return
   fi

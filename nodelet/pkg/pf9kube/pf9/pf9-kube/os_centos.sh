@@ -1,5 +1,6 @@
 source defaults.env
 source runtime.sh
+source /etc/os-release
 
 PWD=$(pwd)
 PF9_TE_FILE="$PWD/pf9.te"
@@ -385,7 +386,7 @@ function configure_containerd_http_proxy()
     mkdir -p "$CONTAINERD_DROPIN_DIR"
     cat > "$override_cfg" <<EOF
 [Service]
-Environment="HTTP_PROXY=${HTTP_PROXY}"  
+Environment="HTTP_PROXY=${HTTP_PROXY}"
 Environment="HTTPS_PROXY=${HTTPS_PROXY}"
 Environment="NO_PROXY=${NO_PROXY}"
 EOF
@@ -393,13 +394,28 @@ EOF
     systemctl restart containerd
 }
 
+function get_expected_keepalived_version()
+{
+    if [[ "$VERSION_ID" =~ ^8.* ]]; then
+        echo ${KEEPALIVED_VERSION_RHEL8}
+    else
+        # Assume it is 7.x
+        echo ${KEEPALIVED_VERSION_RHEL7}
+    fi
+}
+
 function install_keepalived()
 {
-  echo "Removing keepalived"
-  # remove keepalived
-  yum erase -y keepalived
+    echo "Removing keepalived"
+    # remove keepalived
+    yum erase -y keepalived
 
-  echo "Installing keepalived"
-  # install keepalived
-  yum install -y $KEEPALIVED_PACKAGE_DIR/keepalived-2.1.3-1.el7.x86_64.rpm
+    echo "Installing keepalived"
+    # install keepalived
+    if [[ "$VERSION_ID" =~ ^8.* ]]; then
+        yum install -y $KEEPALIVED_PACKAGE_DIR/keepalived-2.1.5-9.el8.x86_64.rpm
+    else
+        # Assume it is 7.x
+        yum install -y $KEEPALIVED_PACKAGE_DIR/keepalived-2.1.3-1.el7.x86_64.rpm
+    fi
 }
