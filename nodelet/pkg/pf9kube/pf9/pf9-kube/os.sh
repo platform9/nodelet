@@ -8,9 +8,20 @@ if [[ "$ID" == "ubuntu" ]]; then
         echo "Unknown Ubuntu version: ${VERSION_ID}"
         exit 1
     fi
-elif [[ "$ID" == "centos" || "$ID" == "rhel" ]]; then
+elif [[ "$ID" == "centos" || "$ID" == "rhel" || "$ID" == "rocky" ]]; then
     source os_centos.sh
     export OS_FAMILY="centos"
+    if [[ "$VERSION_ID" =~ 8.* ]]; then
+    if [[ "$VERSION_ID" =~ 9.* ]]; then
+        export OS_VERSION="9.x"
+    elif [[ "$VERSION_ID" =~ 8.* ]]; then
+        export OS_VERSION="8.x"
+    elif [[ "$VERSION_ID" =~ 7.* ]]; then
+        export OS_VERSION="7.x"
+    else
+        echo "Unknown CentOS/RHEL version: ${VERSION_ID}"
+        exit 1
+    fi
 else
     echo "Unknown OS: ${ID}"
     exit 1

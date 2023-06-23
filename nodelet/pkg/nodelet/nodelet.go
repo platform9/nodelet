@@ -87,7 +87,7 @@ func (n *Nodelet) Run(ctx context.Context) error {
 
 func CreateNodeletFromConfig(ctx context.Context, cfg *config.Config) (*Nodelet, error) {
 	log := zap.S()
-	phases, err := loadRolePhases(ctx, *cfg)
+	phases, err := loadRolePhases(ctx, cfg)
 	if err != nil {
 		// Phases could not be loaded. Cannot recover from this.
 		return nil, fmt.Errorf("could not load phases: %v", err)

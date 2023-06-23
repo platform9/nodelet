@@ -9,14 +9,18 @@ DOCKER_PACKAGE="docker-ce"
 DOCKER_CLI="docker-ce-cli"
 CONTAINERD_PACKAGE="containerd.io"
 
-if [[ "$VERSION_ID" =~ ^8.* ]]; then
+if [[ "$VERSION_ID" =~ ^9.* ]]; then
+    DOCKER_PACKAGE_VERSION="3:20.10.24-3.el9"
+    DOCKER_CLI_VERSION="1:20.10.24-3.el9"
+    CONTAINERD_PACKAGE_VERSION="1.6.6-3.1.el9"
+elif [[ "$VERSION_ID" =~ ^8.* ]]; then
     DOCKER_PACKAGE_VERSION="3:20.10.6-3.el8"
     DOCKER_CLI_VERSION="1:20.10.6-3.el8"
-    CONTAINERD_PACKAGE_VERSION="1.4.12-3.1.el8"
+    CONTAINERD_PACKAGE_VERSION="1.6.6-3.1.el8"
 else
     DOCKER_PACKAGE_VERSION="19.03.11-3.el7"
     DOCKER_CLI_VERSION="19.03.11-3.el7"
-    CONTAINERD_PACKAGE_VERSION="1.4.12-3.1.el7"
+    CONTAINERD_PACKAGE_VERSION="1.6.6-3.1.el7"
 fi
 
 
@@ -149,23 +153,39 @@ function install_runtime_repo()
 {
     # Add the repository key
     rpm --import ${DOCKER_CENTOS_REPO_KEY}
-
     # use $'' to make sure \n are interpreted correctly
-    local docker_repo_string=$'[dockerrepo]\nname=Docker CE Stable - \$basearch\n'
-
+    local docker_repo_string=$'[dockerrepo]\nname=Docker CE Stable - $basearch\n'
     if [ ! -z $DOCKER_CENTOS_REPO_URL ]; then
-         # Install the repository
-    cat > /etc/yum.repos.d/docker.mirrors <<EOF
-$DOCKER_CENTOS_REPO_URL
-https://download.docker.com/linux/centos/7/\$basearch/stable
-EOF
+        # Install the repository
+        if [ "$OS_VERSION" == "7.x" ]; then
+            DOCKER_REPO_UPSTREAM=https://download.docker.com/linux/centos/7/\$basearch/stable
+        elif [ "$OS_VERSION" == "8.x" ]; then
         # use $'' to make sure \n are interpreted correctly
+            DOCKER_REPO_UPSTREAM=https://download.docker.com/linux/centos/8/\$basearch/stable
+        elif [ "$OS_VERSION" == "9.x" ]; then
+            DOCKER_REPO_UPSTREAM=https://download.docker.com/linux/centos/9/\$basearch/stable
+        else
+            echo "Unknown CentOS/RHEL version: ${OS_VERSION}"
+            exit 1
+        fi
+        cat > /etc/yum.repos.d/docker.mirrors <<EOF
+$DOCKER_CENTOS_REPO_URL
+$DOCKER_REPO_UPSTREAM
+EOF
         docker_repo_string+=$'mirrorlist=file:///etc/yum.repos.d/docker.mirrors\n'
     else
         # use the default configuration
-        docker_repo_string+=$'baseurl=https://download.docker.com/linux/centos/7/\$basearch/stable\nenabled=1\ngpgcheck=1\n'
+        if [ "$OS_VERSION" == "7.x" ]; then
+            docker_repo_string+=$'baseurl=https://download.docker.com/linux/centos/7/$basearch/stable\nenabled=1\ngpgcheck=1\n'
+        elif [ "$OS_VERSION" == "8.x" ]; then
+            docker_repo_string+=$'baseurl=https://download.docker.com/linux/centos/8/$basearch/stable\nenabled=1\ngpgcheck=1\n'
+        elif [ "$OS_VERSION" == "9.x" ]; then
+            docker_repo_string+=$'baseurl=https://download.docker.com/linux/centos/9/$basearch/stable\nenabled=1\ngpgcheck=1\n'
+        else
+            echo "Unknown CentOS/RHEL version: ${OS_VERSION}"
+            exit 1
+        fi
     fi
-
     # Install the repository
     echo "$docker_repo_string" > /etc/yum.repos.d/docker.repo
 }
