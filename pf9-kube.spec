@@ -9,7 +9,6 @@ Provides:       pf9app
 Requires:       curl
 Requires:       gzip
 Requires:       net-tools
-Requires:       libcgroup-tools
 Requires:       iptables-services
 AutoReqProv:    no
 
@@ -72,6 +71,24 @@ rm -rf $RPM_BUILD_ROOT
 mkdir -p /opt/pf9/home
 groupadd pf9group || true
 useradd -d /opt/pf9/home -G pf9group pf9 || true
+# Set a flag indicating whether the package check should be performed
+perform_package_check=true
+
+if [[ $(grep "rocky" /etc/os-release) ]]; then
+    if grep -qE "VERSION_ID=\"9\.[12]\"" /etc/os-release; then
+        perform_package_check=false
+        echo "It is Rocky Linux 9, Libcgroup-tools package is not needed"
+    fi
+fi
+
+# Check if the package check should be performed
+if [[ "$perform_package_check" == "true" ]]; then
+    # Check if libcgroup-tools is installed
+    if ! rpm -q libcgroup-tools > /dev/null; then
+        echo "Libcgroup-tools package is not installed. Aborting installation."
+        exit 1
+    fi
+fi
 
 %post
 ## Adding ownership tweak (PMK-4129) to %post section instead of %files section since it's not sure if this file exists or not.

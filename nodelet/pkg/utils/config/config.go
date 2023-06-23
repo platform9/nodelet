@@ -27,6 +27,7 @@ var DefaultConfig = Config{
 	ConnectTimeout:          20,
 	FullRetryCount:          10,
 	UseCgroups:              true,
+	CgroupsV2:               false,
 	PhaseRetry:              3,
 	CPULimit:                40,                            // percentage
 	LoopInterval:            constants.DefaultLoopInterval, // seconds
@@ -62,6 +63,7 @@ type Config struct {
 	KubeServiceState          string  `mapstructure:"KUBE_SERVICE_STATE"`
 	FullRetryCount            int     `mapstructure:"FULL_RETRY_COUNT"`
 	UseCgroups                bool    `mapstructure:"USE_CGROUPS"`
+	CgroupsV2                 bool    `mapstructure:"CGROUPS_V2"`
 	PhaseRetry                int     `mapstructure:"PHASE_RETRY"`
 	CPULimit                  float64 `mapstructure:"CPU_LIMIT"`
 	PF9StatusThresholdSeconds int     `mapstructure:"PF9_STATUS_THRESHOLD_SECONDS"`
@@ -138,7 +140,8 @@ func getDefaultConfig() *Config {
 
 /*
 GetConfigFromDir : Tries to load YAML config files from configDir i.e. /etc/pf9/nodelet directory.
-			This function returns an error if the directory is inaccessible or if no config files could be loaded
+
+	This function returns an error if the directory is inaccessible or if no config files could be loaded
 */
 func GetConfigFromDir(configDir string) (*Config, error) {
 	pf9File := fileio.New()

@@ -33,6 +33,8 @@ const (
 	CgroupName = "pf9-kube-status"
 	// CgroupQuotaParam : Cgroup param to set to limit CPU quotas
 	CgroupQuotaParam = "cpu.cfs_quota_us=%v"
+	// CgroupV2QuotaParam : Cgroup param to set to limit CPU quotas, for cgroup v2
+	CgroupV2QuotaParam = "CPUQuota=%v%%"
 	// NotStartedState Phase state when no operation has been performed
 	NotStartedState = "not-started"
 	// RunningState Phase state when start operation was successful
@@ -97,6 +99,8 @@ var (
 	BaseCgroupCommand = []string{"cgexec", "-g", "cpu:pf9-kube-status", "sudo", "/opt/pf9/pf9-kube/setup_env_and_run_script.sh"}
 	// CgroupCreateCmd : Command for creating cgroup
 	CgroupCreateCmd = []string{"sudo", "/usr/bin/cgcreate", "-a", "pf9:pf9group", "-t", "pf9:pf9group", "-g", "cpu:pf9-kube-status"}
+	//BaseCgroupV2Command: Base command to be used for invoking different phase scripts for cgroups v2
+	BaseCgroupV2Command = []string{"sudo", "systemd-run", "--slice=cpu.slice:pf9-kube-status", "--pty", "--quiet", "-p", "CPUAccounting=true", "-p", "CPUQuotaPeriodSec=1000ms", "-p"}
 	// CgroupPeriodCmd : Command for setting cpu.cfs_period_us property to 1s
 	CgroupPeriodCmd = []string{"sudo", "/usr/bin/cgset", "-r", "cpu.cfs_period_us=1000000", CgroupName}
 	// CgroupQuotaCmd : Base command for setting cpu.cfs_quota_us property
@@ -132,8 +136,8 @@ var (
 	// K8sRegistry represents registry for official images for kubernetes
 	K8sRegistry = "k8s.gcr.io"
 
-	ServicesCIDR                  = "10.21.0.0/22"
-	ServicesCIDRv6                = "fd00:102::/116"
+	ServicesCIDR   = "10.21.0.0/22"
+	ServicesCIDRv6 = "fd00:102::/116"
 
 	ConfigSrcDir = "/opt/pf9/pf9-kube/conf"
 	// CoreDNSTemplate is template file for coredns

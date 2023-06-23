@@ -62,7 +62,7 @@ var _ = Describe("Test phases.go", func() {
 			fakeCfg.DisableScripts = false
 			fakeCfg.ClusterRole = "master"
 			setupCgroupCmdMocks(true, mockCtrl, ctx)
-			phases, err := phases.InitAndLoadRolePhases(ctx, *fakeCfg)
+			phases, err := phases.InitAndLoadRolePhases(ctx, fakeCfg)
 			assert.Nil(GinkgoT(), err)
 			assert.NotEmpty(GinkgoT(), phases)
 		})
@@ -71,7 +71,7 @@ var _ = Describe("Test phases.go", func() {
 			fakeCfg.DisableScripts = false
 			fakeCfg.ClusterRole = "worker"
 			setupCgroupCmdMocks(true, mockCtrl, ctx)
-			phases, err := phases.InitAndLoadRolePhases(ctx, *fakeCfg)
+			phases, err := phases.InitAndLoadRolePhases(ctx, fakeCfg)
 			assert.Nil(GinkgoT(), err)
 			assert.NotEmpty(GinkgoT(), phases)
 		})
@@ -80,7 +80,7 @@ var _ = Describe("Test phases.go", func() {
 			fakeCfg.DisableScripts = false
 			fakeCfg.ClusterRole = "none"
 			setupCgroupCmdMocks(true, mockCtrl, ctx)
-			phases, err := phases.InitAndLoadRolePhases(ctx, *fakeCfg)
+			phases, err := phases.InitAndLoadRolePhases(ctx, fakeCfg)
 			assert.Nil(GinkgoT(), err)
 			assert.NotEmpty(GinkgoT(), phases)
 		})
@@ -92,7 +92,7 @@ var _ = Describe("Test phases.go", func() {
 			fakeCfg.DisableScripts = false
 			fakeCfg.ClusterRole = "master"
 			setupCgroupCmdMocks(false, mockCtrl, ctx)
-			phases, err := phases.InitAndLoadRolePhases(ctx, *fakeCfg)
+			phases, err := phases.InitAndLoadRolePhases(ctx, fakeCfg)
 			assert.Nil(GinkgoT(), err)
 			assert.NotEmpty(GinkgoT(), phases)
 		})
@@ -101,7 +101,7 @@ var _ = Describe("Test phases.go", func() {
 			fakeCfg.DisableScripts = false
 			fakeCfg.ClusterRole = "worker"
 			setupCgroupCmdMocks(false, mockCtrl, ctx)
-			phases, err := phases.InitAndLoadRolePhases(ctx, *fakeCfg)
+			phases, err := phases.InitAndLoadRolePhases(ctx, fakeCfg)
 			assert.Nil(GinkgoT(), err)
 			assert.NotEmpty(GinkgoT(), phases)
 		})
@@ -110,7 +110,7 @@ var _ = Describe("Test phases.go", func() {
 			fakeCfg.DisableScripts = false
 			fakeCfg.ClusterRole = "none"
 			setupCgroupCmdMocks(false, mockCtrl, ctx)
-			phases, err := phases.InitAndLoadRolePhases(ctx, *fakeCfg)
+			phases, err := phases.InitAndLoadRolePhases(ctx, fakeCfg)
 			assert.Nil(GinkgoT(), err)
 			assert.NotEmpty(GinkgoT(), phases)
 		})
@@ -126,6 +126,8 @@ func setupCgroupCmdMocks(enabled bool, mockCtrl *gomock.Controller, ctx context.
 	if enabled {
 		cmdCount = 1
 	}
+	mockCmd.EXPECT().RunCommand(ctx, nil, -1, "", "grep", gomock.Any(), gomock.Any(), "/etc/os-release").Return(0, nil).Times(cmdCount)
+	mockCmd.EXPECT().RunCommandWithStdOut(ctx, nil, -1, "", "sed", gomock.Any(), gomock.Any(), "/etc/os-release").Return(0, []string{}, nil).Times(cmdCount)
 	mockCmd.EXPECT().RunCommand(ctx, nil, -1, "", constants.CgroupCreateCmd[0], constants.CgroupCreateCmd[1], gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(0, nil).Times(cmdCount)
 	mockCmd.EXPECT().RunCommand(ctx, nil, -1, "", constants.CgroupPeriodCmd[0], constants.CgroupPeriodCmd[1], gomock.Any(), gomock.Any(), gomock.Any()).Return(0, nil).Times(cmdCount)
 	defaultCPUQuota := fmt.Sprintf(constants.CgroupQuotaParam, 400000)

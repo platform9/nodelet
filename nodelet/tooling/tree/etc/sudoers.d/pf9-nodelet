@@ -11,11 +11,27 @@ pf9     ALL = NOPASSWD: /opt/pf9/pf9-kube/setup_env_and_run_script.sh /opt/pf9/p
           NOPASSWD: /usr/bin/cgcreate -a pf9\:pf9group -t pf9\:pf9group -g cpu\:pf9-kube-status, \
           NOPASSWD: /usr/bin/cgset -r * pf9-kube-status, \
           NOPASSWD: /usr/bin/cgget -g cpu\:pf9-kube-status, \
-          NOPASSWD: /usr/bin/systemctl start containerd, \
-          NOPASSWD: /usr/bin/systemctl stop containerd, \
-          NOPASSWD: /usr/bin/systemctl is-active containerd, \
-          NOPASSWD: /usr/bin/chown pf9\:pf9group /run/containerd/containerd.sock, \
-          NOPASSWD: /usr/bin/rm -rf /var/lib/nerdctl
-
+          NOPASSWD: /*/chown pf9\:pf9group /var/opt/pf9/kube/kubelet-config/bootstrap-config.yaml, \
+          NOPASSWD: /*/chown -R pf9\:pf9group /etc/pf9/*, \
+          NOPASSWD: /*/chown pf9\:pf9group /etc/pf9/*, \
+          NOPASSWD: /*/chown -R pf9\:pf9group /var/opt/pf9/kube/kubelet-config, \
+          NOPASSWD: /*/chown pf9\:pf9group /run/systemd/system/pf9-kubelet.service, \
+          NOPASSWD: /*/chmod 770 /run/systemd/system/pf9-kubelet.service, \
+          NOPASSWD: /*/chown pf9\:pf9group /run/containerd/containerd.sock, \
+          NOPASSWD: /*/systemctl daemon-reload, \
+          NOPASSWD: /*/systemctl is-active pf9*, \
+          NOPASSWD: /*/systemctl enable pf9*, \
+          NOPASSWD: /*/systemctl restart pf9*, \
+          NOPASSWD: /*/systemctl start pf9*, \
+          NOPASSWD: /*/systemctl stop pf9*, \
+          NOPASSWD: /bin/mkdir -p /var/lib/kubelet, \
+          NOPASSWD: /bin/mkdir -p /var/opt/pf9/*, \
+          NOPASSWD: /usr/bin/touch /run/systemd/system/pf9-kubelet.service, \
+          NOPASSWD: /*/systemctl start containerd, \
+          NOPASSWD: /*/systemctl stop containerd, \
+          NOPASSWD: /*/systemctl is-active containerd, \
+          NOPASSWD: /*/rm -rf /var/lib/nerdctl
+          NOPASSWD: /*/rm -rf /var/lib/nerdctl, \
+          NOPASSWD: /usr/bin/systemd-run --slice=cpu.slice\:pf9-kube-status --pty --quiet *
 
 Defaults:pf9 !requiretty
