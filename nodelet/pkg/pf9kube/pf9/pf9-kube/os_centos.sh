@@ -154,7 +154,7 @@ function install_runtime_repo()
     # Add the repository key
     rpm --import ${DOCKER_CENTOS_REPO_KEY}
     # use $'' to make sure \n are interpreted correctly
-    local docker_repo_string=$'[dockerrepo]\nname=Docker CE Stable - $basearch\n'
+    local docker_repo_string=$'[dockerrepo]\nname=Docker CE Stable - \$basearch\n'
     if [ ! -z $DOCKER_CENTOS_REPO_URL ]; then
         # Install the repository
         if [ "$OS_VERSION" == "7.x" ]; then

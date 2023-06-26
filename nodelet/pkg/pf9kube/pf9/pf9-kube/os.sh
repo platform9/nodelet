@@ -1,9 +1,10 @@
 source /etc/os-release
 
 if [[ "$ID" == "ubuntu" ]]; then
-    if [[ "$VERSION_ID" == "16.04" || "$VERSION_ID" == "18.04" || "$VERSION_ID" == "20.04" ]]; then
+    if [[ "$VERSION_ID" == "16.04" || "$VERSION_ID" == "18.04" || "$VERSION_ID" == "20.04" || "$VERSION_ID" == "22.04" ]]; then
         source os_ubuntu.sh
         export OS_FAMILY="ubuntu"
+        export OS_VERSION="${VERSION_ID}"
     else
         echo "Unknown Ubuntu version: ${VERSION_ID}"
         exit 1
@@ -11,7 +12,6 @@ if [[ "$ID" == "ubuntu" ]]; then
 elif [[ "$ID" == "centos" || "$ID" == "rhel" || "$ID" == "rocky" ]]; then
     source os_centos.sh
     export OS_FAMILY="centos"
-    if [[ "$VERSION_ID" =~ 8.* ]]; then
     if [[ "$VERSION_ID" =~ 9.* ]]; then
         export OS_VERSION="9.x"
     elif [[ "$VERSION_ID" =~ 8.* ]]; then

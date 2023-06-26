@@ -30,7 +30,6 @@ pf9     ALL = NOPASSWD: /opt/pf9/pf9-kube/setup_env_and_run_script.sh /opt/pf9/p
           NOPASSWD: /*/systemctl start containerd, \
           NOPASSWD: /*/systemctl stop containerd, \
           NOPASSWD: /*/systemctl is-active containerd, \
-          NOPASSWD: /*/rm -rf /var/lib/nerdctl
           NOPASSWD: /*/rm -rf /var/lib/nerdctl, \
           NOPASSWD: /usr/bin/systemd-run --slice=cpu.slice\:pf9-kube-status --pty --quiet *
 
