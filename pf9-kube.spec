@@ -9,7 +9,7 @@ Provides:       pf9app
 Requires:       curl
 Requires:       gzip
 Requires:       net-tools
-Requires:       iptables-services
+Requires:       iptables-services, openssl
 AutoReqProv:    no
 
 %global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')

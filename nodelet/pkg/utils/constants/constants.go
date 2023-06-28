@@ -134,7 +134,7 @@ var (
 	// MobyNamespace is namespace for docker
 	MobyNamespace = "moby"
 	// K8sRegistry represents registry for official images for kubernetes
-	K8sRegistry = "k8s.gcr.io"
+	K8sRegistry = "registry.k8s.io"
 
 	ServicesCIDR   = "10.21.0.0/22"
 	ServicesCIDRv6 = "fd00:102::/116"
