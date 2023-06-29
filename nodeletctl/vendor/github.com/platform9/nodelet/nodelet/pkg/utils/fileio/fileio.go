@@ -1,14 +1,19 @@
 package fileio
 
 import (
+	"archive/tar"
 	"bufio"
+	"compress/gzip"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -42,6 +47,10 @@ type FileInterface interface {
 	VerifyChecksum(string) (bool, error)
 	GenerateHashForDir(string) ([]string, error)
 	GenerateHashForFile(string) (string, error)
+	NewYamlFromTemplateYaml(string, string, interface{}) error
+	ListFilesWithPatterns(string, []string) ([]string, error)
+	WriteToFileWithBase64Decoding(string, string) error
+	Extract(string, string) error
 }
 
 // TouchFile creates an empty file
@@ -260,7 +269,7 @@ func (f *Pf9FileIO) GenerateChecksum(imageDir string) error {
 	}
 	ChecksumDir := fmt.Sprintf("%s/checksum", imageDir)
 	if _, err := os.Stat(ChecksumDir); os.IsNotExist(err) {
-		if err := os.Mkdir(ChecksumDir, os.ModePerm); err != nil {
+		if err := os.MkdirAll(ChecksumDir, os.ModePerm); err != nil {
 			return errors.Wrapf(err, "failed to create directory: %s", ChecksumDir)
 		}
 	}
@@ -332,6 +341,51 @@ func (f *Pf9FileIO) GenerateHashForFile(fileName string) (string, error) {
 	return fileData, nil
 }
 
+// NewYamlFromTemplateYaml creates new yaml from template yaml file by replacing the value in provided data
+func (f *Pf9FileIO) NewYamlFromTemplateYaml(templFile string, outFile string, data interface{}) error {
+
+	fw, err := os.Create(outFile)
+	if err != nil {
+		return err
+	}
+	defer fw.Close()
+	t, err := template.ParseFiles(templFile)
+	if err != nil {
+		return err
+	}
+	err = t.Execute(fw, data)
+	if err != nil {
+		return fmt.Errorf("error executing template: %s", err)
+	}
+	return nil
+}
+
+// ListfilesWithPattern returns list of filenames with given patterns from given directory *recursively*
+func (f *Pf9FileIO) ListFilesWithPatterns(root string, patterns []string) ([]string, error) {
+	var matches []string
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		for _, p := range patterns {
+
+			if matched, err := filepath.Match(p, filepath.Base(path)); err != nil {
+				return err
+			} else if matched {
+				matches = append(matches, path)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return matches, nil
+}
+
 // stringSlicesEqual states whether two string slices are equal or not
 func stringSlicesEqual(a, b []string) bool {
 	if len(a) != len(b) {
@@ -343,4 +397,84 @@ func stringSlicesEqual(a, b []string) bool {
 		}
 	}
 	return true
+}
+
+// WriteToFileWithBase64Decoding writes base64 decoded data of source file to dest file
+func (f *Pf9FileIO) WriteToFileWithBase64Decoding(destFile string, srcFile string) error {
+	src, err := f.ReadFile(srcFile)
+	if err != nil {
+		return err
+	}
+	dst := make([]byte, base64.StdEncoding.DecodedLen(len(src)))
+	_, err = base64.StdEncoding.Decode(dst, src)
+	if err != nil {
+		return errors.Wrapf(err, "decode error")
+	}
+	err = f.WriteToFile(destFile, dst, false)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// extract the targz file to the destination directory
+func (f *Pf9FileIO) Extract(tgzFile string, destDir string) error {
+
+	fl, err := os.Open(tgzFile)
+	if err != nil {
+		return fmt.Errorf("error opening tgz file: %v", err)
+	}
+	defer fl.Close()
+
+	gzf, err := gzip.NewReader(fl)
+	if err != nil {
+		return fmt.Errorf("error creating gzip reader: %v", err)
+	}
+
+	defer gzf.Close()
+	tarReader := tar.NewReader(gzf)
+
+	for {
+		f, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil {
+			return fmt.Errorf("error reading tar file: %v", err)
+		}
+		fpath := filepath.Join(destDir, f.Name)
+		fi := f.FileInfo()
+		mode := fi.Mode()
+		switch {
+		case mode.IsDir():
+			err = os.MkdirAll(fpath, 0770)
+			if err != nil {
+				return fmt.Errorf("error creating directory: %s %v", fpath, err)
+			}
+		case mode.IsRegular():
+			// this is redundant
+			err = os.MkdirAll(filepath.Dir(fpath), 0770)
+			if err != nil {
+				return fmt.Errorf("error creating directory: %s %v", filepath.Dir(fpath), err)
+			}
+			destFile, err := os.OpenFile(fpath, os.O_CREATE|os.O_RDWR, 0770)
+			defer destFile.Close()
+			if err != nil {
+				return fmt.Errorf("error creating file: %s %v", fpath, err)
+			}
+			n, err := io.Copy(destFile, tarReader)
+
+			if err != nil {
+				return fmt.Errorf("error copying file: %s %v", fpath, err)
+			}
+
+			if n != f.Size {
+				return fmt.Errorf("error copying file size written not equal: expected %d, got %d, %s %v", f.Size, n, fpath, err)
+			}
+
+		}
+	}
+
+	return nil
 }
