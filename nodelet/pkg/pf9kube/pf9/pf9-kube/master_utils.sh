@@ -332,7 +332,7 @@ function prepare_conf_files()
 
     # Image registries
     local quay_registry="${QUAY_PRIVATE_REGISTRY:-quay.io}"
-    local k8s_registry="${K8S_PRIVATE_REGISTRY:-k8s.gcr.io}"
+    local k8s_registry="${K8S_PRIVATE_REGISTRY:-registry.k8s.io}"
     local gcr_registry="${GCR_PRIVATE_REGISTRY:-gcr.io}"
     local docker_registry="${DOCKER_PRIVATE_REGISTRY}"
 
@@ -1025,7 +1025,7 @@ function ensure_dns()
 {
     local coredns_template="${CONF_SRC_DIR}/networkapps/coredns.yaml"
     local coredns_file="${CONF_SRC_DIR}/networkapps/coredns-applied.yaml"
-    local k8s_registry="${K8S_PRIVATE_REGISTRY:-k8s.gcr.io}"
+    local k8s_registry="${K8S_PRIVATE_REGISTRY:-registry.k8s.io}"
 
     # Replace configuration values in calico spec with user input
     sed -e "s|__DNS_IP__|${DNS_IP}|g" \
