@@ -77,6 +77,14 @@ func (cp *ContainerdConfigPhase) Start(ctx context.Context, cfg config.Config) e
 	// TODO: check if we can use this:
 	// https://github.com/containerd/containerd/blob/84ec0796f82e5b3cf875942f43b612862eb3cf15/services/server/config/config.go#L188
 
+	// adding the sandbox image
+	sandboxImage := "registry.k8s.io/pause:3.6"
+	if cfg.K8sPrivateRegistry != "" {
+		sandboxImage = cfg.K8sPrivateRegistry + "/pause:3.6"
+	}
+
+	fileContent = strings.Replace(fileContent, "__SANDBOX_IMAGE__", sandboxImage, 1)
+
 	// checking containerd Cgroup configured
 	if !strings.Contains(fileContent, constants.CgroupSystemd) {
 		appendata := "\n\t[plugins.\"io.containerd.grpc.v1.cri\".containerd.runtimes.runc.options]\n\t\tSystemdCgroup = false"
