@@ -53,6 +53,8 @@ function configure_docker()
 function containerd_config()
 {
     echo "Generating config.toml"
+    local k8s_registry="${K8S_PRIVATE_REGISTRY:-registry.k8s.io}"
+    local pause_img="${k8s_registry}/pause:3.6"
     mkdir -p /etc/containerd
     cat > "/etc/containerd/config.toml" <<EOF
 version = 2
@@ -64,6 +66,7 @@ required_plugins = []
 oom_score = 0
 [plugins]
   [plugins."io.containerd.grpc.v1.cri"]
+    sandbox_image = "$pause_img"
     [plugins."io.containerd.grpc.v1.cri".registry]
       [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
         [plugins."io.containerd.grpc.v1.cri".registry.mirrors."platform9.io"]
