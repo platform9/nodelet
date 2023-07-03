@@ -77,14 +77,6 @@ func (cp *ContainerdConfigPhase) Start(ctx context.Context, cfg config.Config) e
 	// TODO: check if we can use this:
 	// https://github.com/containerd/containerd/blob/84ec0796f82e5b3cf875942f43b612862eb3cf15/services/server/config/config.go#L188
 
-	// adding the sandbox image
-	sandboxImage := "registry.k8s.io/pause:3.6"
-	if cfg.K8sPrivateRegistry != "" {
-		sandboxImage = cfg.K8sPrivateRegistry + "/pause:3.6"
-	}
-
-	fileContent = strings.Replace(fileContent, "__SANDBOX_IMAGE__", sandboxImage, 1)
-
 	// checking containerd Cgroup configured
 	if !strings.Contains(fileContent, constants.CgroupSystemd) {
 		appendata := "\n\t[plugins.\"io.containerd.grpc.v1.cri\".containerd.runtimes.runc.options]\n\t\tSystemdCgroup = false"
@@ -96,6 +88,27 @@ func (cp *ContainerdConfigPhase) Start(ctx context.Context, cfg config.Config) e
 			phaseutils.SetHostStatus(cp.hostPhase, constants.FailedState, fmt.Sprintf("couldn't write to containerd config file:%s :%v", constants.ContainerdConfigFile, err))
 			return errors.Wrapf(err, "couldn't write to containerd config file:%s", constants.ContainerdConfigFile)
 		}
+	}
+
+	// Replace the sandbox image
+	b, err = ioutil.ReadFile(constants.ContainerdConfigFile)
+	if err != nil {
+		phaseutils.SetHostStatus(cp.hostPhase, constants.FailedState, fmt.Sprintf("couldn't read containerd config file:%s :%v", constants.ContainerdConfigFile, err))
+		return errors.Wrapf(err, "couldn't read containerd config file:%s", constants.ContainerdConfigFile)
+	}
+	fileContent = string(b)
+
+	// adding the sandbox image
+	sandboxImage := "registry.k8s.io/pause:3.6"
+	if cfg.K8sPrivateRegistry != "" {
+		sandboxImage = cfg.K8sPrivateRegistry + "/pause:3.6"
+	}
+
+	fileContent = strings.ReplaceAll(fileContent, "__SANDBOX_IMAGE__", sandboxImage)
+	err = file.WriteToFile(constants.ContainerdConfigFile, fileContent, false)
+	if err != nil {
+		phaseutils.SetHostStatus(cp.hostPhase, constants.FailedState, fmt.Sprintf("couldn't write to containerd config file:%s :%v", constants.ContainerdConfigFile, err))
+		return errors.Wrapf(err, "couldn't write to containerd config file:%s", constants.ContainerdConfigFile)
 	}
 
 	phaseutils.SetHostStatus(cp.hostPhase, constants.RunningState, "")
