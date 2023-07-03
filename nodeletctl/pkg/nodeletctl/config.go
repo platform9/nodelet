@@ -53,6 +53,7 @@ type NodeletConfig struct {
 	ContainersCidr         string
 	ServicesCidr           string
 	ServicesCidrV6         string
+	IsAirgapped            bool
 }
 
 func setNodeletClusterCfg(cfg *BootstrapConfig, nodelet *NodeletConfig) {
@@ -73,6 +74,7 @@ func setNodeletClusterCfg(cfg *BootstrapConfig, nodelet *NodeletConfig) {
 	nodelet.IPv4Enabled = cfg.IPv4Enabled
 	nodelet.IPv6Enabled = cfg.IPv6Enabled
 	nodelet.Dualstack = cfg.IPv4Enabled && cfg.IPv6Enabled
+	nodelet.IsAirgapped = cfg.IsAirgapped
 
 	//Set default Calico opts first
 	nodelet.CalicoV4Interface = cfg.Calico.V4Interface
