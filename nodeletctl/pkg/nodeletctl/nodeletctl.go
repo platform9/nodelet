@@ -15,72 +15,72 @@ import (
 )
 
 type BootstrapConfig struct {
-	SSHUser                string                 `json:"sshUser,omitempty" survey:"sshUser"`
-	SSHPrivateKeyFile      string                 `json:"sshPrivateKeyFile,omitempty" survey:"sshPrivateKeyFile"`
-	CertsDir               string                 `json:"certsDir,omitempty" survey:"certsDir"`
-	KubeConfig             string                 `json:"kubeconfig,omitempty" survey:"kubeconfig"`
-	Pf9KubePkg             string                 `json:"pf9KubePkg,omitempty" survey:"pf9KubePkg"`
-	ClusterId              string                 `json:"clusterId,omitempty" survey:"clusterId"`
-	AllowWorkloadsOnMaster bool                   `json:"allowWorkloadsOnMaster,omitempty" survey:"allowWorkloadsOnMaster"`
-	K8sApiPort             string                 `json:"k8sApiPort,omitempty" survey:"k8sApiPort"`
-	MasterIp               string                 `json:"masterIp,omitempty" survey:"masterIp"`
-	MasterIpv6             string                 `json:"masterIpV6,omitempty" survey:"masterIpV6"`
-	MasterVipEnabled       bool                   `json:"masterVipEnabled,omitempty" survey:"masterVipEnabled"`
-	MasterVipInterface     string                 `json:"masterVipInterface,omitempty" survey:"masterVipInterface"`
-	MasterVipVrouterId     int                    `json:"masterVipVrouterId,omitempty" survey:"masterVipVrouterId"`
-	MTU                    string                 `json:"mtu,omitempty" survey:"mtu"`
-	Privileged             string                 `json:"privileged,omitempty" survey:"privileged"`
+	SSHUser                string                 `json:"sshUser,omitempty" yaml:"sshUser,omitempty" survey:"sshUser"`
+	SSHPrivateKeyFile      string                 `json:"sshPrivateKeyFile,omitempty" yaml:"sshPrivateKeyFile,omitempty" survey:"sshPrivateKeyFile"`
+	CertsDir               string                 `json:"certsDir,omitempty" yaml:"certsDir,omitempty" survey:"certsDir"`
+	KubeConfig             string                 `json:"kubeconfig,omitempty" yaml:"kubeconfig,omitempty" survey:"kubeconfig"`
+	Pf9KubePkg             string                 `json:"nodeletPkg,omitempty" yaml:"nodeletPkg,omitempty" survey:"nodeletPkg"`
+	ClusterId              string                 `json:"clusterName,omitempty" yaml:"clusterName,omitempty" survey:"clusterName"`
+	AllowWorkloadsOnMaster bool                   `json:"allowWorkloadsOnMaster,omitempty" yaml:"allowWorkloadsOnMaster,omitempty" survey:"allowWorkloadsOnMaster"`
+	K8sApiPort             string                 `json:"k8sApiPort,omitempty" yaml:"k8sApiPort,omitempty" survey:"k8sApiPort"`
+	MasterIp               string                 `json:"masterIp,omitempty" yaml:"masterIp,omitempty" survey:"masterIp"`
+	MasterIpv6             string                 `json:"masterIpV6,omitempty" yaml:"masterIpV6,omitempty" survey:"masterIpV6"`
+	MasterVipEnabled       bool                   `json:"masterVipEnabled,omitempty" yaml:"masterVipEnabled,omitempty" survey:"masterVipEnabled"`
+	MasterVipInterface     string                 `json:"masterVipInterface,omitempty" yaml:"masterVipInterface,omitempty" survey:"masterVipInterface"`
+	MasterVipVrouterId     int                    `json"masterVipVrouterId,omitempty" yaml:"masterVipVrouterId,omitempty" survey:"masterVipVrouterId"`
+	MTU                    string                 `json:"mtu,omitempty" yaml:"mtu,omitempty" survey:"mtu"`
+	Privileged             string                 `json:"privileged,omitempty" yaml:"privileged,omitempty" survey:"privileged"`
 	ContainerRuntime       ContainerRuntimeConfig `json:"containerRuntime,omitempty" survey:"containerRuntime"`
-	UserImages             []string               `json:"userImages,omitempty" survey:"userImages"`
-	SystemImages           []string               `json:"systemImages,omitempty" survey:"systemImages"`
-	DNS                    CoreDNSConfig          `json:"dns,omitempty" survey:"dns"`
-	UseHostname            bool                   `json:"useHostname,omitempty" survey:"useHostname"`
-	IPv4Enabled            bool                   `json:"ipv4Enabled,omitempty" survey:"ipv4Enabled"`
-	IPv6Enabled            bool                   `json:"ipv6Enabled,omitempty" survey:"ipv6Enabled"`
-	Calico                 CalicoConfig           `json:"calico,omitempty" survey:"calico"`
-	ServicesCidr           string                 `json:"servicesCidr,omitempty" survey:"servicesCidr"`
-	ServicesCidrV6         string                 `json:"servicesCidrV6,omitempty" survey:"servicesCidrV6"`
-	EtcdConfig             EtcdConfig             `json:"etcdConfig,omitempty" survey:"etcdConfig"`
-	MasterNodes            []HostConfig           `json:"masterNodes" survey:"masterNodes"`
-	WorkerNodes            []HostConfig           `json:"workerNodes" survey:"workerNodes"`
-	IsAirgapped            bool                   `json:"isAirgapped" survey:"isAirgapped"`
+	UserImages             []string               `json:"userImages,omitempty" yaml:"userImages,omitempty" survey:"userImages"`
+	SystemImages           []string               `json:"systemImages,omitempty" yaml:"systemImages,omitempty" survey:"systemImages"`
+	DNS                    CoreDNSConfig          `json:"dns,omitempty" yaml:"dns,omitempty" survey:"dns"`
+	UseHostname            bool                   `json:"useHostname,omitempty" yaml:"useHostname,omitempty" survey:"useHostname"`
+	IPv4Enabled            bool                   `json:"ipv4,omitempty" yaml:"ipv4,omitempty" survey:"ipv4"`
+	IPv6Enabled            bool                   `json:"ipv6,omitempty" yaml:"ipv6,omitempty" survey:"ipv6"`
+	Calico                 CalicoConfig           `json:"calico,omitempty" yaml:"calico,omitempty" survey:"calico"`
+	ServicesCidr           string                 `json:"servicesCidr,omitempty" yaml:"servicesCidr,omitempty" survey:"servicesCidr"`
+	ServicesCidrV6         string                 `json:"servicesCidrV6,omitempty" yaml:"servicesCidrV6,omitempty" survey:"servicesCidrV6"`
+	EtcdConfig             EtcdConfig             `json:"etcdConfig,omitempty" yaml:"etcdConfig,omitempty" survey:"etcdConfig"`
+	MasterNodes            []HostConfig           `json:"masterNodes" yaml:"masterNodes" survey:"masterNodes"`
+	WorkerNodes            []HostConfig           `json:"workerNodes" yaml:"workerNodes" survey:"workerNodes"`
+	IsAirgapped            bool                   `json:"isAirgapped" yaml:"isAirgapped" survey:"isAirgapped"`
 }
 
 type EtcdConfig struct {
-	DataDir           string `json:"dataDir,omitempty" survey:"dataDir"`
-	DiscoveryUrl      string `json:"discoveryUrl,omitempty" survey:"discoveryUrl"`
-	ElectionTimeout   int    `json:"electionTimeout,omitempty" survey:"electionTimeout"`
-	HeartbeatInterval int    `json:"heartbeatInterval,omitempty" survey:"heartbeatInterval"`
-	Version           string `json:"version,omitempty" survey:"version"`
+	DataDir           string `json:"dataDir,omitempty" yaml:"dataDir,omitempty" survey:"dataDir"`
+	DiscoveryUrl      string `json:"discoveryUrl,omitempty" yaml:"discoveryUrl,omitempty" survey:"discoveryUrl"`
+	ElectionTimeout   int    `json:"electionTimeout,omitempty" yaml:"electionTimeout,omitempty" survey:"electionTimeout"`
+	HeartbeatInterval int    `json:"heartbeatInterval,omitempty" yaml:"heartbeatInterval,omitempty" survey:"heartbeatInterval"`
+	Version           string `json:"version,omitempty" yaml:"version,omitempty" survey:"version"`
 }
 
 type CalicoConfig struct {
-	V4Interface      string `json:"v4Interface,omitempty" survey:"v4Interface"`
-	V6Interface      string `json:"v6Interface,omitempty" survey:"v6Interface"`
-	V4ContainersCidr string `json:"v4ContainersCidr,omitempty" survey:"v4ContainersCidr"`
-	V6ContainersCidr string `json:"v6ContainersCidr,omitempty" survey:"v6ContainersCidr"`
-	V4BlockSize      int    `json:"v4BlockSize,omitempty" survey:"v4BlockSize"`
-	V6BlockSize      int    `json:"v6BlockSize,omitempty" survey:"v6BlockSize"`
-	V4NATOutgoing    bool   `json:"v4NATOutgoing,omitempty" survey:"v4NATOutgoing"`
-	V6NATOutgoing    bool   `json:"v6NATOutgoing,omitempty" survey:"v6NATOutgoing"`
-	V4IpIpMode       string `json:"v4IpIpMode,omitempty" survey:"v4IpIpMode"`
+	V4Interface      string `json:"v4Interface,omitempty" yaml:"v4Interface,omitempty" survey:"v4Interface"`
+	V6Interface      string `json:"v6Interface,omitempty" yaml:"v6Interface,omitempty" survey:"v6Interface"`
+	V4ContainersCidr string `json:"v4ContainersCidr,omitempty" yaml:"v4ContainersCidr,omitempty" survey:"v4ContainersCidr"`
+	V6ContainersCidr string `json:"v6ContainersCidr,omitempty" yaml:"v6ContainersCidr,omitempty" survey:"v6ContainersCidr"`
+	V4BlockSize      int    `json:"v4BlockSize,omitempty" yaml:"v4BlockSize,omitempty" survey:"v4BlockSize"`
+	V6BlockSize      int    `json:"v6BlockSize,omitempty" yaml:"v6BlockSize,omitempty" survey:"v6BlockSize"`
+	V4NATOutgoing    bool   `json:"v4NATOutgoing,omitempty" yaml:"v4NATOutgoing,omitempty" survey:"v4NATOutgoing"`
+	V6NATOutgoing    bool   `json:"v6NATOutgoing,omitempty" yaml:"v6NATOutgoing,omitempty" survey:"v6NATOutgoing"`
+	V4IpIpMode       string `json:"v4IpIpMode,omitempty" yaml:"v4IpIpMode,omitempty" survey:"v4IpIpMode"`
 }
 
 type CoreDNSConfig struct {
-	HostsFile   string   `json:"hostsFile,omitempty" survey:"hostsFile"`
-	InlineHosts []string `json:"corednsHosts,omitempty" survey:"corednsHosts"`
+	HostsFile   string   `json:"hostsFile,omitempty" yaml:"hostsFile,omitempty" survey:"hostsFile"`
+	InlineHosts []string `json:"corednsHosts,omitempty" yaml:"corednsHosts,omitempty" survey:"corednsHosts"`
 }
 
 type ContainerRuntimeConfig struct {
-	Name         string `json:"name,omitempty" survey:"name"`
-	CgroupDriver string `json:"cgroupDriver,omitempty" survey:"cgroupDriver"`
+	Name         string `json:"name,omitempty" yaml:"name,omitempty" survey:"name"`
+	CgroupDriver string `json:"cgroupDriver,omitempty" yaml:"cgroupDriver,omitempty" survey:"cgroupDriver"`
 }
 
 type HostConfig struct {
-	NodeName            string  `json:"nodeName" survey:"nodeName"`
-	NodeIP              *string `json:"nodeIP,omitempty" survey:"nodeIP"`
-	V4InterfaceOverride *string `json:"calicoV4Interface,omitempty" survey:"calicoV4Interface"`
-	V6InterfaceOverride *string `json:"calicoV6Interface,omitempty" survey:"calicoV6Interface"`
+	NodeName            string  `json:"nodeName" yaml:"nodeName" survey:"nodeName"`
+	NodeIP              *string `json:"nodeIP,omitempty" yaml:"nodeIP,omitempty" survey:"nodeIP"`
+	V4InterfaceOverride *string `json:"calicoV4Interface,omitempty" yaml:"calicoV4Interface,omitempty" survey:"calicoV4Interface"`
+	V6InterfaceOverride *string `json:"calicoV6Interface,omitempty" yaml:"calicoV6Interface,omitempty" survey:"calicoV6Interface"`
 }
 
 type ClusterStatus struct {
