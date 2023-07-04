@@ -35,8 +35,8 @@ type BootstrapConfig struct {
 	SystemImages           []string               `json:"systemImages,omitempty" survey:"systemImages"`
 	DNS                    CoreDNSConfig          `json:"dns,omitempty" survey:"dns"`
 	UseHostname            bool                   `json:"useHostname,omitempty" survey:"useHostname"`
-	IPv4Enabled            bool                   `json:"ipv4Enabled,omitempty" survey:"ipv4"`
-	IPv6Enabled            bool                   `json:"ipv6Enabled,omitempty" survey:"ipv6"`
+	IPv4Enabled            bool                   `json:"ipv4Enabled,omitempty" survey:"ipv4Enabled"`
+	IPv6Enabled            bool                   `json:"ipv6Enabled,omitempty" survey:"ipv6Enabled"`
 	Calico                 CalicoConfig           `json:"calico,omitempty" survey:"calico"`
 	ServicesCidr           string                 `json:"servicesCidr,omitempty" survey:"servicesCidr"`
 	ServicesCidrV6         string                 `json:"servicesCidrV6,omitempty" survey:"servicesCidrV6"`
