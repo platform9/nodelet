@@ -13,6 +13,10 @@ import (
 	"github.com/kballard/go-shellquote"
 )
 
+const (
+	runAsSudo = true
+)
+
 // Client interface provides ways to run command and upload files to remote hosts
 type LocalClient struct {
 }
@@ -25,8 +29,10 @@ func GetLocalClient() ssh.Client {
 func (client *LocalClient) RunCommand(command string) ([]byte, []byte, error) {
 	zap.S().Debugf("Running command: %s", command)
 
-	// Prepend sudo if runAsSudo set to true(it's always true)
-	command = fmt.Sprintf("sudo %s", command)
+	// Prepend sudo if runAsSudo set to true
+	if runAsSudo {
+		command = fmt.Sprintf("sudo %s", command)
+	}
 	var stdoutBuf bytes.Buffer
 	var stderrBuf bytes.Buffer
 	words, err := shellquote.Split(command)
