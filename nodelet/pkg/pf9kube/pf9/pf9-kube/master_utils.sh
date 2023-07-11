@@ -98,7 +98,7 @@ function ensure_etcd_running()
     #
     # TODO
     # PMK-3665: Customise ETCD in platform9 managed kubernetes cluster
-    # 
+    #
     # The flexibility of customizing ETCD with the help of environment variables
     # needs support from DU side as well if we want it to be truly customizable
     # at the time of cluster creation or at the time of cluster update.
@@ -152,7 +152,7 @@ function ensure_etcd_running()
     #
     #              periodic can be used if you want to retain key value revisions from the
     #              last time window specified in ETCD_AUTO_COMPACTION_RETENTION env variable.
-    #              e.g. 1h or 30m 
+    #              e.g. 1h or 30m
     #
     #              revision can be used if you want to retains last n revisions of key values.
     #              You can specify the value in in ETCD_AUTO_COMPACTION_RETENTION env variable.
@@ -877,7 +877,7 @@ function post_upgrade_monitoring_fix()
         echo "Monitoring found installed, fixing ownership of objects in pf9-monitoring"
     fi
 
-    # Need to create configmap because we are upgrading from an older pf9-kube version 
+    # Need to create configmap because we are upgrading from an older pf9-kube version
     # where the new owner configmap was not present
     ${KUBECTL_SYSTEM} create configmap monitoring-owner -n pf9-monitoring \
     --dry-run -o yaml | ${KUBECTL_SYSTEM} apply -f -

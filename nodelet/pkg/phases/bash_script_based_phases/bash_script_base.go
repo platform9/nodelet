@@ -44,7 +44,12 @@ func (p *Phase) GetPhaseName() string {
 func (p *Phase) runCommand(ctx context.Context, op string, cfg config.Config) ([]string, int) {
 	baseCmd := constants.BaseCommand
 	if _, ok := constants.ValidCgroupOps[op]; ok && cfg.UseCgroups {
-		baseCmd = constants.BaseCgroupCommand
+		if cfg.CgroupsV2 {
+			baseCmd = append(constants.BaseCgroupV2Command, fmt.Sprintf(constants.CgroupV2QuotaParam, cfg.CPULimit))
+			baseCmd = append(baseCmd, constants.BaseCommand...)
+		} else {
+			baseCmd = constants.BaseCgroupCommand
+		}
 	}
 	command := append(baseCmd, p.Filename, op)
 	if cfg.IsDebug() {

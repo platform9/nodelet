@@ -38,6 +38,7 @@ var _ = Describe("Test config.go", func() {
 			KubeServiceState:          constants.ServiceStateTrue,
 			FullRetryCount:            10,
 			UseCgroups:                true,
+			CgroupsV2:                 false,
 			PhaseRetry:                3,
 			CPULimit:                  40,
 			PF9StatusThresholdSeconds: 30,

@@ -565,7 +565,7 @@ function ensure_kubelet_running()
         --pod-infra-container-image=${pause_img} \
         --dynamic-config-dir=${KUBELET_DYNAMIC_CONFIG_DIR} \
         --cgroup-driver=${CONTAINERD_CGROUP}"
-    
+
     # container-runtime: The container runtime to use. Possible values: docker, remote
     # container-runtime-endpoint: The endpoint of remote runtime service. Currently unix socket endpoint is supported on Linux
     #                             Examples: unix:///var/run/dockershim.sock or /run/containerd/containerd.sock
@@ -580,7 +580,7 @@ function ensure_kubelet_running()
 
     if [ "$RUNTIME" == "containerd" ]; then
         local container_log_max_files=${CONTAINER_LOG_MAX_FILES:-${DOCKER_LOG_MAX_FILE}}
-        # Why not use DOCKER_LOG_MAX_SIZE variable? 
+        # Why not use DOCKER_LOG_MAX_SIZE variable?
         # The formatting for docker config is 10m while kubelet expects 10Mi. To avoid implement string manipulation in bash just hardcoding
         # the same default as docker config for now.
         local container_log_max_size=${CONTAINER_LOG_MAX_SIZE:-"10Mi"}
@@ -1227,7 +1227,7 @@ function make_kubeconfig()
     fi
     if [[ "$kube_server" == "$MASTER_IP" && "$USE_HOSTNAME" == "true" && "$CLOUD_PROVIDER_TYPE" == "local" && "$MASTER_VIP_ENABLED" == "false" ]]; then
         kube_server=$HOSTNAME
-    fi 
+    fi
     if [ "$K8S_API_PORT" != "443" ]; then
         kube_server="${kube_server}:${K8S_API_PORT}"
     fi

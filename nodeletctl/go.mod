@@ -8,7 +8,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/platform9/nodelet/nodelet v0.0.0-20220420170655-9ece5c5b1f61
+	github.com/platform9/nodelet/nodelet v0.0.0-20230628163937-b77acde2bc89
 	github.com/platform9/pf9ctl v0.0.0-20230125134605-3783dcfca904
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/viper v1.11.0

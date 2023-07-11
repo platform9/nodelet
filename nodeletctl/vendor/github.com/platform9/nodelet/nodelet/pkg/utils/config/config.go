@@ -27,6 +27,7 @@ var DefaultConfig = Config{
 	ConnectTimeout:          20,
 	FullRetryCount:          10,
 	UseCgroups:              true,
+	CgroupsV2:               false,
 	PhaseRetry:              3,
 	CPULimit:                40,                            // percentage
 	LoopInterval:            constants.DefaultLoopInterval, // seconds
@@ -44,6 +45,11 @@ var DefaultConfig = Config{
 	GRPCRetryTimeoutSeconds: 5,
 	NumCmdOutputLinesToLog:  10, // 0 indicates no command lines to be logged
 	UserImagesDir:           constants.UserImagesDir,
+	CoreDNSHostsFile:        constants.CoreDNSHostsFile,
+	K8sPrivateRegistry:      constants.K8sRegistry,
+	ServicesCIDR:            constants.ServicesCIDR,
+	ServicesCIDRv6:          constants.ServicesCIDRv6,
+	Dualstack:               false,
 }
 
 // Config a struct to load the values from viper for future use.
@@ -57,6 +63,7 @@ type Config struct {
 	KubeServiceState          string  `mapstructure:"KUBE_SERVICE_STATE"`
 	FullRetryCount            int     `mapstructure:"FULL_RETRY_COUNT"`
 	UseCgroups                bool    `mapstructure:"USE_CGROUPS"`
+	CgroupsV2                 bool    `mapstructure:"CGROUPS_V2"`
 	PhaseRetry                int     `mapstructure:"PHASE_RETRY"`
 	CPULimit                  float64 `mapstructure:"CPU_LIMIT"`
 	PF9StatusThresholdSeconds int     `mapstructure:"PF9_STATUS_THRESHOLD_SECONDS"`
@@ -77,11 +84,21 @@ type Config struct {
 	GRPCRetryTimeoutSeconds   int     `mapstructure:"GRPC_RETRY_TIMEOUT_SECONDS"`
 	NumCmdOutputLinesToLog    int     `mapstructure:"NUM_CMD_OP_LINES_TO_LOG"`
 	CloudProviderType         string  `mapstructure:"CLOUD_PROVIDER_TYPE"`
-	UseHostname               string  `mapstructure:"USE_HOSTNAME"`
+	UseHostname               bool    `mapstructure:"USE_HOSTNAME"`
 	MasterIp                  string  `mapstructure:"MASTER_IP"`
+	MasterIPv6                string  `mapstructure:"MASTER_IPV6"`
 	K8sApiPort                string  `mapstructure:"K8S_API_PORT"`
 	MasterSchedulable         bool    `mapstructure:"ALLOW_WORKLOADS_ON_MASTER"`
 	UserImagesDir             string  `mapstructure:"USER_IMAGES_DIR"`
+	K8sPrivateRegistry        string  `mapstructure:"K8S_PRIVATE_REGISTRY"`
+	ServicesCIDR              string  `mapstructure:"SERVICES_CIDR"`
+	AppCatalogEnabled         bool    `mapstructure:"APP_CATALOG_ENABLED"`
+	KubeletCloudConfig        string  `mapstructure:"KUBELET_CLOUD_CONFIG"`
+	CoreDNSHostsFile          string  `mapstructure:"COREDNS_HOSTS_FILE"`
+	IPv6Enabled               bool    `mapstructure:"IPV6_ENABLED"`
+	IPv4Enabled               bool    `mapstructure:"IPV4_ENABLED"`
+	Dualstack                 bool    `mapstructure:"DUALSTACK"`
+	ServicesCIDRv6            string  `mapstructure:"SERVICES_CIDR_V6"`
 }
 
 // ToStringMap converts the Config struct to a map of strings
@@ -123,7 +140,8 @@ func getDefaultConfig() *Config {
 
 /*
 GetConfigFromDir : Tries to load YAML config files from configDir i.e. /etc/pf9/nodelet directory.
-			This function returns an error if the directory is inaccessible or if no config files could be loaded
+
+	This function returns an error if the directory is inaccessible or if no config files could be loaded
 */
 func GetConfigFromDir(configDir string) (*Config, error) {
 	pf9File := fileio.New()
