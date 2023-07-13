@@ -1,6 +1,8 @@
 package constants
 
-import "fmt"
+import (
+	"fmt"
+)
 
 const (
 	// ConfigDir : Directory for nodelet config files
@@ -72,12 +74,20 @@ const (
 	DefaultSunpikeConfigPath = "/etc/pf9/nodelet/config_sunpike.yaml"
 	// TrueString represents true as a string in nodeletd
 	TrueString = "true"
-	//LoopBackIpString represents loopback IP string also known as localhost
+	// LoopBackIpString represents loopback IP string also known as localhost
 	LoopBackIpString = "127.0.0.1"
 	// LocalHost represents localhost as a string
 	LocalHostString = "localhost"
-	//LocalCloudProvider represents cloud provider type as local
+	// LocalCloudProvider represents cloud provider type as local
 	LocalCloudProvider = "local"
+	// RuntimeContainerd represents containerd service
+	RuntimeContainerd = "containerd"
+
+	CgroupSystemd = "SystemdCgroup"
+
+	IsActiveOp = "is-active"
+
+	ActiveState = "active"
 )
 
 var (
@@ -107,12 +117,42 @@ var (
 	ChecksumDir = fmt.Sprintf("%s/checksum", UserImagesDir)
 	// ChecksumFile contains sha256 hash for tar archives of user images
 	ChecksumFile = fmt.Sprintf("%s/sha256sums.txt", ChecksumDir)
-	// ContainerdAddress is default address for containerd socket
-	ContainerdAddress = "/run/containerd/containerd.sock"
+	// ContainerdSocket is default address for containerd socket
+	ContainerdSocket = "/run/containerd/containerd.sock"
 	// DefaultSnapShotter is default snapshotter for containerd
 	DefaultSnapShotter = "overlayfs"
-	//K8sNamespace is namespace for kubernetes
+	// Containerd binary path
+	ContainerdBinPath = "/usr/local/bin/containerd"
+	// Nerdctl directory path
+	NerdctlDir = "/var/lib/nerdctl"
+	// K8sNamespace is namespace for kubernetes
 	K8sNamespace = "k8s.io"
+	// MobyNamespace is namespace for docker
+	MobyNamespace = "moby"
+	// K8sRegistry represents registry for official images for kubernetes
+	K8sRegistry = "registry.k8s.io"
+
+	ServicesCIDR   = "10.21.0.0/22"
+	ServicesCIDRv6 = "fd00:102::/116"
+
+	ConfigSrcDir = "/opt/pf9/pf9-kube/conf"
+	// CoreDNSTemplate is template file for coredns
+	CoreDNSTemplate = fmt.Sprintf("%s/networkapps/coredns.yaml", ConfigSrcDir)
+	// CoreDNSFile is applied coredns file
+	CoreDNSFile      = fmt.Sprintf("%s/networkapps/coredns-applied.yaml", ConfigSrcDir)
+	CoreDNSHostsFile = "/etc/hosts"
+
+	CloudConfigFile = "/etc/pf9/kube.d/cloud-config"
+
+	EtcContainerdDir = "/etc/containerd"
+
+	ContainerdConfigFile = fmt.Sprintf("%s/config.toml", EtcContainerdDir)
+
+	ContainerdCgroup = "systemd"
+
+	Pf9User = "pf9"
+
+	Pf9Group = "pf9group"
 
 	// Phase orders of all the phases
 	NoRolePhaseOrder                   = 10

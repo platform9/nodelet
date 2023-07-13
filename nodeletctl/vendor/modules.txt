@@ -80,7 +80,7 @@ github.com/pelletier/go-toml/v2/internal/tracker
 github.com/pkg/errors
 # github.com/pkg/sftp v1.13.1
 github.com/pkg/sftp
-# github.com/platform9/nodelet/nodelet v0.0.0-20220420170655-9ece5c5b1f61
+# github.com/platform9/nodelet/nodelet v0.0.0 => ../nodelet
 ## explicit
 github.com/platform9/nodelet/nodelet/pkg/utils/config
 github.com/platform9/nodelet/nodelet/pkg/utils/constants
