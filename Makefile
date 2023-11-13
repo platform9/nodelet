@@ -350,7 +350,7 @@ runc: $(RUNC_DIR)
 # NERDCTL install
 .PHONY: nerdctl
 NERDCTL_CLI := "nerdctl"
-NERDCTL_CLI_VERSION := "0.22.0"
+NERDCTL_CLI_VERSION := "1.7.0"
 NERDCTL_URL := https://github.com/containerd/nerdctl/releases/download/v${NERDCTL_CLI_VERSION}/nerdctl-${NERDCTL_CLI_VERSION}-linux-amd64.tar.gz
 NERDCTL_DIR := "nerdctl"
 
@@ -381,7 +381,7 @@ keepalived:
 # CRICTL install
 .PHONY: crictl
 CRICTL_CLI := "crictl"
-CRICTL_CLI_VERSION := "v1.22.0"
+CRICTL_CLI_VERSION := "v1.26.0"
 CRICTL_URL := https://github.com/kubernetes-sigs/cri-tools/releases/download/${CRICTL_CLI_VERSION}/crictl-${CRICTL_CLI_VERSION}-linux-amd64.tar.gz
 CRICTL_DIR := "crictl"
 
