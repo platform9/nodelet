@@ -1,4 +1,13 @@
 # NODELET
+
+07/01/2023
+
+** This project is no longer maintained. **
+
+All future changes must go to [pf9-kube](https://github.com/platform9/pf9-kube/)
+
+---
+
 [![Makefile CI](https://github.com/platform9/nodelet/actions/workflows/unit-test.yml/badge.svg)](https://github.com/platform9/nodelet/actions/workflows/unit-test.yml)
 [![rpm-deb-build](https://github.com/platform9/nodelet/actions/workflows/rpm-deb-build.yml/badge.svg)](https://github.com/platform9/nodelet/actions/workflows/rpm-deb-build.yml)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Froopakparikh%2Fnodelet.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Froopakparikh%2Fnodelet?ref=badge_shield)
