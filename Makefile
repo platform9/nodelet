@@ -540,7 +540,7 @@ jq:
 	${WGET_CMD} -O jq -L https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 && \
 	chmod u=rwx,og=rx jq
 
-$(COMMON_SRC_ROOT): easyrsa $(AUTHBS_SRC_DIR) bouncer-docker-image kubernetes nodelet cni-plugins containerd runc nerdctl crictl calicoctl etcdctl etcd_raft_checker pf9kube-addr-conv pf9kube-ip_type virtctl jq keepalived
+$(COMMON_SRC_ROOT): easyrsa $(AUTHBS_SRC_DIR) bouncer-docker-image kubernetes nodelet cni-plugins containerd runc nerdctl crictl calicoctl etcdctl etcdutl etcd_raft_checker pf9kube-addr-conv pf9kube-ip_type virtctl jq keepalived
 	echo "make COMMON_SRC_ROOT $(COMMON_SRC_ROOT)"
 	echo "COMMON_SRC_ROOT is $(COMMON_SRC_ROOT)" # i.e. /vagrant/build/pf9-kube/pf9-kube-src/common
 	echo "AGENT_SRC_DIR is $(AGENT_SRC_DIR)" # cp -a /vagrant/agent/root/* /vagrant/build/pf9-kube/pf9-kube-src/common/
@@ -584,6 +584,7 @@ $(COMMON_SRC_ROOT): easyrsa $(AUTHBS_SRC_DIR) bouncer-docker-image kubernetes no
 	cp -a ${KUBERNETES_DIR}/${CRICTL_DIR}/crictl $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}bin/
 	cp -a ${KUBERNETES_DIR}/calicoctl $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/bin/
 	cp -a ${ETCD_TMP_DIR}/etcdctl $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/bin/
+	cp -a ${ETCD_TMP_DIR}/etcdutl $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/bin/
 	cp -a ${AGENT_BUILD_DIR}/etcd_raft_checker $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/bin/
 	cp -a ${AGENT_BUILD_DIR}/addr_conv $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/bin/
 	cp -a ${AGENT_BUILD_DIR}/ip_type $(COMMON_SRC_ROOT)${KUBERNETES_EXECUTABLES}/
