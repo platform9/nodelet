@@ -20,6 +20,7 @@ spec:
         - "--v=__DEBUG_LEVEL__"
         - "--horizontal-pod-autoscaler-use-rest-clients=true"
         - "--use-service-account-credentials=true"
+        - "--node-monitor-grace-period=40s"
       volumeMounts:
         - name: "apiserver-certs"
           mountPath: "/srv/kubernetes/certs/apiserver"
@@ -86,6 +87,8 @@ spec:
         - "--kubelet-client-key=/srv/kubernetes/certs/kubelet/apiserver/request.key"
         - "--v=__DEBUG_LEVEL__"
         - "--http2-max-streams-per-connection=1000" # See: PMK-2969
+        - "--default-not-ready-toleration-seconds=60"
+        - "--default-unreachable-toleration-seconds=60"
       volumeMounts:
         - name: "authn"
           mountPath: "/srv/kubernetes/authn"
